@@ -1,0 +1,7 @@
+initial-example-app/.cache
+initial-example-app/.classpath
+initial-example-app/.project
+initial-example-app/project/target
+initial-example-app/target
+.DS_Store
+**/*.DS_Store
