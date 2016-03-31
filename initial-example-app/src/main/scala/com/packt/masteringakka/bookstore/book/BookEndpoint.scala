@@ -20,6 +20,8 @@ class BookEndpoint(bookManager:ActorRef)(implicit val system:ActorSystem, ec:Exe
     val filtered = values.filter(_.nonEmpty)
     if (filtered.isEmpty) None else Some(filtered) 
   })
+  
+  object AuthorParam extends Params.Extract("author", Params.first ~> Params.nonempty)
 
   def intent = {
     case req @ GET(Path(Seg("api" :: "book" :: IntPathElement(bookId) :: Nil))) =>
@@ -28,11 +30,15 @@ class BookEndpoint(bookManager:ActorRef)(implicit val system:ActorSystem, ec:Exe
       
     case req @ GET(Path(Seg("api" :: "book" :: Nil))) & Params(TagParam(tags)) =>
       val f = (bookManager ? FindBooksByTags(tags)).mapTo[Vector[Book]]
-      respond(f, req)      
+      respond(f, req) 
+      
+    case req @ GET(Path(Seg("api" :: "book" :: Nil))) & Params(AuthorParam(author)) =>
+      val f = (bookManager ? FindBooksByAuthor(author)).mapTo[Vector[Book]]
+      respond(f, req)       
       
     case req @ POST(Path(Seg("api" :: "book" :: Nil))) =>
-      val book = extractBody[Book](Body.string(req))
-      val f = (bookManager ? CreateBook(book)).mapTo[Book]
+      val createBook = extractBody[CreateBook](Body.string(req))
+      val f = (bookManager ? createBook).mapTo[Book]
       respond(f, req)
       
     case req @ Path(Seg("api" :: "book" :: IntPathElement(bookId) :: "tag" :: tag :: Nil)) =>
@@ -44,5 +50,9 @@ class BookEndpoint(bookManager:ActorRef)(implicit val system:ActorSystem, ec:Exe
         case other => 
           req.respond(Pass)
       }
+      
+    case req @ PUT(Path(Seg("api" :: "book" :: IntPathElement(bookId) :: "inventory" :: IntPathElement(amount) :: Nil))) =>
+      val f = (bookManager ? AddInventoryToBook(bookId, amount)).mapTo[Option[Book]]
+      respond(f, req)
   }
 }

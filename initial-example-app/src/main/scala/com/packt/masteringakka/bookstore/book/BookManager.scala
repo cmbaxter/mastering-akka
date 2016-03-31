@@ -5,11 +5,11 @@ import akka.actor.Props
 import slick.driver.PostgresDriver.api._
 import com.packt.masteringakka.bookstore.PostgresDB
 import slick.jdbc.GetResult
-import java.sql.Date
 import slick.dbio.DBIOAction
 import com.packt.masteringakka.bookstore.BookstoreDao
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import java.util.Date
 
 object BookManager{
   def props = Props[BookManager]
@@ -38,8 +38,13 @@ class BookManager extends Actor{
           books <- lookupBooksByIds(ids)
         } yield books
       result pipeTo sender()
+        
+    case FindBooksByAuthor(author) =>
+      val result = dao.findBooksByAuthor(author)
+      result pipeTo sender()      
             
-    case CreateBook(book) =>
+    case CreateBook(title, author, tags, cost) =>
+      val book = Book(0, title, author, tags, cost, 0, new Date, new Date)
       val result = dao.createBook(book)
       result pipeTo sender()
       
@@ -49,7 +54,15 @@ class BookManager extends Actor{
         
     case RemoveTagFromBook(id, tag) =>
       val result = manipulateTags(id, tag)(dao.untagBook)        
-      result pipeTo sender()        
+      result pipeTo sender() 
+      
+    case AddInventoryToBook(id, amount) =>
+      val result = 
+        for{
+          book <- dao.findBookById(id)
+          addRes <- checkExistsAndThen(book)(b => dao.addInventoryToBook(b, amount))
+        } yield addRes
+      result pipeTo sender()   
   }
   
   def manipulateTags(id:Int, tag:String)(f:(Book,String) => Future[Book]):Future[Option[Book]] = {
@@ -69,23 +82,23 @@ class BookManager extends Actor{
 }
 
 object BookManagerDao{
-  implicit val GetBook = GetResult{r => Book(r.<<, r.<<, r.<<, r.nextString.split(",").filter(_.nonEmpty).toList, r.<<, r.<<)}
+  implicit val GetBook = GetResult{r => Book(r.<<, r.<<, r.<<, r.nextString.split(",").filter(_.nonEmpty).toList, r.<<, r.<<, r.nextTimestamp, r.nextTimestamp)}
+  val BookLookupPrefix =  """
+    select b.id, b.title, b.author, array_to_string(array_agg(t.tag), ',') as tags, b.cost, b.inventoryAmount, b.createTs, b.modifyTs
+    from Book b left join BookTag t on b.id = t.bookId where
+  """
 }
 
 class BookManagerDao(implicit ec:ExecutionContext) extends BookstoreDao{
   import BookManagerDao._
+  import DaoHelpers._
+  
   
   def findBookById(id:Int) = findBooksByIds(Seq(id)).map(_.headOption)
   
   def findBooksByIds(ids:Seq[Int]) = {
     val idsParam = s"${ids.mkString(",")}"
-    val booksResult = 
-      db.run(sql"""
-        select b.id, b.title, b.author, array_to_string(array_agg(t.tag), ',') as tags, b.cost, b.inventoryAmount 
-        from Book b left join BookTag t on b.id = t.bookId where b.id in (#$idsParam) group by b.id
-        """.as[Book]
-      )
-    booksResult    
+    db.run(sql"""#$BookLookupPrefix b.id in (#$idsParam) group by b.id""".as[Book])       
   }
   
   def findBookIdsByTags(tags:Seq[String]) = {
@@ -94,11 +107,16 @@ class BookManagerDao(implicit ec:ExecutionContext) extends BookstoreDao{
     idsWithAllTags.map(_.map(_._1) )     
   }
   
+  def findBooksByAuthor(author:String) = {
+    val param = s"%$author%"
+    db.run(sql"""#$BookLookupPrefix b.author like $param group by b.id""".as[Book])
+  }
+  
   def createBook(book:Book) = {
     val insert = 
       sqlu"""
         insert into Book (title, author, cost, inventoryamount, createts) 
-        values (${book.title}, ${book.author}, ${book.cost}, ${book.inventoryAmount}, ${new Date(System.currentTimeMillis())})
+        values (${book.title}, ${book.author}, ${book.cost}, ${book.inventoryAmount}, ${book.createTs.toSqlDate })
       """
     val idget = sql"select currval('book_id_seq')".as[Int]
     def tagsInserts(bookId:Int) = DBIOAction.sequence(book.tags.map(t => sqlu"insert into BookTag (bookid, tag) values ($bookId, $t)"))
@@ -121,6 +139,12 @@ class BookManagerDao(implicit ec:ExecutionContext) extends BookstoreDao{
   }
   
   def untagBook(book:Book, tag:String) = {
-    db.run(sqlu"delete from BookTag where bookId =  ${book.id} and tag = $tag").map(_ => book.copy(tags = book.tags.filterNot( _ == tag)))  
-  }  
+    db.run(sqlu"delete from BookTag where bookId =  ${book.id} and tag = $tag").
+      map(_ => book.copy(tags = book.tags.filterNot( _ == tag)))  
+  } 
+  
+  def addInventoryToBook(book:Book, amount:Int) = {
+    db.run(sqlu"update Book set inventoryAmount = inventoryAmount + $amount where id = ${book.id}").
+      map(_ => book.copy(inventoryAmount = book.inventoryAmount + amount)) //Not entirely accurate in that others updates could have happened
+  }
 }

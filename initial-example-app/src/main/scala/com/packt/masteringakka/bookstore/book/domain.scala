@@ -1,7 +1,9 @@
 package com.packt.masteringakka.bookstore.book
 
+import java.util.Date
+
 //Persistent entities
-case class Book(id:Int, title:String, author:String, tags:List[String], cost:Double, inventoryAmount:Int)
+case class Book(id:Int, title:String, author:String, tags:List[String], cost:Double, inventoryAmount:Int, createTs:Date, modifyTs:Date)
 
 //Lookup operations
 case class FindBook(id:Int)
@@ -11,7 +13,7 @@ case class FindBooksByTitle(title:String)
 case class FindBooksByAuthor(author:String)
 
 //Modify operations
-case class CreateBook(book:Book)
+case class CreateBook(title:String, author:String, tags:List[String], cost:Double)
 case class AddTagToBook(bookId:Int, tag:String)
 case class RemoveTagFromBook(bookId:Int, tag:String)
 case class AddInventoryToBook(bookId:Int, amount:Int)

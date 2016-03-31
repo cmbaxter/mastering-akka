@@ -16,9 +16,13 @@ import unfiltered.response.JsonContent
 import unfiltered.response.NotFound
 import io.netty.handler.codec.http.HttpResponse
 import scala.reflect.ClassTag
+import com.typesafe.config.ConfigFactory
+import java.util.Date
 
 object Server extends App{
-  implicit val system = ActorSystem("Bookstore")
+  val conf = ConfigFactory.load.getConfig("bookstore")
+  val postgresDb = slick.driver.PostgresDriver.api.Database.forConfig("psqldb", conf)  
+  implicit val system = ActorSystem("Bookstore", conf)
   import system.dispatcher
 
   val endpoints:List[BookstorePlan] = List(BookBoot).flatMap(_.bootup)
@@ -28,11 +32,7 @@ object Server extends App{
       serv.plan(endpoint)
   }
   
-  server.run()
-  
-  //Force init of db
-  PostgresDB.db.executor 
-    
+  server.run()       
 }
 
 trait BookstorePlan extends async.Plan with ServerErrorResponse{
@@ -80,4 +80,14 @@ trait BookstorePlan extends async.Plan with ServerErrorResponse{
 
 trait Bootstrap{
   def bootup(implicit system:ActorSystem):List[BookstorePlan]
+}
+
+trait BookstoreDao{
+  val db = Server.postgresDb 
+
+  object DaoHelpers{
+    implicit class EnhancedDate(date:Date){
+      def toSqlDate = new java.sql.Date(date.getTime) 
+    }
+  }  
 }
