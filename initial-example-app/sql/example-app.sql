@@ -34,11 +34,28 @@ CREATE TABLE BookTag(
     PRIMARY KEY(bookId, tag)
 );
 
+-- Credit Txn Table
+DROP TABLE IF EXISTS CreditCardTransaction;
+CREATE TABLE CreditCardTransaction(
+    id serial PRIMARY KEY,
+    cardHolder varchar(100) NOT NULL,
+    cardType varchar(25) NOT NULL,
+    cardNumber varchar(50) NOT NULL,
+    expiration date NOT NULL,
+    amount decimal(10,2) NOT NULL,
+    status varchar(10) NOT NULL,
+    confirmationCode varchar(100) NULL,
+    createTs timestamp NOT NULL,
+    modifyTs timestamp NOT NULL DEFAULT current_timestamp
+);
+
 -- Sales Order Header Table
 DROP TABLE IF EXISTS SalesOrderHeader;
 CREATE TABLE SalesOrderHeader(
     id serial PRIMARY KEY,
     userId INT NOT NULL REFERENCES StoreUser(id),
+    creditTxnId INT NOT NULL REFERENCES CreditCardTransaction(id),
+    status varchar(10) NOT NULL,    
     totalCost decimal(10,2) NOT NULL,
     createTs timestamp NOT NULL,
     modifyTs timestamp NOT NULL DEFAULT current_timestamp

@@ -3,19 +3,21 @@ package com.packt.masteringakka.bookstore.book
 import akka.actor.Actor
 import akka.actor.Props
 import slick.driver.PostgresDriver.api._
-import com.packt.masteringakka.bookstore.PostgresDB
 import slick.jdbc.GetResult
 import slick.dbio.DBIOAction
 import com.packt.masteringakka.bookstore.BookstoreDao
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import java.util.Date
+import akka.actor.ActorLogging
+import com.packt.masteringakka.bookstore.BookStoreActor
 
 object BookManager{
+  val Name = "book-manager"
   def props = Props[BookManager]
 }
 
-class BookManager extends Actor{  
+class BookManager extends BookStoreActor{  
   import akka.pattern.pipe
   import context.dispatcher
   
@@ -23,12 +25,13 @@ class BookManager extends Actor{
 
   def receive = {
     case FindBook(id) => 
+      log.info("Looking up book for id: {}", id)
       val result = dao.findBookById(id)
-      result pipeTo sender()
+      pipeResponse(result)
       
     case FindBooksForIds(ids) =>
       val result = lookupBooksByIds(ids)
-      result pipeTo sender()
+      pipeResponse(result)
       
     case FindBooksByTags(tags) => 
       val idsFut = dao.findBookIdsByTags(tags)
@@ -37,24 +40,24 @@ class BookManager extends Actor{
           ids <- idsFut
           books <- lookupBooksByIds(ids)
         } yield books
-      result pipeTo sender()
+      pipeResponse(result)
         
     case FindBooksByAuthor(author) =>
       val result = dao.findBooksByAuthor(author)
-      result pipeTo sender()      
+      pipeResponse(result)      
             
     case CreateBook(title, author, tags, cost) =>
       val book = Book(0, title, author, tags, cost, 0, new Date, new Date)
       val result = dao.createBook(book)
-      result pipeTo sender()
+      pipeResponse(result)
       
     case AddTagToBook(id, tag) =>
       val result = manipulateTags(id, tag)(dao.tagBook)        
-      result pipeTo sender()
+      pipeResponse(result)
         
     case RemoveTagFromBook(id, tag) =>
       val result = manipulateTags(id, tag)(dao.untagBook)        
-      result pipeTo sender() 
+      pipeResponse(result) 
       
     case AddInventoryToBook(id, amount) =>
       val result = 
@@ -62,7 +65,7 @@ class BookManager extends Actor{
           book <- dao.findBookById(id)
           addRes <- checkExistsAndThen(book)(b => dao.addInventoryToBook(b, amount))
         } yield addRes
-      result pipeTo sender()   
+      pipeResponse(result)   
   }
   
   def manipulateTags(id:Int, tag:String)(f:(Book,String) => Future[Book]):Future[Option[Book]] = {
@@ -118,7 +121,7 @@ class BookManagerDao(implicit ec:ExecutionContext) extends BookstoreDao{
         insert into Book (title, author, cost, inventoryamount, createts) 
         values (${book.title}, ${book.author}, ${book.cost}, ${book.inventoryAmount}, ${book.createTs.toSqlDate })
       """
-    val idget = sql"select currval('book_id_seq')".as[Int]
+    val idget = lastIdSelect("book")
     def tagsInserts(bookId:Int) = DBIOAction.sequence(book.tags.map(t => sqlu"insert into BookTag (bookid, tag) values ($bookId, $t)"))
       
     val txn = 

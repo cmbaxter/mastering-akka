@@ -18,6 +18,9 @@ import io.netty.handler.codec.http.HttpResponse
 import scala.reflect.ClassTag
 import com.typesafe.config.ConfigFactory
 import java.util.Date
+import com.packt.masteringakka.bookstore.user.UserBoot
+import com.packt.masteringakka.bookstore.order.OrderBoot
+import com.packt.masteringakka.bookstore.credit.CreditBoot
 
 object Server extends App{
   val conf = ConfigFactory.load.getConfig("bookstore")
@@ -25,15 +28,17 @@ object Server extends App{
   implicit val system = ActorSystem("Bookstore", conf)
   import system.dispatcher
 
-  val endpoints:List[BookstorePlan] = List(BookBoot).flatMap(_.bootup)
+  val endpoints:List[BookstorePlan] = List(BookBoot, UserBoot, CreditBoot, OrderBoot).flatMap(_.bootup)
   val server = endpoints.foldRight(unfiltered.netty.Server.http(8080)){
     case (endpoint, serv) => 
       println("Adding endpoint: " + endpoint)
       serv.plan(endpoint)
   }
   
-  server.run()       
+  //Adding in the pretent credit card charging service too so that the app works
+  server.plan(PretentCreditCardService).run()       
 }
+
 
 trait BookstorePlan extends async.Plan with ServerErrorResponse{
   import concurrent.duration._
@@ -49,27 +54,33 @@ trait BookstorePlan extends async.Plan with ServerErrorResponse{
   def respond(f:Future[Any], resp:unfiltered.Async.Responder[HttpResponse]) = {
     import system.dispatcher
     f.onComplete{
-      case util.Success(Some(b:AnyRef)) => 
-        val ser = write(b)          
-        resp.respond(JsonContent ~> ResponseString(ser))
+      case util.Success(FullResult(b:AnyRef)) => 
+        respondJson(ApiResponse(ApiResonseMeta(Ok.code), Some(b)), resp)
           
-      case util.Success(None) =>
-        resp.respond(NotFound)  
+      case util.Success(EmptyResult) =>
+        respondJson(ApiResponse(ApiResonseMeta(NotFound.code, Some(ErrorMessage("notfound")))), resp, NotFound)  
         
-      case util.Success(v:Vector[_]) =>
-        val ser = write(v)          
-        resp.respond(JsonContent ~> ResponseString(ser))        
-        
-      case util.Success(b:AnyRef) => 
-        val ser = write(b)          
-        resp.respond(JsonContent ~> ResponseString(ser))
+      case util.Success(fail:Failure) =>
+        val status = fail.failType match{
+          case ValidationFailure => BadRequest
+          case _ => InternalServerError
+        }
+        val apiResp = ApiResponse(ApiResonseMeta(status.code, Some(fail.message)))
+        respondJson(apiResp, resp, status)    
         
       case util.Success(x) =>
-        resp.respond(InternalServerError ~> ResponseString(s"Cannot serialize $x to json"))        
-          
+        val apiResp = ApiResponse(ApiResonseMeta(InternalServerError.code, Some(ServiceResult.UnexpectedFailure )))
+        respondJson(apiResp, resp, InternalServerError)
+                          
       case util.Failure(ex) => 
-        resp.respond(InternalServerError ~> ResponseString(ex.getMessage))      
+        val apiResp = ApiResponse(ApiResonseMeta(InternalServerError.code, Some(ServiceResult.UnexpectedFailure )))
+        respondJson(apiResp, resp, InternalServerError)     
     }
+  }
+  
+  def respondJson[T <: AnyRef](apiResp:ApiResponse[T], resp:unfiltered.Async.Responder[HttpResponse], status:Status = Ok) = {
+    val ser = write(apiResp)          
+    resp.respond(status ~> JsonContent ~> ResponseString(ser))    
   }
   
   def extractBody[T <: AnyRef: Manifest](f: => String) = {
@@ -78,11 +89,32 @@ trait BookstorePlan extends async.Plan with ServerErrorResponse{
   }
 }
 
+trait BookStoreActor extends Actor with ActorLogging{
+  import akka.pattern.pipe
+  import context.dispatcher
+  
+  private val toFailure:PartialFunction[Throwable, ServiceResult[Nothing]] = {
+    case ex => Failure(ServiceFailure, ServiceResult.UnexpectedFailure, Some(ex))
+  }
+  
+  def pipeResponse[T](f:Future[T]) = 
+    f.
+      map{
+        case o:Option[_] => ServiceResult.fromOption(o) 
+        case f:Failure => f
+        case other => FullResult(other)
+      }.
+      recover(toFailure). 
+      pipeTo(sender())
+}
+
+
 trait Bootstrap{
   def bootup(implicit system:ActorSystem):List[BookstorePlan]
 }
 
 trait BookstoreDao{
+  import slick.driver.PostgresDriver.api._
   val db = Server.postgresDb 
 
   object DaoHelpers{
@@ -90,4 +122,6 @@ trait BookstoreDao{
       def toSqlDate = new java.sql.Date(date.getTime) 
     }
   }  
+  
+  def lastIdSelect(table:String) = sql"select currval('#${table}_id_seq')".as[Int]
 }
