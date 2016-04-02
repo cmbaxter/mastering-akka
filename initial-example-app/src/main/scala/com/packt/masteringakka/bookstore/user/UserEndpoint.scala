@@ -18,12 +18,12 @@ class UserEndpoint(userManager:ActorRef)(implicit val system:ActorSystem, ec:Exe
     
     case req @ POST(Path(Seg("api" :: "user" :: Nil))) =>
       val input = extractBody[UserInput](Body.string(req))
-      val f = (userManager ? CreateUser(input)).mapTo[BookstoreUser]
+      val f = (userManager ? CreateUser(input))
       respond(f, req)
       
     case req @ PUT(Path(Seg("api" :: "user" :: IntPathElement(userId) :: Nil))) =>
       val input = extractBody[UserInput](Body.string(req))
-      val f = (userManager ? UpdateUserInfo(userId, input)).mapTo[Option[BookstoreUser]]
+      val f = (userManager ? UpdateUserInfo(userId, input))
       respond(f, req)      
   }
 }

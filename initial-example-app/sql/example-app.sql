@@ -11,7 +11,8 @@ CREATE TABLE StoreUser(
     lastName varchar(100) NOT NULL,
     email varchar(100) NOT NULL,
     createTs timestamp NOT NULL,
-    modifyTs timestamp NOT NULL DEFAULT current_timestamp
+    modifyTs timestamp NOT NULL DEFAULT current_timestamp,
+    CONSTRAINT email_unique UNIQUE(email)
 );
 
 -- Book Table

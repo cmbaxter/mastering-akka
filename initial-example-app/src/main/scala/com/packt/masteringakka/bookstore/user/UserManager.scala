@@ -8,36 +8,62 @@ import java.util.Date
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import com.packt.masteringakka.bookstore.BookStoreActor
+import com.packt.masteringakka.bookstore.ErrorMessage
+import com.packt.masteringakka.bookstore.ServiceResult
+import com.packt.masteringakka.bookstore.ValidationFailure
+import com.packt.masteringakka.bookstore.Failure
 
 object UserManager{
   val Name = "user-manager"
   def props = Props[UserManager]
+  class EmailNotUniqueException extends Exception
+  val EmailNotUniqueError = ErrorMessage("user.email.nonunique", Some("The email supplied for a create or update is not unique"))
 }
 
 class UserManager extends BookStoreActor{
   import akka.pattern.pipe
+  import UserManager._
   import context.dispatcher
   
   val dao = new UserManagerDao
-
+  val recoverEmailCheck:PartialFunction[Throwable, ServiceResult[_]] = {
+    case ex:EmailNotUniqueException => 
+      println("Recovering")
+      Failure(ValidationFailure, EmailNotUniqueError )
+  }
+  
   def receive = {
     case FindUserById(id) =>
       log.info("Looking up user for id: {}", id)
       pipeResponse(dao.findUserById(id))
     
     case CreateUser(UserInput(first, last, email)) =>
-      //TODO: fail if email already in use (add as unique index)
-      val result = dao.createUser(BookstoreUser(0, first, last, email, new Date, new Date))
-      pipeResponse(result)
+      val result = 
+        for{
+          _ <- emailUnique(email)
+          daoRes <- dao.createUser(BookstoreUser(0, first, last, email, new Date, new Date))
+        } yield daoRes        
+      pipeResponse(result.recover(recoverEmailCheck ))
       
     case upd @ UpdateUserInfo(id, input) =>
       val result = 
         for{
+          _ <- emailUnique(input.email, Some(id))
           userOpt <- dao.findUserById(id)
           updated <- maybeUpdate(upd, userOpt)
         } yield updated
-      pipeResponse(result)
+      pipeResponse(result.recover(recoverEmailCheck ))
       
+  }
+  
+  def emailUnique(email:String, existingId:Option[Int] = None) = {
+    dao.
+      findUserByEmail(email).
+      flatMap{
+        case None => Future.successful(true)
+        case Some(user) if Some(user.id) == existingId => Future.successful(true)
+        case _ => Future.failed(new EmailNotUniqueException)
+      }
   }
   
   def maybeUpdate(upd:UpdateUserInfo, userOpt:Option[BookstoreUser]) = 
@@ -51,6 +77,7 @@ class UserManager extends BookStoreActor{
 }
 
 object UserManagerDao{
+  val SelectFields = "select id, firstName, lastName, email, createTs, modifyTs from StoreUser " 
   implicit val GetUser = GetResult{r => BookstoreUser(r.<<, r.<<, r.<<, r.<<, r.nextTimestamp, r.nextTimestamp)}
 }
 
@@ -69,9 +96,15 @@ class UserManagerDao(implicit ec:ExecutionContext) extends BookstoreDao{
   
   def findUserById(id:Int) = {
     db.
-      run(sql"select id, firstName, lastName, email, createTs, modifyTs from StoreUser where id = $id".as[BookstoreUser]).
+      run(sql"#$SelectFields where id = $id".as[BookstoreUser]).
       map(_.headOption)
   }
+  
+  def findUserByEmail(email:String) = {
+    db.
+      run(sql"#$SelectFields where email = $email".as[BookstoreUser]).
+      map(_.headOption)
+  }  
   
   def updateUserInfo(user:BookstoreUser) = {
     val update = sqlu"""

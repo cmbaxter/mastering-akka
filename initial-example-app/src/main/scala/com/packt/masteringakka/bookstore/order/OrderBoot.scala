@@ -7,7 +7,7 @@ object OrderBoot extends Bootstrap {
 
   def bootup(implicit system:ActorSystem) = {
     import system.dispatcher
-    val salesHandler = system.actorOf(SalesOrderHandler.props, SalesOrderHandler.Name)
+    val salesHandler = system.actorOf(SalesOrderManager.props, SalesOrderManager.Name)
     List(new SalesOrderEndpoint(salesHandler))
   }
 }

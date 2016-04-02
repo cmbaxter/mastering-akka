@@ -21,6 +21,8 @@ import java.util.Date
 import com.packt.masteringakka.bookstore.user.UserBoot
 import com.packt.masteringakka.bookstore.order.OrderBoot
 import com.packt.masteringakka.bookstore.credit.CreditBoot
+import org.json4s.ext.EnumNameSerializer
+import com.packt.masteringakka.bookstore.credit.CreditTransactionStatus
 
 object Server extends App{
   val conf = ConfigFactory.load.getConfig("bookstore")
@@ -45,7 +47,7 @@ trait BookstorePlan extends async.Plan with ServerErrorResponse{
   
   val system:ActorSystem
   implicit val endpointTimeout = Timeout(10 seconds)
-  implicit val formats = Serialization.formats(NoTypeHints)
+  implicit val formats = Serialization.formats(NoTypeHints) + new EnumNameSerializer(CreditTransactionStatus)
   
   object IntPathElement{
     def unapply(str:String) = util.Try(str.toInt).toOption

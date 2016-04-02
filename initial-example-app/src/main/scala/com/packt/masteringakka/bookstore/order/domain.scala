@@ -1,6 +1,7 @@
 package com.packt.masteringakka.bookstore.order
 
 import java.util.Date
+import com.packt.masteringakka.bookstore.credit.CreditCardInfo
 
 //Persistent entities
 object SalesOrderStatus extends Enumeration{
@@ -11,4 +12,4 @@ case class SalesOrderLineItem(id:Int, orderId:Int, bookId:Int, quantity:Int, cos
 
 //Create/Modify requests
 case class LineItemRequest(bookId:Int, quantity:Int)
-case class CreateOrder(userId:Int, lineItems:List[LineItemRequest])
+case class CreateOrder(userId:Int, lineItems:List[LineItemRequest], cardInfo:CreditCardInfo)

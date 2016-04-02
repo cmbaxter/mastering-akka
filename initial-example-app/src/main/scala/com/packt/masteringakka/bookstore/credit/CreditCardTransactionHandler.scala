@@ -21,6 +21,7 @@ class CreditCardTransactionHandler extends BookStoreActor{
 
   def receive = {
     case ChargeCreditCard(info, amount) =>
+      //TODO: Add in logic to execute the remote call
       val txn = CreditCardTransaction(0, info, amount, CreditTransactionStatus.Approved, Some("foobar"), new Date, new Date)
       val result = dao.createCreditTransaction(txn)
       pipeResponse(result)
