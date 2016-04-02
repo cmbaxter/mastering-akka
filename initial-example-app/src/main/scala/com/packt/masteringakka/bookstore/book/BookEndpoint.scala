@@ -13,7 +13,7 @@ import io.netty.channel.ChannelHandler.Sharable
 import unfiltered.response.Pass
 
 @Sharable
-class BookEndpoint(bookManager:ActorRef)(implicit val system:ActorSystem, ec:ExecutionContext) extends BookstorePlan{
+class BookEndpoint(bookManager:ActorRef)(implicit val ec:ExecutionContext) extends BookstorePlan{
   import akka.pattern.ask
   
   object TagParam extends Params.Extract("tag", {values => 
@@ -37,7 +37,7 @@ class BookEndpoint(bookManager:ActorRef)(implicit val system:ActorSystem, ec:Exe
       respond(f, req)       
       
     case req @ POST(Path(Seg("api" :: "book" :: Nil))) =>
-      val createBook = extractBody[CreateBook](Body.string(req))
+      val createBook = parseJson[CreateBook](Body.string(req))
       val f = (bookManager ? createBook)
       respond(f, req)
       

@@ -1,8 +1,10 @@
 package com.packt.masteringakka.bookstore
 
-case class ApiResonseMeta(statusCode:Int, error:Option[ErrorMessage] = None)
-case class ApiResponse[T <: AnyRef](meta:ApiResonseMeta, response:Option[T] = None)
 
+/**
+ * Represents a result from a call to a service actor, being either a FullResult (Some), EmptyResult (None) or a Failure.
+ * Has the full completent of methods like map, flatMap and filter to treat as a Monad 
+ */
 sealed abstract class ServiceResult[+A] {
   def isEmpty:Boolean
   def isValid:Boolean
@@ -16,32 +18,32 @@ sealed abstract class ServiceResult[+A] {
   }
 }
 
+/**
+ * Companion to ServiceResult
+ */
 object ServiceResult{
   val UnexpectedFailure = ErrorMessage("common.unexpect", Some("An unexpected exception has occurred"))
-  
-  implicit def sr2Iterable[A](sr:ServiceResult[A]):Iterable[A] = sr match{
-    case FullResult(a) => List(a)
-    case _ => List()
-  }  
   
   def fromOption[A](opt:Option[A]):ServiceResult[A] = opt match {
     case None => EmptyResult
     case Some(value) => FullResult(value)
   }
-
-  def fromTry[A](tr:util.Try[A]):ServiceResult[A] = tr match{
-    case util.Success(value) => FullResult(value)
-    case util.Failure(ex:Throwable) => Failure(ServiceFailure, UnexpectedFailure, Some(ex))
-  }
 }
 
+/**
+ * Empty (negative) representation of a service call result.  For example, if looking up 
+ * an entity by id and it wasn't there this is the type of response to use
+ */
 sealed abstract class Empty extends ServiceResult[Nothing]{
   def isValid:Boolean = false
   def isEmpty:Boolean = true
 }
 case object EmptyResult extends Empty
 
-
+/**
+ * Full (positive) representation of a service call result.  This will wrap the result of a call to service to qualify
+ * to the receiver that the call was successful
+ */
 final case class FullResult[+A](value:A) extends ServiceResult[A]{
   def isValid:Boolean = true
   def isEmpty:Boolean = false
@@ -51,11 +53,24 @@ final case class FullResult[+A](value:A) extends ServiceResult[A]{
   override def flatMap[B](f: A => ServiceResult[B]): ServiceResult[B] = f(value)   
 }
 
-sealed trait FailureType
-final case object ValidationFailure extends FailureType{ override def toString = "validation"}
-final case object ServiceFailure extends FailureType{ override def toString = "service"}
+/**
+ * Represents the type of failure encountered by the app
+ */
+object FailureType extends Enumeration{
+  val Validation, Service = Value
+}
+
+/**
+ * Represents an error message from a failure with a service call.  Has fields for the code of the error
+ * as well as a description of the error
+ */
 case class ErrorMessage(code:String, shortText:Option[String] = None, params:Option[Map[String,String]] = None)
-sealed case class Failure(failType:FailureType, message:ErrorMessage, exception:Option[Throwable] = None) extends Empty{
+
+/**
+ * Failed (negative) result from a call to a service with fields for what type as well as the error message
+ * and optionally a stack trace
+ */
+sealed case class Failure(failType:FailureType.Value, message:ErrorMessage, exception:Option[Throwable] = None) extends Empty{
   type A = Nothing
   override def map[B](f: A => B): ServiceResult[B] = this  
   override def flatMap[B](f: A => ServiceResult[B]): ServiceResult[B] = this   

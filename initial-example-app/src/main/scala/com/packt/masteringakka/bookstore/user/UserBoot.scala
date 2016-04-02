@@ -5,7 +5,7 @@ import akka.actor.ActorSystem
 
 object UserBoot extends Bootstrap{
 
-  def bootup(implicit system:ActorSystem) = {
+  def bootup(system:ActorSystem) = {
     import system.dispatcher
     
     val userManager = system.actorOf(UserManager.props, UserManager.Name)

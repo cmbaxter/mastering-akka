@@ -4,7 +4,7 @@ import com.packt.masteringakka.bookstore.Bootstrap
 import akka.actor.ActorSystem
 
 object CreditBoot extends Bootstrap{
-  def bootup(implicit system:ActorSystem) = {
+  def bootup(system:ActorSystem) = {
     system.actorOf(CreditCardTransactionHandler.props, CreditCardTransactionHandler.Name)
     Nil
   }

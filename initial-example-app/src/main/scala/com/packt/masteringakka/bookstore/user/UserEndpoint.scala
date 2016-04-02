@@ -8,7 +8,7 @@ import unfiltered.request._
 import io.netty.channel.ChannelHandler.Sharable
 
 @Sharable
-class UserEndpoint(userManager:ActorRef)(implicit val system:ActorSystem, ec:ExecutionContext) extends BookstorePlan{
+class UserEndpoint(userManager:ActorRef)(implicit val ec:ExecutionContext) extends BookstorePlan{
   import akka.pattern.ask
   
   def intent = {
@@ -17,12 +17,12 @@ class UserEndpoint(userManager:ActorRef)(implicit val system:ActorSystem, ec:Exe
       respond(f, req)
     
     case req @ POST(Path(Seg("api" :: "user" :: Nil))) =>
-      val input = extractBody[UserInput](Body.string(req))
+      val input = parseJson[UserInput](Body.string(req))
       val f = (userManager ? CreateUser(input))
       respond(f, req)
       
     case req @ PUT(Path(Seg("api" :: "user" :: IntPathElement(userId) :: Nil))) =>
-      val input = extractBody[UserInput](Body.string(req))
+      val input = parseJson[UserInput](Body.string(req))
       val f = (userManager ? UpdateUserInfo(userId, input))
       respond(f, req)      
   }

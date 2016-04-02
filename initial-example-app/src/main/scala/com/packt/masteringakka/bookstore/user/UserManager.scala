@@ -10,8 +10,8 @@ import scala.concurrent.Future
 import com.packt.masteringakka.bookstore.BookStoreActor
 import com.packt.masteringakka.bookstore.ErrorMessage
 import com.packt.masteringakka.bookstore.ServiceResult
-import com.packt.masteringakka.bookstore.ValidationFailure
 import com.packt.masteringakka.bookstore.Failure
+import com.packt.masteringakka.bookstore.FailureType
 
 object UserManager{
   val Name = "user-manager"
@@ -28,8 +28,7 @@ class UserManager extends BookStoreActor{
   val dao = new UserManagerDao
   val recoverEmailCheck:PartialFunction[Throwable, ServiceResult[_]] = {
     case ex:EmailNotUniqueException => 
-      println("Recovering")
-      Failure(ValidationFailure, EmailNotUniqueError )
+      Failure(FailureType.Validation, EmailNotUniqueError )
   }
   
   def receive = {
