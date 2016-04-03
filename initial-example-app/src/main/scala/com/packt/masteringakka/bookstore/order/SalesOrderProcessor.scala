@@ -8,7 +8,6 @@ import com.packt.masteringakka.bookstore.book.FindBook
 import com.packt.masteringakka.bookstore.user.BookstoreUser
 import com.packt.masteringakka.bookstore.ErrorMessage
 import com.packt.masteringakka.bookstore.Failure
-import com.packt.masteringakka.bookstore.ValidationFailure
 import com.packt.masteringakka.bookstore.{FullResult, EmptyResult}
 import com.packt.masteringakka.bookstore.credit.ChargeCreditCard
 import com.packt.masteringakka.bookstore.user.BookstoreUser
@@ -18,10 +17,10 @@ import com.packt.masteringakka.bookstore.credit.CreditTransactionStatus
 import scala.concurrent.ExecutionContext
 import com.packt.masteringakka.bookstore.BookstoreDao
 import slick.dbio.DBIOAction
-import com.packt.masteringakka.bookstore.ServiceFailure
 import com.packt.masteringakka.bookstore.ServiceResult
 import java.util.NoSuchElementException
 import scala.concurrent.Future
+import com.packt.masteringakka.bookstore.FailureType
 
 object SalesOrderProcessor{
   def props = Props[SalesOrderProcessor]
@@ -107,7 +106,7 @@ class SalesOrderProcessor extends FSM[SalesOrderProcessor.State, SalesOrderProce
         
         case Some(item) if item.quantity > b.inventoryAmount  =>
           log.error("Inventory not available for book with id {}", b.id)
-          data.originator ! Failure(ValidationFailure, InventoryNotAvailError )
+          data.originator ! Failure(FailureType.Validation, InventoryNotAvailError )
           stop
           
         case _ =>
@@ -123,7 +122,7 @@ class SalesOrderProcessor extends FSM[SalesOrderProcessor.State, SalesOrderProce
         if (sender().path.name == BookMgrName) ("book", InvalidBookIdError) 
         else ("user", InvalidUserIdError )
       log.info("Unexpected result type of EmptyResult received looking up a {} entity", etype)
-      data.originator ! Failure(ValidationFailure, error)
+      data.originator ! Failure(FailureType.Validation, error)
       stop
       
   } using{
@@ -150,7 +149,7 @@ class SalesOrderProcessor extends FSM[SalesOrderProcessor.State, SalesOrderProce
       goto(WritingEntity) using data
       
     case Event(FullResult(txn:CreditCardTransaction), data:LookedUpData) =>
-      data.originator ! Failure(ValidationFailure, CreditRejectedError )
+      data.originator ! Failure(FailureType.Validation, CreditRejectedError )
       stop      
   }
   
@@ -162,7 +161,7 @@ class SalesOrderProcessor extends FSM[SalesOrderProcessor.State, SalesOrderProce
 
     case Event(Status.Failure(ex:SalesOrderProcessorDao.InventoryNotAvailaleException), data:LookedUpData) =>
       log.error(ex, "DB write failed because inventory for an item was not available when performing db writes")
-      data.originator ! Failure(ValidationFailure, InventoryNotAvailError )
+      data.originator ! Failure(FailureType.Validation, InventoryNotAvailError )
       stop                  
       
     case Event(Status.Failure(ex), data:LookedUpData) =>
@@ -184,7 +183,7 @@ class SalesOrderProcessor extends FSM[SalesOrderProcessor.State, SalesOrderProce
   }
   
   def lookup(name:String) = context.actorSelection(s"/user/$name")
-  def unexpectedFail = Failure(ServiceFailure, ServiceResult.UnexpectedFailure )
+  def unexpectedFail = Failure(FailureType.Service, ServiceResult.UnexpectedFailure )
 }
 
 object SalesOrderProcessorDao{

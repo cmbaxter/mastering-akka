@@ -7,6 +7,9 @@ import akka.actor.ActorRef
 import unfiltered.request._
 import io.netty.channel.ChannelHandler.Sharable
 
+/**
+ * Http endpoint class for performing user related actions
+ */
 @Sharable
 class UserEndpoint(userManager:ActorRef)(implicit val ec:ExecutionContext) extends BookstorePlan{
   import akka.pattern.ask

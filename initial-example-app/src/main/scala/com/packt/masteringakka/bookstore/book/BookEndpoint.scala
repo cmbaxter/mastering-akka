@@ -12,15 +12,22 @@ import unfiltered.request.Seg
 import io.netty.channel.ChannelHandler.Sharable
 import unfiltered.response.Pass
 
+/**
+ * Http Endpoint for requests related to book management 
+ */
 @Sharable
 class BookEndpoint(bookManager:ActorRef)(implicit val ec:ExecutionContext) extends BookstorePlan{
   import akka.pattern.ask
   
+  /**
+   * Unfiltered param for handling the multi value tag param
+   */
   object TagParam extends Params.Extract("tag", {values => 
     val filtered = values.filter(_.nonEmpty)
     if (filtered.isEmpty) None else Some(filtered) 
   })
   
+  /** Unfiltered param for the author param*/
   object AuthorParam extends Params.Extract("author", Params.first ~> Params.nonempty)
 
   def intent = {

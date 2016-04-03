@@ -8,11 +8,17 @@ import slick.dbio.DBIOAction
 import java.util.Date
 import com.packt.masteringakka.bookstore.BookStoreActor
 
+/**
+ * Companion to the CreditCardTransactionHandler actor
+ */
 object CreditCardTransactionHandler{
   val Name = "credit-handler"
   def props = Props[CreditCardTransactionHandler]
 }
 
+/**
+ * Service actor for processing credit card transactions
+ */
 class CreditCardTransactionHandler extends BookStoreActor{
   import akka.pattern.pipe
   import context.dispatcher  
@@ -28,13 +34,17 @@ class CreditCardTransactionHandler extends BookStoreActor{
   }
 }
 
-object CreditCardTransactionHandlerDao{
-  
-}
-
+/**
+ * Doa class for performing Postgres actions related to credit card processing
+ */
 class CreditCardTransactionHandlerDao(implicit ec:ExecutionContext) extends BookstoreDao{
   import DaoHelpers._
   
+  /**
+   * Creates a new credit card transaction record in the db
+   * @param txn The credit transaction to create
+   * @return a Future wrapping that CreditCardTransaction with the id assigned
+   */
   def createCreditTransaction(txn:CreditCardTransaction) = {
     val info = txn.cardInfo 
     val insert = sqlu"""
