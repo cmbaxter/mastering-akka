@@ -1,7 +1,7 @@
 package com.packt.masteringakka.bookstore.order
 
 import akka.actor._
-import com.packt.masteringakka.bookstore.BookStoreActor
+import com.packt.masteringakka.bookstore.common.BookStoreActor
 
 
 object SalesOrderManager{

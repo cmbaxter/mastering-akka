@@ -1,9 +1,9 @@
 package com.packt.masteringakka.bookstore.order
 
-import com.packt.masteringakka.bookstore.Bootstrap
+import com.packt.masteringakka.bookstore.common.Bootstrap
 import akka.actor.ActorSystem
 
-object OrderBoot extends Bootstrap {
+class OrderBoot extends Bootstrap {
 
   def bootup(system:ActorSystem) = {
     import system.dispatcher

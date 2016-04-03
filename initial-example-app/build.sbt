@@ -1,8 +1,12 @@
+import NativePackagerHelper._
+
+enablePlugins(JavaServerAppPackaging)
+
 name := "initial-example-app"
 
 organization := "com.packt.masteringakka"
 
-version := "0.1.0-SNAPSHOT"
+version := "0.1.0"
 
 scalaVersion := "2.11.2"
  
@@ -20,3 +24,11 @@ libraryDependencies ++= Seq(
   "org.json4s" %% "json4s-ext" % "3.2.9",
   "postgresql" % "postgresql" % "9.1-901.jdbc4"
 )
+
+
+mappings in Universal ++= {
+  directory("scripts") ++
+  contentOf("src/main/resources").toMap.mapValues("config/" + _)
+}
+
+scriptClasspath := Seq("../config/") ++ scriptClasspath.value

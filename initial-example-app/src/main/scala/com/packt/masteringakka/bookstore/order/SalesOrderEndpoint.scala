@@ -1,6 +1,6 @@
 package com.packt.masteringakka.bookstore.order
 
-import com.packt.masteringakka.bookstore.BookstorePlan
+import com.packt.masteringakka.bookstore.common.BookstorePlan
 import unfiltered.response.ResponseString
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future

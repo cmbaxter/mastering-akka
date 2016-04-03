@@ -6,21 +6,16 @@ import com.packt.masteringakka.bookstore.user.BookstoreUser
 import com.packt.masteringakka.bookstore.book.Book
 import com.packt.masteringakka.bookstore.book.FindBook
 import com.packt.masteringakka.bookstore.user.BookstoreUser
-import com.packt.masteringakka.bookstore.ErrorMessage
-import com.packt.masteringakka.bookstore.Failure
-import com.packt.masteringakka.bookstore.{FullResult, EmptyResult}
 import com.packt.masteringakka.bookstore.credit.ChargeCreditCard
 import com.packt.masteringakka.bookstore.user.BookstoreUser
 import java.util.Date
 import com.packt.masteringakka.bookstore.credit.CreditCardTransaction
 import com.packt.masteringakka.bookstore.credit.CreditTransactionStatus
 import scala.concurrent.ExecutionContext
-import com.packt.masteringakka.bookstore.BookstoreDao
 import slick.dbio.DBIOAction
-import com.packt.masteringakka.bookstore.ServiceResult
+import com.packt.masteringakka.bookstore.common._
 import java.util.NoSuchElementException
 import scala.concurrent.Future
-import com.packt.masteringakka.bookstore.FailureType
 
 object SalesOrderProcessor{
   def props = Props[SalesOrderProcessor]

@@ -1,4 +1,5 @@
-package com.packt.masteringakka.bookstore
+package com.packt.masteringakka.bookstore.common
+
 
 /**
  * Representation of a response from a REST api call.  Contains meta data as well as the optional

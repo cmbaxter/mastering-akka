@@ -1,17 +1,13 @@
 package com.packt.masteringakka.bookstore.user
 
 import akka.actor._
-import com.packt.masteringakka.bookstore.BookstoreDao
+import com.packt.masteringakka.bookstore.common._
 import slick.driver.PostgresDriver.api._
 import slick.jdbc.GetResult
 import java.util.Date
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import com.packt.masteringakka.bookstore.BookStoreActor
-import com.packt.masteringakka.bookstore.ErrorMessage
-import com.packt.masteringakka.bookstore.ServiceResult
-import com.packt.masteringakka.bookstore.Failure
-import com.packt.masteringakka.bookstore.FailureType
+import com.packt.masteringakka.bookstore.common.BookStoreActor
 
 /**
  * Companion to the UserManager service actor

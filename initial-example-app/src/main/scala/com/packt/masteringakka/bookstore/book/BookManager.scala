@@ -5,12 +5,12 @@ import akka.actor.Props
 import slick.driver.PostgresDriver.api._
 import slick.jdbc.GetResult
 import slick.dbio.DBIOAction
-import com.packt.masteringakka.bookstore.BookstoreDao
+import com.packt.masteringakka.bookstore.common.BookstoreDao
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import java.util.Date
 import akka.actor.ActorLogging
-import com.packt.masteringakka.bookstore.BookStoreActor
+import com.packt.masteringakka.bookstore.common.BookStoreActor
 
 /**
  * Companion to the BookManager service actor

@@ -1,12 +1,12 @@
 package com.packt.masteringakka.bookstore.credit
 
 import akka.actor._
-import com.packt.masteringakka.bookstore.BookstoreDao
+import com.packt.masteringakka.bookstore.common.BookstoreDao
 import scala.concurrent.ExecutionContext
 import slick.driver.PostgresDriver.api._
 import slick.dbio.DBIOAction
 import java.util.Date
-import com.packt.masteringakka.bookstore.BookStoreActor
+import com.packt.masteringakka.bookstore.common.BookStoreActor
 
 /**
  * Companion to the CreditCardTransactionHandler actor

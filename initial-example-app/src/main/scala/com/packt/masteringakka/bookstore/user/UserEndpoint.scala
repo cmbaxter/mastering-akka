@@ -2,7 +2,7 @@ package com.packt.masteringakka.bookstore.user
 
 import akka.actor.ActorSystem
 import scala.concurrent.ExecutionContext
-import com.packt.masteringakka.bookstore.BookstorePlan
+import com.packt.masteringakka.bookstore.common.BookstorePlan
 import akka.actor.ActorRef
 import unfiltered.request._
 import io.netty.channel.ChannelHandler.Sharable

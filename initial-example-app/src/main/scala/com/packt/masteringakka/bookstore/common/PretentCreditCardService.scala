@@ -1,4 +1,4 @@
-package com.packt.masteringakka.bookstore
+package com.packt.masteringakka.bookstore.common
 
 import io.netty.channel.ChannelHandler.Sharable
 import unfiltered.netty.ServerErrorResponse

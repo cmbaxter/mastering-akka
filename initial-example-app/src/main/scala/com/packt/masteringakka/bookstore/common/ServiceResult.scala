@@ -1,5 +1,4 @@
-package com.packt.masteringakka.bookstore
-
+package com.packt.masteringakka.bookstore.common
 
 /**
  * Represents a result from a call to a service actor, being either a FullResult (Some), EmptyResult (None) or a Failure.
