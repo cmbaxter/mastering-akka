@@ -6,6 +6,10 @@ import com.packt.masteringakka.bookstore.common.BookstorePlan
 import akka.actor.ActorRef
 import unfiltered.request._
 import io.netty.channel.ChannelHandler.Sharable
+import com.packt.masteringakka.bookstore.domain.user.UserInput
+import com.packt.masteringakka.bookstore.domain.user.UpdateUserInfo
+import com.packt.masteringakka.bookstore.domain.user.FindUserById
+import com.packt.masteringakka.bookstore.domain.user.CreateUser
 
 /**
  * Http endpoint class for performing user related actions

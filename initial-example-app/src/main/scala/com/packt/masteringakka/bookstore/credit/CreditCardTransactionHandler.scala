@@ -7,6 +7,14 @@ import slick.driver.PostgresDriver.api._
 import slick.dbio.DBIOAction
 import java.util.Date
 import com.packt.masteringakka.bookstore.common.BookStoreActor
+import dispatch._
+import org.json4s._
+import org.json4s.native.Serialization
+import org.json4s.native.Serialization.{read, write}
+import com.packt.masteringakka.bookstore.domain.credit.CreditTransactionStatus
+import com.packt.masteringakka.bookstore.domain.credit.CreditCardTransaction
+import com.packt.masteringakka.bookstore.domain.credit.CreditCardInfo
+import com.packt.masteringakka.bookstore.domain.credit.ChargeCreditCard
 
 /**
  * Companion to the CreditCardTransactionHandler actor
@@ -14,6 +22,10 @@ import com.packt.masteringakka.bookstore.common.BookStoreActor
 object CreditCardTransactionHandler{
   val Name = "credit-handler"
   def props = Props[CreditCardTransactionHandler]
+  implicit val formats = Serialization.formats(NoTypeHints)
+  
+  case class ChargeRequest(cardHolder:String, cardType:String, cardNumber:String, expiration:Date, amount:Double)
+  case class ChargeResponse(confirmationCode:String)
 }
 
 /**
@@ -22,15 +34,32 @@ object CreditCardTransactionHandler{
 class CreditCardTransactionHandler extends BookStoreActor{
   import akka.pattern.pipe
   import context.dispatcher  
+  import CreditCardTransactionHandler._
   
   val dao = new CreditCardTransactionHandlerDao
-
+  val settings = CreditSettings(context.system)
+  
   def receive = {
-    case ChargeCreditCard(info, amount) =>
-      //TODO: Add in logic to execute the remote call
-      val txn = CreditCardTransaction(0, info, amount, CreditTransactionStatus.Approved, Some("foobar"), new Date, new Date)
-      val result = dao.createCreditTransaction(txn)
+    case ChargeCreditCard(info, amount) => 
+      val result = 
+        for{
+          chargeResp <- chargeCard(info, amount)
+          txn = CreditCardTransaction(0, info, amount, CreditTransactionStatus.Approved, Some(chargeResp.confirmationCode), new Date, new Date)
+          daoResult <- dao.createCreditTransaction(txn)
+        } yield daoResult            
       pipeResponse(result)
+  }
+  
+  /**
+   * Calls the external service to charge the credit card
+   * @param info The card info to charge
+   * @amount The amount to charge
+   * @return a Future wrapping the response from the charge request
+   */
+  def chargeCard(info:CreditCardInfo, amount:Double) = { 
+    val jsonBody = write(ChargeRequest(info.cardHolder, info.cardType, info.cardNumber, info.expiration, amount))
+    val request = url(settings.creditChargeUrl) << jsonBody
+    Http(request OK as.String).map(read[ChargeResponse])
   }
 }
 

@@ -1,16 +1,16 @@
 package com.packt.masteringakka.bookstore.order
 
 import akka.actor._
-import com.packt.masteringakka.bookstore.user.FindUserById
-import com.packt.masteringakka.bookstore.user.BookstoreUser
-import com.packt.masteringakka.bookstore.book.Book
-import com.packt.masteringakka.bookstore.book.FindBook
-import com.packt.masteringakka.bookstore.user.BookstoreUser
-import com.packt.masteringakka.bookstore.credit.ChargeCreditCard
-import com.packt.masteringakka.bookstore.user.BookstoreUser
+import com.packt.masteringakka.bookstore.domain.user.FindUserById
+import com.packt.masteringakka.bookstore.domain.user.BookstoreUser
+import com.packt.masteringakka.bookstore.domain.book.Book
+import com.packt.masteringakka.bookstore.domain.book.FindBook
+import com.packt.masteringakka.bookstore.domain.user.BookstoreUser
+import com.packt.masteringakka.bookstore.domain.credit.ChargeCreditCard
+import com.packt.masteringakka.bookstore.domain.user.BookstoreUser
 import java.util.Date
-import com.packt.masteringakka.bookstore.credit.CreditCardTransaction
-import com.packt.masteringakka.bookstore.credit.CreditTransactionStatus
+import com.packt.masteringakka.bookstore.domain.credit.CreditCardTransaction
+import com.packt.masteringakka.bookstore.domain.credit.CreditTransactionStatus
 import scala.concurrent.ExecutionContext
 import slick.dbio.DBIOAction
 import com.packt.masteringakka.bookstore.common._
@@ -42,7 +42,6 @@ object SalesOrderProcessor{
     val Book, User, Credit = Value
   }
   
-  val BookMgrName = "book-manager"
   val UserManagerName = "user-manager"
   val CreditHandlerName = "credit-handler"
     
@@ -53,6 +52,7 @@ object SalesOrderProcessor{
 }
 
 class SalesOrderProcessor extends FSM[SalesOrderProcessor.State, SalesOrderProcessor.Data]{
+  import SalesOrderManager._
   import SalesOrderProcessor._
   import concurrent.duration._
   import context.dispatcher
@@ -69,7 +69,7 @@ class SalesOrderProcessor extends FSM[SalesOrderProcessor.State, SalesOrderProce
       goto(ResolvingDependencies) using UnresolvedDependencies(Inputs(sender(), req))
   }
   
-  when(ResolvingDependencies, 5 seconds)(transform {
+  when(ResolvingDependencies, ResolveTimeout )(transform {
     case Event(ActorIdentity(identifier:ResolutionIdent.Value, actor @ Some(ref)), data:UnresolvedDependencies) =>      
       log.info("Resolved dependency {}, {}", identifier, ref)
       val newData = identifier match{

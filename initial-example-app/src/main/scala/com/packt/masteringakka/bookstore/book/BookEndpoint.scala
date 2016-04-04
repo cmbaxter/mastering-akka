@@ -11,6 +11,13 @@ import unfiltered.request._
 import unfiltered.request.Seg
 import io.netty.channel.ChannelHandler.Sharable
 import unfiltered.response.Pass
+import com.packt.masteringakka.bookstore.domain.book.RemoveTagFromBook
+import com.packt.masteringakka.bookstore.domain.book.FindBooksByTags
+import com.packt.masteringakka.bookstore.domain.book.FindBooksByAuthor
+import com.packt.masteringakka.bookstore.domain.book.FindBook
+import com.packt.masteringakka.bookstore.domain.book.CreateBook
+import com.packt.masteringakka.bookstore.domain.book.AddTagToBook
+import com.packt.masteringakka.bookstore.domain.book.AddInventoryToBook
 
 /**
  * Http Endpoint for requests related to book management 

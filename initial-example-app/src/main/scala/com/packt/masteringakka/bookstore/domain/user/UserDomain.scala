@@ -1,4 +1,4 @@
-package com.packt.masteringakka.bookstore.user
+package com.packt.masteringakka.bookstore.domain.user
 
 import java.util.Date
 

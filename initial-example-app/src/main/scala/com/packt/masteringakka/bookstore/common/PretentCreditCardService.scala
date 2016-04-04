@@ -14,7 +14,7 @@ import unfiltered.response._
  */
 @Sharable
 object PretentCreditCardService extends unfiltered.netty.async.Plan with ServerErrorResponse{
-  case class ChargeRequest(cardHolder:String, cardType:String, cardNumber:String, expiration:Date)
+  case class ChargeRequest(cardHolder:String, cardType:String, cardNumber:String, expiration:Date, amount:Double)
   case class ChargeResponse(confirmationCode:String)
   implicit val formats = Serialization.formats(NoTypeHints)
   

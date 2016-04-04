@@ -22,7 +22,8 @@ libraryDependencies ++= Seq(
   "net.databinder" %% "unfiltered-netty-server" % "0.8.4",
   "net.databinder" %% "unfiltered-json4s" % "0.8.4",
   "org.json4s" %% "json4s-ext" % "3.2.9",
-  "postgresql" % "postgresql" % "9.1-901.jdbc4"
+  "postgresql" % "postgresql" % "9.1-901.jdbc4",
+  "net.databinder.dispatch" %% "dispatch-core" % "0.11.2"
 )
 
 

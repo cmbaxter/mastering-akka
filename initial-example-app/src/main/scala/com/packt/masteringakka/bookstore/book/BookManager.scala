@@ -11,6 +11,15 @@ import scala.concurrent.Future
 import java.util.Date
 import akka.actor.ActorLogging
 import com.packt.masteringakka.bookstore.common.BookStoreActor
+import com.packt.masteringakka.bookstore.domain.book.RemoveTagFromBook
+import com.packt.masteringakka.bookstore.domain.book.FindBooksForIds
+import com.packt.masteringakka.bookstore.domain.book.FindBooksByTags
+import com.packt.masteringakka.bookstore.domain.book.FindBooksByAuthor
+import com.packt.masteringakka.bookstore.domain.book.FindBook
+import com.packt.masteringakka.bookstore.domain.book.CreateBook
+import com.packt.masteringakka.bookstore.domain.book.Book
+import com.packt.masteringakka.bookstore.domain.book.AddTagToBook
+import com.packt.masteringakka.bookstore.domain.book.AddInventoryToBook
 
 /**
  * Companion to the BookManager service actor

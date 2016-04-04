@@ -2,12 +2,16 @@ package com.packt.masteringakka.bookstore.user
 
 import akka.actor._
 import com.packt.masteringakka.bookstore.common._
-import slick.driver.PostgresDriver.api._
 import slick.jdbc.GetResult
 import java.util.Date
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import com.packt.masteringakka.bookstore.common.BookStoreActor
+import com.packt.masteringakka.bookstore.domain.user.UserInput
+import com.packt.masteringakka.bookstore.domain.user.UpdateUserInfo
+import com.packt.masteringakka.bookstore.domain.user.FindUserById
+import com.packt.masteringakka.bookstore.domain.user.CreateUser
+import com.packt.masteringakka.bookstore.domain.user.BookstoreUser
 
 /**
  * Companion to the UserManager service actor
@@ -106,6 +110,7 @@ object UserManagerDao{
 class UserManagerDao(implicit ec:ExecutionContext) extends BookstoreDao{
   import DaoHelpers._
   import UserManagerDao._
+  import slick.driver.PostgresDriver.api._
   
   /**
    * Creates a new user

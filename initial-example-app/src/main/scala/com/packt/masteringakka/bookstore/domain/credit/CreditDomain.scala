@@ -1,4 +1,4 @@
-package com.packt.masteringakka.bookstore.credit
+package com.packt.masteringakka.bookstore.domain.credit
 
 import java.util.Date
 
