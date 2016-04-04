@@ -1,16 +1,20 @@
-package com.packt.masteringakka.bookstore.common
+package com.packt.masteringakka.bookstore.server
 import com.packt.masteringakka.bookstore.book._
 import akka.actor._
 import com.typesafe.config.ConfigFactory
 import collection.JavaConversions._
+import com.packt.masteringakka.bookstore.common.PostgresDb
+import com.packt.masteringakka.bookstore.common.Bootstrap
+import akka.event.Logging
 
 /**
  * Main entry point to startup the application
  */
 object Server extends App{
   val conf = ConfigFactory.load.getConfig("bookstore")
-  val postgresDb = slick.driver.PostgresDriver.api.Database.forConfig("psqldb", conf)  
+  PostgresDb.init(conf) 
   implicit val system = ActorSystem("Bookstore", conf)
+  val log = Logging(system.eventStream, "Server")
   import system.dispatcher
 
   //Boot up each service module from the config and get the endpoints from it
@@ -22,7 +26,7 @@ object Server extends App{
     
   val server = endpoints.foldRight(unfiltered.netty.Server.http(8080)){
     case (endpoint, serv) => 
-      println("Adding endpoint: " + endpoint)
+      log.info("Adding endpoint: {}", endpoint)
       serv.plan(endpoint)
   }
   
@@ -35,16 +39,3 @@ object Server extends App{
   }
 }
 
-/**
- * Trait that defines a class that will boot up actors from within a specific services module
- */
-trait Bootstrap{
-  
-  /**
-   * Books up the actors for a service module and returns the service endpoints for that
-   * module to be included in the Unfiltered server as plans
-   * @param system The actor system to boot actors into
-   * @return a List of BookstorePlans to add as plans into the server
-   */
-  def bootup(system:ActorSystem):List[BookstorePlan]
-}

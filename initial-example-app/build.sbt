@@ -4,27 +4,37 @@ enablePlugins(JavaServerAppPackaging)
 
 name := "initial-example-app"
 
-organization := "com.packt.masteringakka"
-
-version := "0.1.0"
-
-scalaVersion := "2.11.2"
- 
-libraryDependencies ++= Seq(
-  "com.typesafe.akka" %% "akka-actor" % "2.4.2",
-  "com.typesafe.akka" %% "akka-testkit" % "2.4.2",
-  "com.typesafe.akka" %% "akka-slf4j" % "2.4.2",
-  "ch.qos.logback" % "logback-classic" % "1.0.9",
-  "com.typesafe.slick" %% "slick" % "3.1.1",
-  "com.typesafe.slick" %% "slick-hikaricp" % "3.1.1",
-  "net.databinder" %% "unfiltered-filter" % "0.8.4",
-  "net.databinder" %% "unfiltered-netty" % "0.8.4",
-  "net.databinder" %% "unfiltered-netty-server" % "0.8.4",
-  "net.databinder" %% "unfiltered-json4s" % "0.8.4",
-  "org.json4s" %% "json4s-ext" % "3.2.9",
-  "postgresql" % "postgresql" % "9.1-901.jdbc4",
-  "net.databinder.dispatch" %% "dispatch-core" % "0.11.2"
+lazy val commonSettings = Seq(
+  organization := "com.packt.masteringakka",
+  version := "0.1.0",
+  scalaVersion := "2.11.2"
 )
+
+lazy val root = (project in file(".")).
+  aggregate(common, bookServices, userServices, creditServices, orderServices, server)
+
+lazy val common = (project in file("common")).
+  settings(commonSettings: _*)
+
+lazy val bookServices = (project in file("book-services")).
+  settings(commonSettings: _*).
+  dependsOn(common)
+
+lazy val userServices = (project in file("user-services")).
+  settings(commonSettings: _*).
+  dependsOn(common)
+
+lazy val creditServices = (project in file("credit-services")).
+  settings(commonSettings: _*).
+  dependsOn(common)
+
+lazy val orderServices = (project in file("order-services")).
+  settings(commonSettings: _*).
+  dependsOn(common)      
+
+lazy val server = (project in file("server")).
+  settings(commonSettings: _*).
+  dependsOn(common, bookServices, userServices, creditServices, orderServices)
 
 
 mappings in Universal ++= {

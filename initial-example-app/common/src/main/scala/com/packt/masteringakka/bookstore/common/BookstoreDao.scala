@@ -1,13 +1,15 @@
 package com.packt.masteringakka.bookstore.common
 
 import java.util.Date
+import akka.actor.ActorSystem
+import com.typesafe.config.Config
 
 /**
  * Base dao to use for other daos in the bookstore app
  */
 trait BookstoreDao{
   import slick.driver.PostgresDriver.api._
-  val db = Server.postgresDb 
+  def db = PostgresDb.db  
 
   /**
    * Defines some helpers to use in daos
@@ -33,4 +35,13 @@ trait BookstoreDao{
    * @return a DBIOAction used to select the last id val
    */
   def lastIdSelect(table:String) = sql"select currval('#${table}_id_seq')".as[Int]
+}
+
+object PostgresDb{
+  import slick.driver.PostgresDriver.backend._
+  private[common] var db:Database = _
+  
+  def init(conf:Config):Unit = {
+    db = Database.forConfig("psqldb", conf)
+  }
 }

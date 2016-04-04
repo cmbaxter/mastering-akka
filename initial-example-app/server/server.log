@@ -1,0 +1,179 @@
+2016-04-04 09:24:16,325 [main] WARN  com.zaxxer.hikari.HikariConfig - The jdbcConnectionTest property is now deprecated, see the documentation for connectionTestQuery
+2016-04-04 09:24:16,333 [main] DEBUG com.zaxxer.hikari.HikariConfig - HikariCP pool psqldb configuration:
+2016-04-04 09:24:16,351 [main] DEBUG com.zaxxer.hikari.HikariConfig - allowPoolSuspension.............false
+2016-04-04 09:24:16,352 [main] DEBUG com.zaxxer.hikari.HikariConfig - autoCommit......................true
+2016-04-04 09:24:16,352 [main] DEBUG com.zaxxer.hikari.HikariConfig - catalog.........................
+2016-04-04 09:24:16,352 [main] DEBUG com.zaxxer.hikari.HikariConfig - connectionCustomizer............com.zaxxer.hikari.AbstractHikariConfig$1@3427b02d
+2016-04-04 09:24:16,352 [main] DEBUG com.zaxxer.hikari.HikariConfig - connectionCustomizerClassName...
+2016-04-04 09:24:16,352 [main] DEBUG com.zaxxer.hikari.HikariConfig - connectionInitSql...............
+2016-04-04 09:24:16,352 [main] DEBUG com.zaxxer.hikari.HikariConfig - connectionTestQuery.............select 1
+2016-04-04 09:24:16,352 [main] DEBUG com.zaxxer.hikari.HikariConfig - connectionTimeout...............1000
+2016-04-04 09:24:16,352 [main] DEBUG com.zaxxer.hikari.HikariConfig - dataSource......................
+2016-04-04 09:24:16,352 [main] DEBUG com.zaxxer.hikari.HikariConfig - dataSourceClassName.............
+2016-04-04 09:24:16,352 [main] DEBUG com.zaxxer.hikari.HikariConfig - dataSourceJNDI..................
+2016-04-04 09:24:16,353 [main] DEBUG com.zaxxer.hikari.HikariConfig - dataSourceProperties............{password=<masked>}
+2016-04-04 09:24:16,353 [main] DEBUG com.zaxxer.hikari.HikariConfig - driverClassName.................org.postgresql.Driver
+2016-04-04 09:24:16,355 [main] DEBUG com.zaxxer.hikari.HikariConfig - healthCheckProperties...........{}
+2016-04-04 09:24:16,356 [main] DEBUG com.zaxxer.hikari.HikariConfig - healthCheckRegistry.............
+2016-04-04 09:24:16,356 [main] DEBUG com.zaxxer.hikari.HikariConfig - idleTimeout.....................600000
+2016-04-04 09:24:16,356 [main] DEBUG com.zaxxer.hikari.HikariConfig - initializationFailFast..........false
+2016-04-04 09:24:16,356 [main] DEBUG com.zaxxer.hikari.HikariConfig - isolateInternalQueries..........false
+2016-04-04 09:24:16,356 [main] DEBUG com.zaxxer.hikari.HikariConfig - jdbc4ConnectionTest.............false
+2016-04-04 09:24:16,356 [main] DEBUG com.zaxxer.hikari.HikariConfig - jdbcUrl.........................jdbc:postgresql://localhost:5432/akkaexampleapp
+2016-04-04 09:24:16,356 [main] DEBUG com.zaxxer.hikari.HikariConfig - leakDetectionThreshold..........0
+2016-04-04 09:24:16,356 [main] DEBUG com.zaxxer.hikari.HikariConfig - maxLifetime.....................1800000
+2016-04-04 09:24:16,356 [main] DEBUG com.zaxxer.hikari.HikariConfig - maximumPoolSize.................50
+2016-04-04 09:24:16,356 [main] DEBUG com.zaxxer.hikari.HikariConfig - metricRegistry..................
+2016-04-04 09:24:16,357 [main] DEBUG com.zaxxer.hikari.HikariConfig - minimumIdle.....................10
+2016-04-04 09:24:16,357 [main] DEBUG com.zaxxer.hikari.HikariConfig - password........................<masked>
+2016-04-04 09:24:16,357 [main] DEBUG com.zaxxer.hikari.HikariConfig - poolName........................psqldb
+2016-04-04 09:24:16,357 [main] DEBUG com.zaxxer.hikari.HikariConfig - readOnly........................false
+2016-04-04 09:24:16,357 [main] DEBUG com.zaxxer.hikari.HikariConfig - registerMbeans..................false
+2016-04-04 09:24:16,357 [main] DEBUG com.zaxxer.hikari.HikariConfig - threadFactory...................
+2016-04-04 09:24:16,357 [main] DEBUG com.zaxxer.hikari.HikariConfig - transactionIsolation............
+2016-04-04 09:24:16,357 [main] DEBUG com.zaxxer.hikari.HikariConfig - username........................root
+2016-04-04 09:24:16,357 [main] DEBUG com.zaxxer.hikari.HikariConfig - validationTimeout...............1000
+2016-04-04 09:24:16,359 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariCP pool psqldb is starting.
+2016-04-04 09:24:16,417 [HikariCP connection filler (pool psqldb)] DEBUG c.zaxxer.hikari.pool.PoolUtilities - psqldb - Connection.setNetworkTimeout() not supported
+2016-04-04 09:24:16,490 [HikariCP connection filler (pool psqldb)] DEBUG com.zaxxer.hikari.pool.HikariPool - After fill pool stats psqldb (total=10, inUse=0, avail=10, waiting=0)
+2016-04-04 09:24:16,589 [Bookstore-akka.actor.default-dispatcher-3] INFO  akka.event.slf4j.Slf4jLogger - Slf4jLogger started
+2016-04-04 09:24:16,675 [Bookstore-akka.actor.default-dispatcher-2] INFO  Server - Adding endpoint: com.packt.masteringakka.bookstore.order.SalesOrderEndpoint@53045c6c
+2016-04-04 09:24:16,677 [Bookstore-akka.actor.default-dispatcher-2] INFO  Server - Adding endpoint: com.packt.masteringakka.bookstore.user.UserEndpoint@cb0755b
+2016-04-04 09:24:16,677 [Bookstore-akka.actor.default-dispatcher-2] INFO  Server - Adding endpoint: com.packt.masteringakka.bookstore.book.BookEndpoint@33065d67
+2016-04-04 09:24:16,679 [main] DEBUG i.n.u.i.l.InternalLoggerFactory - Using SLF4J as the default logging framework
+2016-04-04 09:24:16,683 [main] DEBUG i.n.c.MultithreadEventLoopGroup - -Dio.netty.eventLoopThreads: 16
+2016-04-04 09:24:16,690 [main] DEBUG i.n.u.internal.PlatformDependent0 - java.nio.Buffer.address: available
+2016-04-04 09:24:16,690 [main] DEBUG i.n.u.internal.PlatformDependent0 - sun.misc.Unsafe.theUnsafe: available
+2016-04-04 09:24:16,690 [main] DEBUG i.n.u.internal.PlatformDependent0 - sun.misc.Unsafe.copyMemory: available
+2016-04-04 09:24:16,691 [main] DEBUG i.n.u.internal.PlatformDependent0 - java.nio.Bits.unaligned: true
+2016-04-04 09:24:16,708 [main] DEBUG i.n.util.internal.PlatformDependent - UID: 501
+2016-04-04 09:24:16,709 [main] DEBUG i.n.util.internal.PlatformDependent - Java version: 8
+2016-04-04 09:24:16,709 [main] DEBUG i.n.util.internal.PlatformDependent - -Dio.netty.noUnsafe: false
+2016-04-04 09:24:16,709 [main] DEBUG i.n.util.internal.PlatformDependent - sun.misc.Unsafe: available
+2016-04-04 09:24:16,709 [main] DEBUG i.n.util.internal.PlatformDependent - -Dio.netty.noJavassist: false
+2016-04-04 09:24:16,712 [main] DEBUG i.n.util.internal.PlatformDependent - Javassist: available
+2016-04-04 09:24:16,713 [main] DEBUG i.n.util.internal.PlatformDependent - -Dio.netty.tmpdir: /var/folders/7q/8kqdnsxx35765lcgbqk6_23r0000gn/T (java.io.tmpdir)
+2016-04-04 09:24:16,713 [main] DEBUG i.n.util.internal.PlatformDependent - -Dio.netty.bitMode: 64 (sun.arch.data.model)
+2016-04-04 09:24:16,713 [main] DEBUG i.n.util.internal.PlatformDependent - -Dio.netty.noPreferDirect: false
+2016-04-04 09:24:16,725 [main] DEBUG io.netty.channel.nio.NioEventLoop - -Dio.netty.noKeySetOptimization: false
+2016-04-04 09:24:16,725 [main] DEBUG io.netty.channel.nio.NioEventLoop - -Dio.netty.selectorAutoRebuildThreshold: 512
+2016-04-04 09:24:16,748 [main] DEBUG i.n.util.internal.ThreadLocalRandom - -Dio.netty.initialSeedUniquifier: 0x34d5e891d97bb623 (took 1 ms)
+2016-04-04 09:24:16,769 [main] DEBUG io.netty.buffer.ByteBufUtil - -Dio.netty.allocator.type: unpooled
+2016-04-04 09:24:16,769 [main] DEBUG io.netty.buffer.ByteBufUtil - -Dio.netty.threadLocalDirectBufferSize: 65536
+2016-04-04 09:24:16,771 [main] DEBUG io.netty.util.NetUtil - Loopback interface: lo0 (lo0, 0:0:0:0:0:0:0:1)
+2016-04-04 09:24:16,771 [main] DEBUG io.netty.util.NetUtil - /proc/sys/net/core/somaxconn: 128 (non-existent)
+2016-04-04 09:24:46,371 [Hikari Housekeeping Timer (pool psqldb)] DEBUG com.zaxxer.hikari.pool.HikariPool - Before cleanup pool stats psqldb (total=10, inUse=0, avail=10, waiting=0)
+2016-04-04 09:24:46,371 [Hikari Housekeeping Timer (pool psqldb)] DEBUG com.zaxxer.hikari.pool.HikariPool - After cleanup pool stats psqldb (total=10, inUse=0, avail=10, waiting=0)
+2016-04-04 09:25:16,370 [Hikari Housekeeping Timer (pool psqldb)] DEBUG com.zaxxer.hikari.pool.HikariPool - Before cleanup pool stats psqldb (total=10, inUse=0, avail=10, waiting=0)
+2016-04-04 09:25:16,370 [Hikari Housekeeping Timer (pool psqldb)] DEBUG com.zaxxer.hikari.pool.HikariPool - After cleanup pool stats psqldb (total=10, inUse=0, avail=10, waiting=0)
+2016-04-04 09:25:49,645 [main] WARN  com.zaxxer.hikari.HikariConfig - The jdbcConnectionTest property is now deprecated, see the documentation for connectionTestQuery
+2016-04-04 09:25:49,650 [main] DEBUG com.zaxxer.hikari.HikariConfig - HikariCP pool psqldb configuration:
+2016-04-04 09:25:49,664 [main] DEBUG com.zaxxer.hikari.HikariConfig - allowPoolSuspension.............false
+2016-04-04 09:25:49,665 [main] DEBUG com.zaxxer.hikari.HikariConfig - autoCommit......................true
+2016-04-04 09:25:49,665 [main] DEBUG com.zaxxer.hikari.HikariConfig - catalog.........................
+2016-04-04 09:25:49,665 [main] DEBUG com.zaxxer.hikari.HikariConfig - connectionCustomizer............com.zaxxer.hikari.AbstractHikariConfig$1@3427b02d
+2016-04-04 09:25:49,665 [main] DEBUG com.zaxxer.hikari.HikariConfig - connectionCustomizerClassName...
+2016-04-04 09:25:49,665 [main] DEBUG com.zaxxer.hikari.HikariConfig - connectionInitSql...............
+2016-04-04 09:25:49,665 [main] DEBUG com.zaxxer.hikari.HikariConfig - connectionTestQuery.............select 1
+2016-04-04 09:25:49,665 [main] DEBUG com.zaxxer.hikari.HikariConfig - connectionTimeout...............1000
+2016-04-04 09:25:49,665 [main] DEBUG com.zaxxer.hikari.HikariConfig - dataSource......................
+2016-04-04 09:25:49,665 [main] DEBUG com.zaxxer.hikari.HikariConfig - dataSourceClassName.............
+2016-04-04 09:25:49,665 [main] DEBUG com.zaxxer.hikari.HikariConfig - dataSourceJNDI..................
+2016-04-04 09:25:49,666 [main] DEBUG com.zaxxer.hikari.HikariConfig - dataSourceProperties............{password=<masked>}
+2016-04-04 09:25:49,666 [main] DEBUG com.zaxxer.hikari.HikariConfig - driverClassName.................org.postgresql.Driver
+2016-04-04 09:25:49,668 [main] DEBUG com.zaxxer.hikari.HikariConfig - healthCheckProperties...........{}
+2016-04-04 09:25:49,669 [main] DEBUG com.zaxxer.hikari.HikariConfig - healthCheckRegistry.............
+2016-04-04 09:25:49,669 [main] DEBUG com.zaxxer.hikari.HikariConfig - idleTimeout.....................600000
+2016-04-04 09:25:49,669 [main] DEBUG com.zaxxer.hikari.HikariConfig - initializationFailFast..........false
+2016-04-04 09:25:49,669 [main] DEBUG com.zaxxer.hikari.HikariConfig - isolateInternalQueries..........false
+2016-04-04 09:25:49,669 [main] DEBUG com.zaxxer.hikari.HikariConfig - jdbc4ConnectionTest.............false
+2016-04-04 09:25:49,669 [main] DEBUG com.zaxxer.hikari.HikariConfig - jdbcUrl.........................jdbc:postgresql://localhost:5432/akkaexampleapp
+2016-04-04 09:25:49,669 [main] DEBUG com.zaxxer.hikari.HikariConfig - leakDetectionThreshold..........0
+2016-04-04 09:25:49,669 [main] DEBUG com.zaxxer.hikari.HikariConfig - maxLifetime.....................1800000
+2016-04-04 09:25:49,669 [main] DEBUG com.zaxxer.hikari.HikariConfig - maximumPoolSize.................50
+2016-04-04 09:25:49,669 [main] DEBUG com.zaxxer.hikari.HikariConfig - metricRegistry..................
+2016-04-04 09:25:49,669 [main] DEBUG com.zaxxer.hikari.HikariConfig - minimumIdle.....................10
+2016-04-04 09:25:49,669 [main] DEBUG com.zaxxer.hikari.HikariConfig - password........................<masked>
+2016-04-04 09:25:49,669 [main] DEBUG com.zaxxer.hikari.HikariConfig - poolName........................psqldb
+2016-04-04 09:25:49,670 [main] DEBUG com.zaxxer.hikari.HikariConfig - readOnly........................false
+2016-04-04 09:25:49,670 [main] DEBUG com.zaxxer.hikari.HikariConfig - registerMbeans..................false
+2016-04-04 09:25:49,670 [main] DEBUG com.zaxxer.hikari.HikariConfig - threadFactory...................
+2016-04-04 09:25:49,670 [main] DEBUG com.zaxxer.hikari.HikariConfig - transactionIsolation............
+2016-04-04 09:25:49,670 [main] DEBUG com.zaxxer.hikari.HikariConfig - username........................root
+2016-04-04 09:25:49,670 [main] DEBUG com.zaxxer.hikari.HikariConfig - validationTimeout...............1000
+2016-04-04 09:25:49,672 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariCP pool psqldb is starting.
+2016-04-04 09:25:49,722 [HikariCP connection filler (pool psqldb)] DEBUG c.zaxxer.hikari.pool.PoolUtilities - psqldb - Connection.setNetworkTimeout() not supported
+2016-04-04 09:25:49,794 [HikariCP connection filler (pool psqldb)] DEBUG com.zaxxer.hikari.pool.HikariPool - After fill pool stats psqldb (total=10, inUse=0, avail=10, waiting=0)
+2016-04-04 09:25:49,893 [Bookstore-akka.actor.default-dispatcher-2] INFO  akka.event.slf4j.Slf4jLogger - Slf4jLogger started
+2016-04-04 09:25:49,973 [Bookstore-akka.actor.default-dispatcher-3] INFO  Server - Adding endpoint: com.packt.masteringakka.bookstore.order.SalesOrderEndpoint@53045c6c
+2016-04-04 09:25:49,975 [Bookstore-akka.actor.default-dispatcher-3] INFO  Server - Adding endpoint: com.packt.masteringakka.bookstore.user.UserEndpoint@cb0755b
+2016-04-04 09:25:49,975 [Bookstore-akka.actor.default-dispatcher-3] INFO  Server - Adding endpoint: com.packt.masteringakka.bookstore.book.BookEndpoint@33065d67
+2016-04-04 09:25:49,976 [main] DEBUG i.n.u.i.l.InternalLoggerFactory - Using SLF4J as the default logging framework
+2016-04-04 09:25:49,979 [main] DEBUG i.n.c.MultithreadEventLoopGroup - -Dio.netty.eventLoopThreads: 16
+2016-04-04 09:25:49,985 [main] DEBUG i.n.u.internal.PlatformDependent0 - java.nio.Buffer.address: available
+2016-04-04 09:25:49,986 [main] DEBUG i.n.u.internal.PlatformDependent0 - sun.misc.Unsafe.theUnsafe: available
+2016-04-04 09:25:49,986 [main] DEBUG i.n.u.internal.PlatformDependent0 - sun.misc.Unsafe.copyMemory: available
+2016-04-04 09:25:49,986 [main] DEBUG i.n.u.internal.PlatformDependent0 - java.nio.Bits.unaligned: true
+2016-04-04 09:25:50,003 [main] DEBUG i.n.util.internal.PlatformDependent - UID: 501
+2016-04-04 09:25:50,003 [main] DEBUG i.n.util.internal.PlatformDependent - Java version: 8
+2016-04-04 09:25:50,003 [main] DEBUG i.n.util.internal.PlatformDependent - -Dio.netty.noUnsafe: false
+2016-04-04 09:25:50,003 [main] DEBUG i.n.util.internal.PlatformDependent - sun.misc.Unsafe: available
+2016-04-04 09:25:50,004 [main] DEBUG i.n.util.internal.PlatformDependent - -Dio.netty.noJavassist: false
+2016-04-04 09:25:50,007 [main] DEBUG i.n.util.internal.PlatformDependent - Javassist: available
+2016-04-04 09:25:50,007 [main] DEBUG i.n.util.internal.PlatformDependent - -Dio.netty.tmpdir: /var/folders/7q/8kqdnsxx35765lcgbqk6_23r0000gn/T (java.io.tmpdir)
+2016-04-04 09:25:50,007 [main] DEBUG i.n.util.internal.PlatformDependent - -Dio.netty.bitMode: 64 (sun.arch.data.model)
+2016-04-04 09:25:50,007 [main] DEBUG i.n.util.internal.PlatformDependent - -Dio.netty.noPreferDirect: false
+2016-04-04 09:25:50,018 [main] DEBUG io.netty.channel.nio.NioEventLoop - -Dio.netty.noKeySetOptimization: false
+2016-04-04 09:25:50,018 [main] DEBUG io.netty.channel.nio.NioEventLoop - -Dio.netty.selectorAutoRebuildThreshold: 512
+2016-04-04 09:25:50,040 [main] DEBUG i.n.util.internal.ThreadLocalRandom - -Dio.netty.initialSeedUniquifier: 0x8b97e3474ee6c58e (took 1 ms)
+2016-04-04 09:25:50,062 [main] DEBUG io.netty.buffer.ByteBufUtil - -Dio.netty.allocator.type: unpooled
+2016-04-04 09:25:50,062 [main] DEBUG io.netty.buffer.ByteBufUtil - -Dio.netty.threadLocalDirectBufferSize: 65536
+2016-04-04 09:25:50,063 [main] DEBUG io.netty.util.NetUtil - Loopback interface: lo0 (lo0, 0:0:0:0:0:0:0:1)
+2016-04-04 09:25:50,063 [main] DEBUG io.netty.util.NetUtil - /proc/sys/net/core/somaxconn: 128 (non-existent)
+2016-04-04 09:25:52,559 [nioEventLoopGroup-3-1] DEBUG io.netty.util.ResourceLeakDetector - -Dio.netty.leakDetectionLevel: simple
+2016-04-04 09:25:52,572 [nioEventLoopGroup-3-1] DEBUG i.n.u.i.JavassistTypeParameterMatcherGenerator - Generated: io.netty.util.internal.__matchers__.io.netty.handler.codec.http.HttpObjectMatcher
+2016-04-04 09:25:52,579 [nioEventLoopGroup-3-1] DEBUG io.netty.util.Recycler - -Dio.netty.recycler.maxCapacity.default: 262144
+2016-04-04 09:25:52,583 [nioEventLoopGroup-3-1] DEBUG io.netty.util.internal.Cleaner0 - java.nio.ByteBuffer.cleaner(): available
+2016-04-04 09:25:52,626 [Bookstore-akka.actor.default-dispatcher-3] DEBUG s.backend.DatabaseComponent.action - #1: StreamingResultAction [select distinct(l.orderId) from SalesOrderLineItem l right join BookTag t on l.bookId = t.bookId where t.tag = ?]
+2016-04-04 09:25:52,636 [psqldb-1] DEBUG slick.jdbc.JdbcBackend.statement - Preparing statement: select distinct(l.orderId) from SalesOrderLineItem l right join BookTag t on l.bookId = t.bookId where t.tag = ?
+2016-04-04 09:25:52,640 [psqldb-1] DEBUG c.zaxxer.hikari.pool.PoolUtilities - psqldb - Statement.setQueryTimeout() not supported
+2016-04-04 09:25:52,650 [psqldb-1] DEBUG slick.jdbc.JdbcBackend.benchmark - Execution of prepared statement took 2ms
+2016-04-04 09:25:52,666 [psqldb-1] DEBUG slick.jdbc.StatementInvoker.result - /---------\
+2016-04-04 09:25:52,667 [psqldb-1] DEBUG slick.jdbc.StatementInvoker.result - | 1       |
+2016-04-04 09:25:52,667 [psqldb-1] DEBUG slick.jdbc.StatementInvoker.result - | orderid |
+2016-04-04 09:25:52,667 [psqldb-1] DEBUG slick.jdbc.StatementInvoker.result - |---------|
+2016-04-04 09:25:52,667 [psqldb-1] DEBUG slick.jdbc.StatementInvoker.result - | 6       |
+2016-04-04 09:25:52,667 [psqldb-1] DEBUG slick.jdbc.StatementInvoker.result - | 1       |
+2016-04-04 09:25:52,667 [psqldb-1] DEBUG slick.jdbc.StatementInvoker.result - | 4       |
+2016-04-04 09:25:52,667 [psqldb-1] DEBUG slick.jdbc.StatementInvoker.result - | 5       |
+2016-04-04 09:25:52,667 [psqldb-1] DEBUG slick.jdbc.StatementInvoker.result - | 7       |
+2016-04-04 09:25:52,667 [psqldb-1] DEBUG slick.jdbc.StatementInvoker.result - \---------/
+2016-04-04 09:25:52,678 [Bookstore-akka.actor.default-dispatcher-3] DEBUG s.backend.DatabaseComponent.action - #1: StreamingResultAction [select id, userId, creditTxnId, status, totalCost, createTs, modifyTs from SalesOrderHeader where id in (5,1,6,7,4)]
+2016-04-04 09:25:52,678 [psqldb-2] DEBUG slick.jdbc.JdbcBackend.statement - Preparing statement: select id, userId, creditTxnId, status, totalCost, createTs, modifyTs from SalesOrderHeader where id in (5,1,6,7,4)
+2016-04-04 09:25:52,679 [psqldb-2] DEBUG slick.jdbc.JdbcBackend.benchmark - Execution of prepared statement took 1ms
+2016-04-04 09:25:52,695 [psqldb-2] DEBUG slick.jdbc.StatementInvoker.result - /----+--------+-------------+------------+-----------+----------------------+----------------------\
+2016-04-04 09:25:52,695 [psqldb-2] DEBUG slick.jdbc.StatementInvoker.result - | 1  | 2      | 3           | 4          | 5         | 6                    | 7                    |
+2016-04-04 09:25:52,695 [psqldb-2] DEBUG slick.jdbc.StatementInvoker.result - | id | userid | credittxnid | status     | totalcost | createts             | modifyts             |
+2016-04-04 09:25:52,695 [psqldb-2] DEBUG slick.jdbc.StatementInvoker.result - |----+--------+-------------+------------+-----------+----------------------+----------------------|
+2016-04-04 09:25:52,695 [psqldb-2] DEBUG slick.jdbc.StatementInvoker.result - | 1  | 1      | 5           | InProgress | 32.49     | 2016-04-01 00:00:... | 2016-04-01 00:00:... |
+2016-04-04 09:25:52,695 [psqldb-2] DEBUG slick.jdbc.StatementInvoker.result - | 4  | 1      | 8           | InProgress | 32.49     | 2016-04-02 00:00:... | 2016-04-02 00:00:... |
+2016-04-04 09:25:52,695 [psqldb-2] DEBUG slick.jdbc.StatementInvoker.result - | 5  | 1      | 9           | InProgress | 19.99     | 2016-04-02 00:00:... | 2016-04-02 00:00:... |
+2016-04-04 09:25:52,695 [psqldb-2] DEBUG slick.jdbc.StatementInvoker.result - | 6  | 1      | 10          | InProgress | 32.49     | 2016-04-02 00:00:... | 2016-04-02 00:00:... |
+2016-04-04 09:25:52,696 [psqldb-2] DEBUG slick.jdbc.StatementInvoker.result - | 7  | 1      | 11          | InProgress | 32.49     | 2016-04-03 00:00:... | 2016-04-03 00:00:... |
+2016-04-04 09:25:52,696 [psqldb-2] DEBUG slick.jdbc.StatementInvoker.result - \----+--------+-------------+------------+-----------+----------------------+----------------------/
+2016-04-04 09:25:52,697 [Bookstore-akka.actor.default-dispatcher-3] DEBUG s.backend.DatabaseComponent.action - #1: StreamingResultAction [select id, orderId, bookId, quantity, cost, createTs, modifyTs from SalesOrderLineItem where orderId in (1,4,5,6,7)]
+2016-04-04 09:25:52,697 [psqldb-3] DEBUG slick.jdbc.JdbcBackend.statement - Preparing statement: select id, orderId, bookId, quantity, cost, createTs, modifyTs from SalesOrderLineItem where orderId in (1,4,5,6,7)
+2016-04-04 09:25:52,698 [psqldb-3] DEBUG slick.jdbc.JdbcBackend.benchmark - Execution of prepared statement took 627µs
+2016-04-04 09:25:52,702 [psqldb-3] DEBUG slick.jdbc.StatementInvoker.result - /----+---------+--------+----------+-------+----------------------+----------------------\
+2016-04-04 09:25:52,702 [psqldb-3] DEBUG slick.jdbc.StatementInvoker.result - | 1  | 2       | 3      | 4        | 5     | 6                    | 7                    |
+2016-04-04 09:25:52,702 [psqldb-3] DEBUG slick.jdbc.StatementInvoker.result - | id | orderid | bookid | quantity | cost  | createts             | modifyts             |
+2016-04-04 09:25:52,702 [psqldb-3] DEBUG slick.jdbc.StatementInvoker.result - |----+---------+--------+----------+-------+----------------------+----------------------|
+2016-04-04 09:25:52,702 [psqldb-3] DEBUG slick.jdbc.StatementInvoker.result - | 1  | 1       | 1      | 1        | 19.99 | 2016-04-01 00:00:... | 2016-04-01 00:00:... |
+2016-04-04 09:25:52,702 [psqldb-3] DEBUG slick.jdbc.StatementInvoker.result - | 2  | 1       | 2      | 1        | 12.50 | 2016-04-01 00:00:... | 2016-04-01 00:00:... |
+2016-04-04 09:25:52,702 [psqldb-3] DEBUG slick.jdbc.StatementInvoker.result - | 5  | 4       | 1      | 1        | 19.99 | 2016-04-02 00:00:... | 2016-04-02 00:00:... |
+2016-04-04 09:25:52,702 [psqldb-3] DEBUG slick.jdbc.StatementInvoker.result - | 6  | 4       | 2      | 1        | 12.50 | 2016-04-02 00:00:... | 2016-04-02 00:00:... |
+2016-04-04 09:25:52,702 [psqldb-3] DEBUG slick.jdbc.StatementInvoker.result - | 7  | 5       | 1      | 1        | 19.99 | 2016-04-02 00:00:... | 2016-04-02 00:00:... |
+2016-04-04 09:25:52,702 [psqldb-3] DEBUG slick.jdbc.StatementInvoker.result - \----+---------+--------+----------+-------+----------------------+----------------------/
+2016-04-04 09:25:52,703 [psqldb-3] DEBUG slick.jdbc.StatementInvoker.result - 4 more rows read (9 total)
+2016-04-04 09:26:19,682 [Hikari Housekeeping Timer (pool psqldb)] DEBUG com.zaxxer.hikari.pool.HikariPool - Before cleanup pool stats psqldb (total=10, inUse=0, avail=10, waiting=0)
+2016-04-04 09:26:19,682 [Hikari Housekeeping Timer (pool psqldb)] DEBUG com.zaxxer.hikari.pool.HikariPool - After cleanup pool stats psqldb (total=10, inUse=0, avail=10, waiting=0)
