@@ -12,6 +12,8 @@ import com.packt.masteringakka.bookstore.domain.user.UpdateUserInfo
 import com.packt.masteringakka.bookstore.domain.user.FindUserById
 import com.packt.masteringakka.bookstore.domain.user.CreateUser
 import com.packt.masteringakka.bookstore.domain.user.BookstoreUser
+import com.packt.masteringakka.bookstore.domain.user.FindUserByEmail
+import com.packt.masteringakka.bookstore.domain.user.DeleteUser
 
 /**
  * Companion to the UserManager service actor
@@ -41,8 +43,10 @@ class UserManager extends BookStoreActor{
   
   def receive = {
     case FindUserById(id) =>
-      log.info("Looking up user for id: {}", id)
       pipeResponse(dao.findUserById(id))
+      
+    case FindUserByEmail(email) =>
+      pipeResponse(dao.findUserByEmail(email))      
     
     case CreateUser(UserInput(first, last, email)) =>
       val result = 
@@ -60,6 +64,16 @@ class UserManager extends BookStoreActor{
           updated <- maybeUpdate(upd, userOpt)
         } yield updated
       pipeResponse(result.recover(recoverEmailCheck ))
+      
+    case DeleteUser(userId) =>
+      val result = 
+        for{
+          userOpt <- dao.findUserById(userId)
+          res <- userOpt.fold[Future[Option[BookstoreUser]]](Future.successful(None)){u => 
+            dao.deleteUser(u).map(Some.apply)
+          }
+        } yield res
+      pipeResponse(result)
       
   }
   
@@ -133,7 +147,7 @@ class UserManagerDao(implicit ec:ExecutionContext) extends BookstoreDao{
    */
   def findUserById(id:Int) = {
     db.
-      run(sql"#$SelectFields where id = $id".as[BookstoreUser]).
+      run(sql"#$SelectFields where id = $id and not deleted".as[BookstoreUser]).
       map(_.headOption)
   }
   
@@ -144,7 +158,7 @@ class UserManagerDao(implicit ec:ExecutionContext) extends BookstoreDao{
    */  
   def findUserByEmail(email:String) = {
     db.
-      run(sql"#$SelectFields where email = $email".as[BookstoreUser]).
+      run(sql"#$SelectFields where email = $email and not deleted".as[BookstoreUser]).
       map(_.headOption)
   }  
   
@@ -159,5 +173,14 @@ class UserManagerDao(implicit ec:ExecutionContext) extends BookstoreDao{
       lastName = ${user.lastName}, email = ${user.email} where id = ${user.id}  
     """
     db.run(update).map(_ => user)
+  }
+  
+  /**
+   * Deletes a user from the database
+   * @param user The user to delete
+   * @return A Future wrapping the user that was deleted
+   */
+  def deleteUser(user:BookstoreUser) = {
+    db.run(sqlu"delete from StoreUser where id = ${user.id}").map(_ => user.copy(deleted = true))
   }
 }

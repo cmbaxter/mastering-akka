@@ -27,6 +27,7 @@ class SalesOrderManager extends BookStoreActor{
   import context.dispatcher
   val dao = new SalesOrderManagerDao
   
+  //TODO: Refactor to a bad future driven actor
   def receive = {
     case FindOrderById(id) =>
       pipeResponse(dao.findOrderById(id))

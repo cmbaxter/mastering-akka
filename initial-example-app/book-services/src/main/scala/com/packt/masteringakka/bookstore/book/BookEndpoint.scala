@@ -18,6 +18,7 @@ import com.packt.masteringakka.bookstore.domain.book.FindBook
 import com.packt.masteringakka.bookstore.domain.book.CreateBook
 import com.packt.masteringakka.bookstore.domain.book.AddTagToBook
 import com.packt.masteringakka.bookstore.domain.book.AddInventoryToBook
+import com.packt.masteringakka.bookstore.domain.book.DeleteBook
 
 /**
  * Http Endpoint for requests related to book management 
@@ -68,5 +69,9 @@ class BookEndpoint(bookManager:ActorRef)(implicit val ec:ExecutionContext) exten
     case req @ PUT(Path(Seg("api" :: "book" :: IntPathElement(bookId) :: "inventory" :: IntPathElement(amount) :: Nil))) =>
       val f = (bookManager ? AddInventoryToBook(bookId, amount))
       respond(f, req)
+      
+    case req @ DELETE(Path(Seg("api" :: "book" :: IntPathElement(bookId) :: Nil))) =>
+      val f = (bookManager ? DeleteBook(bookId))
+      respond(f, req)      
   }
 }

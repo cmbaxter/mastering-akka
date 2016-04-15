@@ -1,7 +1,5 @@
 import NativePackagerHelper._
 
-enablePlugins(JavaServerAppPackaging)
-
 name := "initial-example-app"
 
 lazy val commonSettings = Seq(
@@ -32,14 +30,10 @@ lazy val orderServices = (project in file("order-services")).
   settings(commonSettings: _*).
   dependsOn(common)      
 
-lazy val server = (project in file("server")).
-  settings(commonSettings: _*).
-  dependsOn(common, bookServices, userServices, creditServices, orderServices)
-
-
-mappings in Universal ++= {
-  directory("scripts") ++
-  contentOf("src/main/resources").toMap.mapValues("config/" + _)
-}
-
-scriptClasspath := Seq("../config/") ++ scriptClasspath.value
+lazy val server = Project(
+    id = "server",
+    base = file("server"),    
+    settings = commonSettings ++ packageArchetype.java_server ++ Seq(
+        mainClass in Compile := Some("com.packt.masteringakka.bookstore.server.Server")
+    )
+) dependsOn(common, bookServices, userServices, creditServices, orderServices)

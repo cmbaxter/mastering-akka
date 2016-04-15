@@ -1,4 +1,4 @@
---Setup database
+a--Setup database
 DROP DATABASE IF EXISTS akkaexampleapp;
 CREATE DATABASE akkaexampleapp;
 \c akkaexampleapp;
@@ -12,6 +12,7 @@ CREATE TABLE StoreUser(
     email varchar(100) NOT NULL,
     createTs timestamp NOT NULL,
     modifyTs timestamp NOT NULL DEFAULT current_timestamp,
+    deleted boolean NOT NULL DEFAULT false,
     CONSTRAINT email_unique UNIQUE(email)
 );
 
@@ -24,7 +25,8 @@ CREATE TABLE Book(
     cost decimal(10,2) NOT NULL DEFAULT 0.0,
     inventoryAmount INT NOT NULL DEFAULT 0,
     createTs timestamp NOT NULL,
-    modifyTs timestamp NOT NULL DEFAULT current_timestamp
+    modifyTs timestamp NOT NULL DEFAULT current_timestamp,
+    deleted boolean NOT NULL DEFAULT false
 );
 
 -- Book Tags Table

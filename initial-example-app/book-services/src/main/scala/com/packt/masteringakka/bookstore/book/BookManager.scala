@@ -20,6 +20,10 @@ import com.packt.masteringakka.bookstore.domain.book.CreateBook
 import com.packt.masteringakka.bookstore.domain.book.Book
 import com.packt.masteringakka.bookstore.domain.book.AddTagToBook
 import com.packt.masteringakka.bookstore.domain.book.AddInventoryToBook
+import com.packt.masteringakka.bookstore.common.ErrorMessage
+import com.packt.masteringakka.bookstore.common.Failure
+import com.packt.masteringakka.bookstore.common.FailureType
+import com.packt.masteringakka.bookstore.domain.book.DeleteBook
 
 /**
  * Companion to the BookManager service actor
@@ -27,6 +31,8 @@ import com.packt.masteringakka.bookstore.domain.book.AddInventoryToBook
 object BookManager{
   val Name = "book-manager"
   def props = Props[BookManager]
+  class TagExistsException extends Exception
+  val TagAlreadyExistsError = ErrorMessage("book.tag.exists", Some("The tag supplied already exists on the book supplied"))
 }
 
 /**
@@ -35,9 +41,10 @@ object BookManager{
 class BookManager extends BookStoreActor{  
   import akka.pattern.pipe
   import context.dispatcher
+  import BookManager._
   
   val dao = new BookManagerDao
-
+  
   def receive = {
     case FindBook(id) => 
       log.info("Looking up book for id: {}", id)
@@ -67,7 +74,14 @@ class BookManager extends BookStoreActor{
       pipeResponse(result)
       
     case AddTagToBook(id, tag) =>
-      val result = manipulateTags(id, tag)(dao.tagBook)        
+      val result = 
+        manipulateTags(id, tag){(book, tag) => 
+          if (book.tags.contains(tag)) Future.failed(new TagExistsException)
+          else dao.tagBook(book, tag)
+        }.
+        recover{
+          case ex:TagExistsException => Failure(FailureType.Validation, TagAlreadyExistsError )  
+        }
       pipeResponse(result)
         
     case RemoveTagFromBook(id, tag) =>
@@ -80,7 +94,16 @@ class BookManager extends BookStoreActor{
           book <- dao.findBookById(id)
           addRes <- checkExistsAndThen(book)(b => dao.addInventoryToBook(b, amount))
         } yield addRes
-      pipeResponse(result)   
+      pipeResponse(result) 
+        
+    case DeleteBook(bookId) =>
+      val result = 
+        for{
+          book <- dao.findBookById(bookId)
+          addRes <- checkExistsAndThen(book)(dao.deleteBook)
+        } yield addRes
+      pipeResponse(result)
+      
   }
   
   /**
@@ -150,7 +173,7 @@ class BookManagerDao(implicit ec:ExecutionContext) extends BookstoreDao{
    */
   def findBooksByIds(ids:Seq[Int]) = {
     val idsParam = s"${ids.mkString(",")}"
-    db.run(sql"""#$BookLookupPrefix b.id in (#$idsParam) group by b.id""".as[Book])       
+    db.run(sql"""#$BookLookupPrefix b.id in (#$idsParam) and not b.deleted group by b.id""".as[Book])       
   }
   
   /**
@@ -159,8 +182,8 @@ class BookManagerDao(implicit ec:ExecutionContext) extends BookstoreDao{
    * @return a Future for a Vector[Int] which is the ids of the matching books
    */
   def findBookIdsByTags(tags:Seq[String]) = {
-    val tagsParam = tags.map(t => s"'$t'").mkString(",")      
-    val idsWithAllTags = db.run(sql"select bookId, count(bookId) from BookTag where tag in (#$tagsParam) group by bookId having count(bookId) = ${tags.size}".as[(Int,Int)])    
+    val tagsParam = tags.map(t => s"'${t.toLowerCase}'").mkString(",")      
+    val idsWithAllTags = db.run(sql"select bookId, count(bookId) from BookTag where lower(tag) in (#$tagsParam) group by bookId having count(bookId) = ${tags.size}".as[(Int,Int)])    
     idsWithAllTags.map(_.map(_._1) )     
   }
   
@@ -170,8 +193,8 @@ class BookManagerDao(implicit ec:ExecutionContext) extends BookstoreDao{
    * @return a Future for a Vector of Books that match
    */
   def findBooksByAuthor(author:String) = {
-    val param = s"%$author%"
-    db.run(sql"""#$BookLookupPrefix b.author like $param group by b.id""".as[Book])
+    val param = s"%${author.toLowerCase}%"
+    db.run(sql"""#$BookLookupPrefix lower(b.author) like $param and not b.deleted group by b.id""".as[Book])
   }
   
   /**
@@ -231,5 +254,15 @@ class BookManagerDao(implicit ec:ExecutionContext) extends BookstoreDao{
   def addInventoryToBook(book:Book, amount:Int) = {
     db.run(sqlu"update Book set inventoryAmount = inventoryAmount + $amount where id = ${book.id}").
       map(_ => book.copy(inventoryAmount = book.inventoryAmount + amount)) //Not entirely accurate in that others updates could have happened
+  }
+  
+  /**
+   * Soft deletes a book from the system
+   * @param book the book to delete
+   * @return a Future for the Book that was deleted
+   */
+  def deleteBook(book:Book) = {
+    val bookDelete = sqlu"update Book set deleted = true where id = ${book.id}"
+    db.run(bookDelete).map(_ => book.copy(deleted = true))
   }
 }

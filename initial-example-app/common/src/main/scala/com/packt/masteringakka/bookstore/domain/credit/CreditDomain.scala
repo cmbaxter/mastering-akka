@@ -2,6 +2,7 @@ package com.packt.masteringakka.bookstore.domain.credit
 
 import java.util.Date
 
+//TODO: Add user id to credit transaction and db model
 //Persistent entities
 object CreditTransactionStatus extends Enumeration{
   val Approved, Rejected = Value

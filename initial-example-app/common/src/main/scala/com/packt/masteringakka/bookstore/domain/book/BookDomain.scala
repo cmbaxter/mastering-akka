@@ -3,7 +3,7 @@ package com.packt.masteringakka.bookstore.domain.book
 import java.util.Date
 
 //Persistent entities
-case class Book(id:Int, title:String, author:String, tags:List[String], cost:Double, inventoryAmount:Int, createTs:Date, modifyTs:Date)
+case class Book(id:Int, title:String, author:String, tags:List[String], cost:Double, inventoryAmount:Int, createTs:Date, modifyTs:Date, deleted:Boolean = false)
 
 //Lookup operations
 case class FindBook(id:Int)
@@ -17,3 +17,4 @@ case class CreateBook(title:String, author:String, tags:List[String], cost:Doubl
 case class AddTagToBook(bookId:Int, tag:String)
 case class RemoveTagFromBook(bookId:Int, tag:String)
 case class AddInventoryToBook(bookId:Int, amount:Int)
+case class DeleteBook(id:Int)
