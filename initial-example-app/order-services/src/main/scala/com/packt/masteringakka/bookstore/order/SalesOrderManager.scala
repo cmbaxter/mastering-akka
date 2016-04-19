@@ -38,6 +38,9 @@ object SalesOrderManager{
 class SalesOrderManager extends BookStoreActor{
   import context.dispatcher
   import SalesOrderManager._
+  import akka.pattern.ask
+  
+  implicit val timeout = Timeout(5 seconds)  
   val dao = new SalesOrderManagerDao
   
   def receive = {
@@ -74,79 +77,92 @@ class SalesOrderManager extends BookStoreActor{
     } yield orders    
   } 
   
+  /**
+   * Creates a new sales order in the system
+   * @param request The request to create the order
+   * @return a Future for a SalesOrder that will be failed if any validation failures happen
+   */
   def createOrder(request:CreateOrder):Future[SalesOrder] = {
-    import akka.pattern.ask
-    implicit val timeout = Timeout(5 seconds)
-    val quantityMap = request.lineItems.map(i => (i.bookId, i.quantity)).toMap
-    
-    //Resolve dependencies
+        
+    //Resolve dependencies in parallel
     val bookMgrFut = lookup(BookMgrName)
     val userMgrFut = lookup(UserManagerName)
-    val creditMgrFut = lookup(CreditHandlerName)
+    val creditMgrFut = lookup(CreditHandlerName)    
+     
+    for{
+      bookMgr <- bookMgrFut
+      userMgr <- userMgrFut
+      creditMgr <- creditMgrFut
+      (user, lineItems) <- loadUser(request, userMgr).zip(buildLineItems(request, bookMgr))
+      total = lineItems.map(_.cost).sum
+      creditTxn <- chargeCreditCard(request, total, creditMgr)
+      order = SalesOrder(0, user.id, creditTxn.id, SalesOrderStatus.InProgress, total, lineItems, new Date, new Date)
+      daoResult <- dao.createSalesOrder(order)        
+    } yield daoResult
     
-    val result = 
-      for{
-        bookMgr <- bookMgrFut
-        userMgr <- userMgrFut
-        creditMgr <- creditMgrFut
-      } yield{
-      
-        //Look up the user
-        val userFut = 
-          (userMgr ? FindUserById(request.userId)).
-            mapTo[ServiceResult[BookstoreUser]].
-            flatMap(unwrapResult(InvalidUserIdError))
-          
-        //Lookup Books and map into SalesOrderLineItems, validating that inventory is available for each
-        val itemsFut = 
-          Future.traverse(request.lineItems){ item =>
-            (bookMgr ? FindBook(item.bookId)).
-              mapTo[ServiceResult[Book]].
-              flatMap(unwrapResult(InvalidBookIdError ))
-          }.
-          flatMap{ books =>
-            val inventoryAvail = books.forall{b => 
-              quantityMap.get(b.id).map(q => b.inventoryAmount >= q).getOrElse(false)
-            }
-            if (inventoryAvail)
-              Future.successful(books.map{ b =>
-                val quantity = quantityMap.getOrElse(b.id, 0) //safe as we already vetted in the above step
-                SalesOrderLineItem(0, 0, b.id, quantity, quantity * b.cost, new Date, new Date)           
-              })
-            else
-              Future.failed(new OrderProcessingException(InventoryNotAvailError))
-          }
-        
-          for{
-            user <- userFut
-            lineItems <- itemsFut
-          } yield{
-          
-            //Charge the credit card, checking if it succeeded or not
-            val total = lineItems.map(_.cost).sum
-            val creditChargeFut = 
-              (creditMgr ? ChargeCreditCard(request.cardInfo, total)).
-              mapTo[ServiceResult[CreditCardTransaction]].
-              flatMap(unwrapResult(ServiceResult.UnexpectedFailure)).
-              flatMap{
-                case txn if txn.status == CreditTransactionStatus.Approved =>
-                  Future.successful(txn)
-                case txn =>
-                  Future.failed(new OrderProcessingException(CreditRejectedError ))
-              }
-          
-            for{
-              creditTxn <- creditChargeFut
-              order = SalesOrder(0, user.id, creditTxn.id, SalesOrderStatus.InProgress, total, lineItems, new Date, new Date)
-              daoResult <- dao.createSalesOrder(order)
-            } yield daoResult
-          }
-              
-      }
-    
-    //Flatten the big nested set of futures out 
-    result.flatMap(identity).flatMap(identity)
   }
+
+  
+  /**
+   * Calls over to the userMgr to lookup a user by id
+   * @param request The request to create the order
+   * @param userMgr The user manager actor ref
+   * @return a Future wrapping a BookstoreUser that will be failed if the user does not exist
+   */
+  def loadUser(request:CreateOrder, userMgr:ActorRef) = {    
+    (userMgr ? FindUserById(request.userId)).
+      mapTo[ServiceResult[BookstoreUser]].
+      flatMap(unwrapResult(InvalidUserIdError))    
+  }
+    
+  /**
+   * Looks up books for each line item input and converts them into SalesOrderLineItems, vetting
+   * if inventory is available for each first
+   * @param request The request to create the order
+   * @param bookMgr The book manager actor ref
+   * @return a Future for a list of SalesOrderLineItem that will be failed if validations fail
+   */
+  def buildLineItems(request:CreateOrder, bookMgr:ActorRef) = {
+    //Lookup Books and map into SalesOrderLineItems, validating that inventory is available for each
+    val quantityMap = request.lineItems.map(i => (i.bookId, i.quantity)).toMap
+    
+    Future.traverse(request.lineItems){ item =>
+      (bookMgr ? FindBook(item.bookId)).
+        mapTo[ServiceResult[Book]].
+        flatMap(unwrapResult(InvalidBookIdError ))
+    }.
+    flatMap{ books =>
+      val inventoryAvail = books.forall{b => 
+        quantityMap.get(b.id).map(q => b.inventoryAmount >= q).getOrElse(false)
+      }
+      if (inventoryAvail)
+        Future.successful(books.map{ b =>
+          val quantity = quantityMap.getOrElse(b.id, 0) //safe as we already vetted in the above step
+          SalesOrderLineItem(0, 0, b.id, quantity, quantity * b.cost, new Date, new Date)           
+        })
+      else
+        Future.failed(new OrderProcessingException(InventoryNotAvailError))
+    }    
+  }
+  
+  /**
+   * Calls over to the credit handler to charge the credit card
+   * @param request The request to create the order
+   * @param total The total for the order
+   * @param creditMgr The credit manager actor ref
+   */
+  def chargeCreditCard(request:CreateOrder, total:Double, creditMgr:ActorRef) = {
+    (creditMgr ? ChargeCreditCard(request.cardInfo, total)).
+     mapTo[ServiceResult[CreditCardTransaction]].
+     flatMap(unwrapResult(ServiceResult.UnexpectedFailure)).
+     flatMap{
+       case txn if txn.status == CreditTransactionStatus.Approved =>
+         Future.successful(txn)
+       case txn =>
+         Future.failed(new OrderProcessingException(CreditRejectedError ))
+     }    
+  }
+  
   
   /**
    * Takes a ServiceResult and, expecting it to be a FullResult, unwraps it to the underlying
@@ -159,8 +175,13 @@ class SalesOrderManager extends BookStoreActor{
   def unwrapResult[T](error:ErrorMessage)(result:ServiceResult[T]):Future[T] =  result match {    
     case FullResult(user) => Future.successful(user)
     case other => Future.failed(new OrderProcessingException(error))
-  }
+  }  
   
+  /**
+   *  Looks up an actor ref via actor selection
+   *  @param name The name of the actor to lookup
+   *  @return A Future for an ActorRef that will be failed if the actor does not exist
+   */
   def lookup(name:String) = context.actorSelection(s"/user/$name").resolveOne(5 seconds)
 }
 

@@ -2,9 +2,9 @@ name := "initial-example-common"
 
  
 libraryDependencies ++= Seq(
-  "com.typesafe.akka" %% "akka-actor" % "2.4.2",
-  "com.typesafe.akka" %% "akka-testkit" % "2.4.2",
-  "com.typesafe.akka" %% "akka-slf4j" % "2.4.2",
+  "com.typesafe.akka" %% "akka-actor" % "2.3.15",
+  "com.typesafe.akka" %% "akka-testkit" % "2.3.15",
+  "com.typesafe.akka" %% "akka-slf4j" % "2.3.15",
   "ch.qos.logback" % "logback-classic" % "1.0.9",
   "com.typesafe.slick" %% "slick" % "3.1.1",
   "com.typesafe.slick" %% "slick-hikaricp" % "3.1.1",
