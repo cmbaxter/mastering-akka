@@ -1,4 +1,4 @@
-a--Setup database
+--Setup database
 DROP DATABASE IF EXISTS akkaexampleapp;
 CREATE DATABASE akkaexampleapp;
 \c akkaexampleapp;
