@@ -11,6 +11,7 @@ import com.packt.masteringakka.bookstore.domain.credit.CreditTransactionStatus
 import scala.concurrent.Future
 import unfiltered.response._
 import io.netty.handler.codec.http.HttpResponse
+import com.packt.masteringakka.bookstore.order.SalesOrderStatus
 
 /**
  * Base trait for the endpoints in the bookstore app
@@ -20,7 +21,7 @@ trait BookstorePlan extends async.Plan with ServerErrorResponse{
   
   implicit val ec:ExecutionContext
   implicit val endpointTimeout = Timeout(10 seconds)
-  implicit val formats = Serialization.formats(NoTypeHints) + new EnumNameSerializer(CreditTransactionStatus)
+  implicit val formats = Serialization.formats(NoTypeHints) + new EnumNameSerializer(SalesOrderStatus)
   
   /**
    * Extractor for matching on a path element that is an Int

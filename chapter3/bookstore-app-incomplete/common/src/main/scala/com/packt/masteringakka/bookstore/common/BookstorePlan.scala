@@ -7,11 +7,9 @@ import org.json4s._
 import org.json4s.native.Serialization
 import org.json4s.native.Serialization.{read, write}
 import org.json4s.ext.EnumNameSerializer
-import com.packt.masteringakka.bookstore.domain.credit.CreditTransactionStatus
 import scala.concurrent.Future
 import unfiltered.response._
 import io.netty.handler.codec.http.HttpResponse
-import com.packt.masteringakka.bookstore.order.SalesOrderStatus
 
 /**
  * Base trait for the endpoints in the bookstore app
@@ -21,7 +19,13 @@ trait BookstorePlan extends async.Plan with ServerErrorResponse{
   
   implicit val ec:ExecutionContext
   implicit val endpointTimeout = Timeout(10 seconds)
-  implicit val formats = Serialization.formats(NoTypeHints) + new EnumNameSerializer(SalesOrderStatus)
+  implicit val formats = Serialization.formats(NoTypeHints) ++ additionalSerializers
+  
+  /**
+   * Returns any custom serializers that a particular endpoint may need
+   * @return a List of json4s serializers
+   */
+  def additionalSerializers:List[Serializer[_]] = Nil
   
   /**
    * Extractor for matching on a path element that is an Int
