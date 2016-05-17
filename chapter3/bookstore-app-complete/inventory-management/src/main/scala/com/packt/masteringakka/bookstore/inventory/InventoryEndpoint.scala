@@ -10,11 +10,12 @@ import unfiltered.response.Pass
 import akka.pattern.ask
 
 /**
- * Http Endpoint for requests related to book management 
+ * Http Endpoint for requests related to inventory management 
  */
 @Sharable
-class BookEndpoint(bookManager:ActorRef)(implicit val ec:ExecutionContext) extends BookstorePlan{
+class InventoryEndpoint(inventoryClerk:ActorRef)(implicit val ec:ExecutionContext) extends BookstorePlan{
   import akka.pattern.ask
+  import InventoryClerk._
   
   /**
    * Unfiltered param for handling the multi value tag param
@@ -29,38 +30,39 @@ class BookEndpoint(bookManager:ActorRef)(implicit val ec:ExecutionContext) exten
 
   def intent = {
     case req @ GET(Path(Seg("api" :: "book" :: IntPathElement(bookId) :: Nil))) =>
-      val f = (bookManager ? FindBook(bookId))
+      val f = (inventoryClerk ? FindBook(bookId))
       respond(f, req)
       
     case req @ GET(Path(Seg("api" :: "book" :: Nil))) & Params(TagParam(tags)) =>
-      val f = (bookManager ? FindBooksByTags(tags))
+      val f = (inventoryClerk ? FindBooksByTags(tags))
       respond(f, req) 
       
     case req @ GET(Path(Seg("api" :: "book" :: Nil))) & Params(AuthorParam(author)) =>
-      val f = (bookManager ? FindBooksByAuthor(author))
+      val f = (inventoryClerk ? FindBooksByAuthor(author))
       respond(f, req)       
       
     case req @ POST(Path(Seg("api" :: "book" :: Nil))) =>
-      val createBook = parseJson[CreateBook](Body.string(req))
-      val f = (bookManager ? createBook)
+      val createBook = parseJson[CatalogNewBook](Body.string(req))
+      val f = (inventoryClerk ? createBook)
       respond(f, req)
       
     case req @ Path(Seg("api" :: "book" :: IntPathElement(bookId) :: "tag" :: tag :: Nil)) =>
       req match{
         case PUT(_) => 
-          respond((bookManager ? AddTagToBook(bookId, tag)), req)
+          respond((inventoryClerk ? CategorizeBook(bookId, tag)), req)
         case DELETE(_) => 
-          respond((bookManager ? RemoveTagFromBook(bookId, tag)), req)
+          respond((inventoryClerk ? UncategorizeBook(bookId, tag)), req)
         case other => 
           req.respond(Pass)
       }
       
     case req @ PUT(Path(Seg("api" :: "book" :: IntPathElement(bookId) :: "inventory" :: IntPathElement(amount) :: Nil))) =>
-      val f = (bookManager ? AddInventoryToBook(bookId, amount))
+      val f = (inventoryClerk ? IncreaseBookInventory(bookId, amount))
       respond(f, req)
       
     case req @ DELETE(Path(Seg("api" :: "book" :: IntPathElement(bookId) :: Nil))) =>
-      val f = (bookManager ? DeleteBook(bookId))
-      respond(f, req)      
+      val f = (inventoryClerk ? RemoveBookFromCatalog(bookId))
+      respond(f, req)  
+    
   }
 }

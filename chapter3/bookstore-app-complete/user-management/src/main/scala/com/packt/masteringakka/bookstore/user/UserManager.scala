@@ -112,10 +112,10 @@ object UserManagerDao{
 }
 
 /**
- * Dao class for interacting with Postgres to perform user related actions
+ * Repository class for interacting with Postgres to perform user related actions
  */
-class UserManagerDao(implicit ec:ExecutionContext) extends BookstoreDao{
-  import DaoHelpers._
+class UserManagerDao(implicit ec:ExecutionContext) extends BookstoreRepository{
+  import RepoHelpers._
   import UserManagerDao._
   import slick.driver.PostgresDriver.api._
   

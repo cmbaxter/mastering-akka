@@ -3,10 +3,10 @@ package com.packt.masteringakka.bookstore.order
 import akka.actor._
 import com.packt.masteringakka.bookstore.common.BookStoreActor
 import slick.jdbc.GetResult
-import com.packt.masteringakka.bookstore.common.BookstoreDao
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import concurrent.duration._
+import com.packt.masteringakka.bookstore.common.BookstoreRepository
 
 /**
  * Companion to the SalesOrderManager service
@@ -74,7 +74,7 @@ object SalesOrderManagerDao{
 /**
  * Dao class for sales order DB actions for Postgres
  */
-class SalesOrderManagerDao(implicit ec:ExecutionContext) extends BookstoreDao{
+class SalesOrderManagerDao(implicit ec:ExecutionContext) extends BookstoreRepository{
   import SalesOrderManagerDao._
   import slick.driver.PostgresDriver.api._
   import slick.jdbc.SQLActionBuilder

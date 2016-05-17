@@ -4,7 +4,6 @@ import akka.actor.Props
 import slick.driver.PostgresDriver.api._
 import slick.jdbc.GetResult
 import slick.dbio.DBIOAction
-import com.packt.masteringakka.bookstore.common.BookstoreDao
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import java.util.Date
@@ -31,10 +30,10 @@ class BookManager extends BookStoreActor{
   import context.dispatcher
   import BookManager._
   
-  val dao = new BookManagerDao
+  //val dao = new BookManagerDao
   
   def receive = {
-    case FindBook(id) => 
+    /*case FindBook(id) => 
       log.info("Looking up book for id: {}", id)
       val result = dao.findBookById(id)
       pipeResponse(result)
@@ -90,7 +89,8 @@ class BookManager extends BookStoreActor{
           book <- dao.findBookById(bookId)
           addRes <- checkExistsAndThen(book)(dao.deleteBook)
         } yield addRes
-      pipeResponse(result)
+      pipeResponse(result)*/
+    case _ =>
       
   }
   
@@ -102,7 +102,7 @@ class BookManager extends BookStoreActor{
    * @param f A function taking a Book and String (the tag) and returning a Future Book where the tag management happens
    * @return a Future for an Option[Book] will be Some for the new state of the book when the book exists
    */
-  def manipulateTags(id:Int, tag:String)(f:(Book,String) => Future[Book]):Future[Option[Book]] = {
+  /*def manipulateTags(id:Int, tag:String)(f:(Book,String) => Future[Book]):Future[Option[Book]] = {
     for{
       book <- dao.findBookById(id)
       tagRes <- checkExistsAndThen(book)(b => f(b, tag))
@@ -126,13 +126,13 @@ class BookManager extends BookStoreActor{
    */
   def lookupBooksByIds(ids:Seq[Int]) = 
     if (ids.isEmpty) Future.successful(Vector.empty)
-    else dao.findBooksByIds(ids)
+    else dao.findBooksByIds(ids)*/
 }
 
 /**
  * Companion to the BookManagerDao
  */
-object BookManagerDao{
+/*object BookManagerDao{
   implicit val GetBook = GetResult{r => Book(r.<<, r.<<, r.<<, r.nextString.split(",").filter(_.nonEmpty).toList, r.<<, r.<<, r.nextTimestamp, r.nextTimestamp)}
   val BookLookupPrefix =  """
     select b.id, b.title, b.author, array_to_string(array_agg(t.tag), ',') as tags, b.cost, b.inventoryAmount, b.createTs, b.modifyTs
@@ -253,4 +253,4 @@ class BookManagerDao(implicit ec:ExecutionContext) extends BookstoreDao{
     val bookDelete = sqlu"update Book set deleted = true where id = ${book.id}"
     db.run(bookDelete).map(_ => book.copy(deleted = true))
   }
-}
+}*/

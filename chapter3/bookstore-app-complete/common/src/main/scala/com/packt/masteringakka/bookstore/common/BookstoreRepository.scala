@@ -5,16 +5,16 @@ import akka.actor.ActorSystem
 import com.typesafe.config.Config
 
 /**
- * Base dao to use for other daos in the bookstore app
+ * Base DDD repository trait to use for other repositories in the bookstore app
  */
-trait BookstoreDao{
+trait BookstoreRepository{
   import slick.driver.PostgresDriver.api._
   def db = PostgresDb.db  
 
   /**
-   * Defines some helpers to use in daos
+   * Defines some helpers to use in repos
    */
-  object DaoHelpers{
+  object RepoHelpers{
     
     /**
      * Adds a method to easily convert from util.Date to sql.Date 

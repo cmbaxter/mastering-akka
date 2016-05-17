@@ -1,7 +1,6 @@
 package com.packt.masteringakka.bookstore.credit
 
 import akka.actor._
-import com.packt.masteringakka.bookstore.common.BookstoreDao
 import scala.concurrent.ExecutionContext
 import slick.driver.PostgresDriver.api._
 import slick.dbio.DBIOAction
@@ -11,6 +10,7 @@ import dispatch._
 import org.json4s._
 import org.json4s.native.Serialization
 import org.json4s.native.Serialization.{read, write}
+import com.packt.masteringakka.bookstore.common.BookstoreRepository
 
 /**
  * Companion to the CreditCardTransactionHandler actor
@@ -62,8 +62,8 @@ class CreditCardTransactionHandler extends BookStoreActor{
 /**
  * Doa class for performing Postgres actions related to credit card processing
  */
-class CreditCardTransactionHandlerDao(implicit ec:ExecutionContext) extends BookstoreDao{
-  import DaoHelpers._
+class CreditCardTransactionHandlerDao(implicit ec:ExecutionContext) extends BookstoreRepository{
+  import RepoHelpers._
   
   /**
    * Creates a new credit card transaction record in the db

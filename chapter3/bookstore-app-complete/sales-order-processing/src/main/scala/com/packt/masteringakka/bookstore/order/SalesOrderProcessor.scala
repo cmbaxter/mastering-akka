@@ -8,9 +8,8 @@ import com.packt.masteringakka.bookstore.common._
 import java.util.NoSuchElementException
 import scala.concurrent.Future
 import com.packt.masteringakka.bookstore.user.BookstoreUser
-import com.packt.masteringakka.bookstore.inventory.Book
+import com.packt.masteringakka.bookstore.inventory.BookVO
 import com.packt.masteringakka.bookstore.user.FindUserById
-import com.packt.masteringakka.bookstore.inventory.FindBook
 import com.packt.masteringakka.bookstore.credit.ChargeCreditCard
 import com.packt.masteringakka.bookstore.credit.CreditCardTransaction
 import com.packt.masteringakka.bookstore.credit.CreditTransactionStatus
@@ -37,7 +36,7 @@ object SalesOrderProcessor{
     bookMgr:Option[ActorRef] = None, creditHandler:Option[ActorRef] = None) extends InputsData
 
   case class ResolvedDependencies(inputs:Inputs, expectedBooks:Set[Int], 
-    user:Option[BookstoreUser], books:Map[Int, Book], userMgr:ActorRef, 
+    user:Option[BookstoreUser], books:Map[Int, BookVO], userMgr:ActorRef, 
     bookMgr:ActorRef, creditHandler:ActorRef) extends InputsData
 
   case class LookedUpData(inputs:Inputs, user:BookstoreUser, 
@@ -62,11 +61,11 @@ class SalesOrderProcessor extends FSM[SalesOrderProcessor.State, SalesOrderProce
   import concurrent.duration._
   import context.dispatcher
   
-  val dao = new SalesOrderProcessorDao
+  //val dao = new SalesOrderProcessorDao
   
   startWith(Idle, Uninitialized)
   
-  when(Idle){
+  /*when(Idle){
     case Event(req:CreateOrder, _) =>
       lookup(BookMgrName ) ! Identify(ResolutionIdent.Book)
       lookup(UserManagerName ) ! Identify(ResolutionIdent.User )
@@ -245,5 +244,5 @@ class SalesOrderProcessorDao(implicit ec:ExecutionContext) extends BookstoreDao{
       recoverWith{
         case ex:NoSuchElementException => Future.failed(new InventoryNotAvailaleException)
       }
-  }
+  }*/
 }
