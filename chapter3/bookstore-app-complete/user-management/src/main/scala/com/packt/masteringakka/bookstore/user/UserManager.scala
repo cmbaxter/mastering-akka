@@ -6,7 +6,6 @@ import slick.jdbc.GetResult
 import java.util.Date
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import com.packt.masteringakka.bookstore.common.BookStoreActor
 
 /**
  * Companion to the UserManager service actor
@@ -21,12 +20,16 @@ object UserManager{
 /**
  * Service actor for managing users
  */
-class UserManager extends BookStoreActor{
+class UserManager extends BookstoreActor{
   import akka.pattern.pipe
   import UserManager._
   import context.dispatcher
   
-  val dao = new UserManagerDao
+  
+  def receive = {
+    case _ =>
+  }
+  /*val dao = new UserManagerDao
   
   //PF that will be used to recover from a non unique email exception to a Failure that reflects that failed validation
   val recoverEmailCheck:PartialFunction[Throwable, ServiceResult[_]] = {
@@ -100,13 +103,13 @@ class UserManager extends BookStoreActor{
         dao.updateUserInfo(updated).map(Some.apply)
       }.
       getOrElse(Future.successful(None))
-      
+  */
 }
 
 /**
  * Companion object for the UserManagerDao
  */
-object UserManagerDao{
+/*object UserManagerDao{
   val SelectFields = "select id, firstName, lastName, email, createTs, modifyTs from StoreUser " 
   implicit val GetUser = GetResult{r => BookstoreUser(r.<<, r.<<, r.<<, r.<<, r.nextTimestamp, r.nextTimestamp)}
 }
@@ -176,4 +179,4 @@ class UserManagerDao(implicit ec:ExecutionContext) extends BookstoreRepository{
   def deleteUser(user:BookstoreUser) = {
     db.run(sqlu"delete from StoreUser where id = ${user.id}").map(_ => user.copy(deleted = true))
   }
-}
+}*/

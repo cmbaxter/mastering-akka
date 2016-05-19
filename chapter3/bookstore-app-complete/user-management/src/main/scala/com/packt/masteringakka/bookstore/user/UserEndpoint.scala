@@ -11,33 +11,34 @@ import io.netty.channel.ChannelHandler.Sharable
  * Http endpoint class for performing user related actions
  */
 @Sharable
-class UserEndpoint(userManager:ActorRef)(implicit val ec:ExecutionContext) extends BookstorePlan{
+class UserEndpoint(crm:ActorRef)(implicit val ec:ExecutionContext) extends BookstorePlan{
   import akka.pattern.ask
+  import CustomerRelationsManager._
   
   /** Unfiltered param for email address */
   object EmailParam extends Params.Extract("email", Params.first ~> Params.nonempty)
   
   def intent = {
     case req @ GET(Path(Seg("api" :: "user" :: IntPathElement(userId) :: Nil))) =>
-      val f = (userManager ? FindUserById(userId))
+      val f = (crm ? FindUserById(userId))
       respond(f, req)
       
     case req @ GET(Path(Seg("api" :: "user" :: Nil))) & Params(EmailParam(email)) =>
-      val f = (userManager ? FindUserByEmail(email))
+      val f = (crm ? FindUserByEmail(email))
       respond(f, req)      
     
     case req @ POST(Path(Seg("api" :: "user" :: Nil))) =>
-      val input = parseJson[UserInput](Body.string(req))
-      val f = (userManager ? CreateUser(input))
+      val input = parseJson[BookstoreUser.UserInput](Body.string(req))
+      val f = (crm ? CreateUser(input))
       respond(f, req)
       
     case req @ PUT(Path(Seg("api" :: "user" :: IntPathElement(userId) :: Nil))) =>
-      val input = parseJson[UserInput](Body.string(req))
-      val f = (userManager ? UpdateUserInfo(userId, input))
+      val input = parseJson[BookstoreUser.UserInput](Body.string(req))
+      val f = (crm ? UpdateUserInfo(userId, input))
       respond(f, req) 
       
     case req @ DELETE(Path(Seg("api" :: "user" :: IntPathElement(userId) :: Nil))) =>
-      val f = (userManager ? DeleteUser(userId))
-      respond(f, req)       
+      val f = (crm ? DeleteUser(userId))
+      respond(f, req)   
   }
 }

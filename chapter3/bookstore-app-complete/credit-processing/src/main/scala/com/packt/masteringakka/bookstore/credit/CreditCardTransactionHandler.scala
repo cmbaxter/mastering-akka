@@ -5,7 +5,7 @@ import scala.concurrent.ExecutionContext
 import slick.driver.PostgresDriver.api._
 import slick.dbio.DBIOAction
 import java.util.Date
-import com.packt.masteringakka.bookstore.common.BookStoreActor
+import com.packt.masteringakka.bookstore.common.BookstoreActor
 import dispatch._
 import org.json4s._
 import org.json4s.native.Serialization
@@ -27,7 +27,7 @@ object CreditCardTransactionHandler{
 /**
  * Service actor for processing credit card transactions
  */
-class CreditCardTransactionHandler extends BookStoreActor{
+class CreditCardTransactionHandler extends BookstoreActor{
   import akka.pattern.pipe
   import context.dispatcher  
   import CreditCardTransactionHandler._

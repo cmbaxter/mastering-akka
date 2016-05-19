@@ -3,6 +3,7 @@ package com.packt.masteringakka.bookstore.inventory
 import com.packt.masteringakka.bookstore.common.BookstoreRepository
 import slick.jdbc.GetResult
 import scala.concurrent.ExecutionContext
+import com.packt.masteringakka.bookstore.common.EntityRepository
 
 /**
  * Companion to the BookRepository class
@@ -14,19 +15,11 @@ object BookRepository{
 /**
  * DDD repository class for accessing the persistent storage of books
  */
-class BookRepository(implicit ec:ExecutionContext) extends BookstoreRepository{
+class BookRepository(implicit ec:ExecutionContext) extends EntityRepository[BookVO]{
   import slick.driver.PostgresDriver.api._  
   import BookRepository._
   import RepoHelpers._
   import slick.dbio._
-  
-  /**
-   * Check if an id for a book is valid
-   * @param id The id of the book to check
-   * @return a Future for Boolean that will be true when it exists
-   */
-  def bookExists(id:Int) = 
-    db.run(sql"select id from Book where id = $id and not deleted".as[Int]).map(v => !v.isEmpty)
   
   /**
    * Finds the ids of books that have all of the supplied tags on them
@@ -54,7 +47,7 @@ class BookRepository(implicit ec:ExecutionContext) extends BookstoreRepository{
    * @param id The id to load
    * @return a Future for an Option[Book]
    */
-  def loadBook(id:Int) = {
+  def loadEntity(id:Int) = {
     val query = sql"""
       select b.id, b.title, b.author, array_to_string(array_agg(t.tag), ',') as tags, b.cost, b.inventoryAmount, b.createTs, b.modifyTs
       from Book b left join BookTag t on b.id = t.bookId where id = $id and not b.deleted group by b.id   
@@ -67,7 +60,7 @@ class BookRepository(implicit ec:ExecutionContext) extends BookstoreRepository{
    * @param book The book to create
    * @return a Future for a Book with the new id assigned
    */
-  def persistBook(book:BookVO) = {
+  def persistEntity(book:BookVO) = {
     val insert = 
       sqlu"""
         insert into Book (title, author, cost, inventoryamount, createts) 
@@ -126,7 +119,7 @@ class BookRepository(implicit ec:ExecutionContext) extends BookstoreRepository{
    * @param book the book to delete
    * @return a Future representing the number of rows modified
    */
-  def deleteBook(id:Int) = {
+  def deleteEntity(id:Int) = {
     val bookDelete = sqlu"update Book set deleted = true where id = $id"
     db.run(bookDelete)
   }

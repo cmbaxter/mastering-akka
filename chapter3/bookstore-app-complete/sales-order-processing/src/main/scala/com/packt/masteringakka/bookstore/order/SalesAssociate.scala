@@ -1,31 +1,31 @@
 package com.packt.masteringakka.bookstore.order
 
 import akka.actor._
-import com.packt.masteringakka.bookstore.common.BookStoreActor
 import slick.jdbc.GetResult
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import concurrent.duration._
-import com.packt.masteringakka.bookstore.common.BookstoreRepository
+import com.packt.masteringakka.bookstore.common._
 
 /**
  * Companion to the SalesOrderManager service
  */
-object SalesOrderManager{
-  val Name = "order-manager"
-  def props = Props[SalesOrderManager]
-  
-  val BookMgrName = "book-manager" 
+object SalesAssociate{
+  val Name = "sales-associate"
+  def props = Props[SalesAssociate]
+   
   val ResolveTimeout = 5 seconds
 }
 
 /**
  * Service for performing actions related to sales orders
  */
-class SalesOrderManager extends BookStoreActor{
-  import SalesOrderManager._
+class SalesAssociate extends BookstoreActor with EntityLookupDelegate[SalesOrderVO]{
+  import SalesAssociate._
   import context.dispatcher
   val dao = new SalesOrderManagerDao
+  
+  def entityProps(id:Int) = SalesOrderAggregate.props(id)
   
   //TODO: Refactor to a bad future driven actor and update chapter 1
   def receive = {
@@ -44,9 +44,8 @@ class SalesOrderManager extends BookStoreActor{
       pipeResponse(result)      
     
     case req:CreateOrder =>
-      log.info("Creating new sales order processor and forwarding request")
-      val proc = context.actorOf(SalesOrderProcessor.props)
-      proc forward req      
+      val agg = lookupOrCreateChild(0)
+      agg.forward(req)
   }
   
   /**

@@ -1,6 +1,6 @@
 package com.packt.masteringakka.bookstore.inventory
 
-import com.packt.masteringakka.bookstore.common.BookStoreActor
+import com.packt.masteringakka.bookstore.common.BookstoreActor
 import akka.actor.Props
 import akka.actor.ActorRef
 import com.packt.masteringakka.bookstore.common.ServiceResult
@@ -8,6 +8,7 @@ import akka.util.Timeout
 import scala.concurrent.Future
 import com.packt.masteringakka.bookstore.common.FullResult
 import java.util.Date
+import com.packt.masteringakka.bookstore.common.EntityLookupDelegate
 
 /**
  * Companion to the InventoryClerk actor where the vocab is defined 
@@ -33,8 +34,9 @@ object InventoryClerk{
 /**
  * Aggregate root actor for managing the book entities 
  */
-class InventoryClerk extends BookStoreActor{
+class InventoryClerk extends BookstoreActor with EntityLookupDelegate[BookVO]{
   import InventoryClerk._
+  import com.packt.masteringakka.bookstore.common.EntityActor._
   import context.dispatcher
   val repo = new BookRepository
   
@@ -42,7 +44,7 @@ class InventoryClerk extends BookStoreActor{
     case FindBook(id) =>
       log.info("Finding book {}", id)
       val book = lookupOrCreateChild(id)
-      book.forward(Book.GetValueObject)
+      book.forward(GetValueObject)
       
     case FindBooksByTags(tags) =>
       log.info("Finding books for tags {}", tags)
@@ -69,7 +71,7 @@ class InventoryClerk extends BookStoreActor{
       persistOperation(id, Book.RemoveTag(tag))
       
     case RemoveBookFromCatalog(id) =>
-      persistOperation(id, Book.Delete)
+      persistOperation(id, Delete)
   }
   
   def multiBookLookup(f: => Future[Vector[Int]]) = {
@@ -82,28 +84,5 @@ class InventoryClerk extends BookStoreActor{
     }    
   }  
   
-  def persistOperation(id:Int, msg:Any){
-    val book = lookupOrCreateChild(id)
-    book.forward(msg)    
-  }
-  
-  def askForVo(bookActor:ActorRef) = {
-    import akka.pattern.ask
-    import concurrent.duration._
-    implicit val timeout = Timeout(5 seconds)
-    (bookActor ? Book.GetValueObject).mapTo[ServiceResult[BookVO]]
-  }
-  
-  def lookupOrCreateChild(id:Int) = {
-    val name = bookActorName(id)
-    context.child(name).getOrElse{
-      log.info("Creating new Book actor to handle a request for id {}", id)
-      if (id > 0)
-        context.actorOf(Book.props(id), name)
-      else
-        context.actorOf(Book.props(id))
-    }
-  }
-  
-  def bookActorName(id:Int) = s"book-$id"
+  def entityProps(id:Int) = Book.props(id)
 }

@@ -10,7 +10,7 @@ class UserBoot extends Bootstrap{
   def bootup(system:ActorSystem) = {
     import system.dispatcher
     
-    val userManager = system.actorOf(UserManager.props, UserManager.Name)
-    List(new UserEndpoint(userManager))
+    val crm = system.actorOf(CustomerRelationsManager.props, CustomerRelationsManager.Name)
+    List(new UserEndpoint(crm))
   }
 }

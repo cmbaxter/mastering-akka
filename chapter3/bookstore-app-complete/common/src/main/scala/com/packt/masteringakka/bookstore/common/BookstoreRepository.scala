@@ -3,6 +3,7 @@ package com.packt.masteringakka.bookstore.common
 import java.util.Date
 import akka.actor.ActorSystem
 import com.typesafe.config.Config
+import scala.concurrent.Future
 
 /**
  * Base DDD repository trait to use for other repositories in the bookstore app
@@ -35,6 +36,32 @@ trait BookstoreRepository{
    * @return a DBIOAction used to select the last id val
    */
   def lastIdSelect(table:String) = sql"select currval('#${table}_id_seq')".as[Int]
+}
+
+/**
+ * Extension for BookstoreRepository for dealing with entity types
+ */
+trait EntityRepository[VO <: ValueObject[VO]] extends BookstoreRepository{
+  /**
+   * Load the entity from the repo
+   * @param id The id of the entity
+   * @return a Future wrapping an optional value object
+   */
+  def loadEntity(id:Int):Future[Option[VO]]
+  
+  /**
+   * Save the entity to the repo
+   * @param vo The value object representation of the entity
+   * @return a Future wrapping the number of rows updated
+   */
+  def persistEntity(vo:VO):Future[Int]
+  
+  /**
+   * Delete the entity from the repo
+   * @param id The id of the entity to delete
+   * @return a Future wrapping the number of rows updated
+   */
+  def deleteEntity(id:Int):Future[Int]
 }
 
 object PostgresDb{
