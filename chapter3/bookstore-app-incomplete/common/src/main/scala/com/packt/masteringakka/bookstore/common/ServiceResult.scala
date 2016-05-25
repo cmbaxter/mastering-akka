@@ -66,6 +66,16 @@ object FailureType extends Enumeration{
 case class ErrorMessage(code:String, shortText:Option[String] = None, params:Option[Map[String,String]] = None)
 
 /**
+ * Companion to ErrorMessage
+ */
+object ErrorMessage{
+  /**
+   * Common error where an operation is requested on an entity that does not exist
+   */
+  val InvalidEntityId = ErrorMessage("invalid.entity.id", Some("No matching entity found"))
+}
+
+/**
  * Failed (negative) result from a call to a service with fields for what type as well as the error message
  * and optionally a stack trace
  */

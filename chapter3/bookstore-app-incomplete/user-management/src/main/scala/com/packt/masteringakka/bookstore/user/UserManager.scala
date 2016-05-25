@@ -6,7 +6,7 @@ import slick.jdbc.GetResult
 import java.util.Date
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import com.packt.masteringakka.bookstore.common.BookStoreActor
+import com.packt.masteringakka.bookstore.common.BookstoreActor
 
 /**
  * Companion to the UserManager service actor
@@ -21,7 +21,7 @@ object UserManager{
 /**
  * Service actor for managing users
  */
-class UserManager extends BookStoreActor{
+class UserManager extends BookstoreActor{
   import akka.pattern.pipe
   import UserManager._
   import context.dispatcher
@@ -114,8 +114,8 @@ object UserManagerDao{
 /**
  * Dao class for interacting with Postgres to perform user related actions
  */
-class UserManagerDao(implicit ec:ExecutionContext) extends BookstoreDao{
-  import DaoHelpers._
+class UserManagerDao(implicit ec:ExecutionContext) extends BookstoreRepository{
+  import RepoHelpers._
   import UserManagerDao._
   import slick.driver.PostgresDriver.api._
   

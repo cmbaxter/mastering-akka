@@ -55,7 +55,11 @@ trait BookstorePlan extends async.Plan with ServerErrorResponse{
         
       //Got an EmptyResult which will become a 404 with json indicating the not found
       case util.Success(EmptyResult) =>
-        resp.respond(asJson(ApiResponse(ApiResonseMeta(NotFound.code, Some(ErrorMessage("notfound")))), NotFound))  
+        resp.respond(asJson(ApiResponse(ApiResonseMeta(NotFound.code, Some(ErrorMessage("notfound")))), NotFound)) 
+        
+      //Got an InvalidEntityError, that will translate into a 404
+      case util.Success(Failure(FailureType.Validation, ErrorMessage.InvalidEntityId, _)) =>
+        resp.respond(asJson(ApiResponse(ApiResonseMeta(NotFound.code, Some(ErrorMessage("notfound")))), NotFound))         
         
       //Got a Failure.  Will either be a 400 for a validation fail or a 500 for everything else
       case util.Success(fail:Failure) =>

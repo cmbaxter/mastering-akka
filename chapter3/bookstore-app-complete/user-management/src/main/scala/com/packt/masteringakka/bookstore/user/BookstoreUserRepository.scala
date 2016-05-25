@@ -6,23 +6,23 @@ import slick.jdbc.GetResult
 
 object BookstoreUserRepository{  
   val SelectFields = "select id, firstName, lastName, email, createTs, modifyTs from StoreUser " 
-  implicit val GetUser = GetResult{r => BookstoreUserVO(r.<<, r.<<, r.<<, r.<<, r.nextTimestamp, r.nextTimestamp)}  
+  implicit val GetUser = GetResult{r => BookstoreUserFO(r.<<, r.<<, r.<<, r.<<, r.nextTimestamp, r.nextTimestamp)}  
 }
 
 /**
  * Repository class for BookstoreUsers
  */
-class BookstoreUserRepository(implicit ec:ExecutionContext) extends EntityRepository[BookstoreUserVO]{
+class BookstoreUserRepository(implicit ec:ExecutionContext) extends EntityRepository[BookstoreUserFO]{
   import BookstoreUserRepository._
   import RepoHelpers._
   import slick.driver.PostgresDriver.api._  
   
   def loadEntity(id:Int) = {
     db.
-      run(sql"#$SelectFields where id = $id and not deleted".as[BookstoreUserVO]).
+      run(sql"#$SelectFields where id = $id and not deleted".as[BookstoreUserFO]).
       map(_.headOption)
   }
-  def persistEntity(user:BookstoreUserVO) = {
+  def persistEntity(user:BookstoreUserFO) = {
     val insert = sqlu"""
       insert into StoreUser (firstName, lastName, email, createTs, modifyTs) 
       values (${user.firstName}, ${user.lastName}, ${user.email}, ${user.createTs.toSqlDate}, ${user.modifyTs.toSqlDate})
@@ -53,7 +53,7 @@ class BookstoreUserRepository(implicit ec:ExecutionContext) extends EntityReposi
    * @param user The user to update
    * @return a Future for a Int representing the number of updated records
    */
-  def updateUserInfo(user:BookstoreUserVO) = {
+  def updateUserInfo(user:BookstoreUserFO) = {
     val update = sqlu"""
       update StoreUser set firstName = ${user.firstName}, 
       lastName = ${user.lastName}, email = ${user.email} where id = ${user.id}  

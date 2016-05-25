@@ -1,7 +1,6 @@
 package com.packt.masteringakka.bookstore.user
 
 import java.util.Date
-import com.packt.masteringakka.bookstore.common.ValueObject
 import com.packt.masteringakka.bookstore.common.EntityActor
 import com.packt.masteringakka.bookstore.common.BookstoreRepository
 import scala.concurrent.Future
@@ -9,9 +8,10 @@ import akka.actor.Props
 import com.packt.masteringakka.bookstore.common.Failure
 import com.packt.masteringakka.bookstore.common.FailureType
 import com.packt.masteringakka.bookstore.common.ErrorMessage
+import com.packt.masteringakka.bookstore.common.EntityFieldsObject
 
-case class BookstoreUserVO(id:Int, firstName:String, lastName:String, 
-  email:String, createTs:Date, modifyTs:Date, deleted:Boolean = false) extends ValueObject[BookstoreUserVO]{
+case class BookstoreUserFO(id:Int, firstName:String, lastName:String, 
+  email:String, createTs:Date, modifyTs:Date, deleted:Boolean = false) extends EntityFieldsObject[BookstoreUserFO]{
   def assignId(id:Int) = this.copy(id = id)
   def markDeleted = this.copy(deleted = true)
 }
@@ -24,7 +24,7 @@ object BookstoreUser{
   def props(id:Int) = Props(classOf[BookstoreUser], id)
 }
 
-class BookstoreUser(idInput:Int) extends EntityActor[BookstoreUserVO](idInput){
+class BookstoreUser(idInput:Int) extends EntityActor[BookstoreUserFO](idInput){
   import BookstoreUser._
   import EntityActor._
   import akka.pattern.pipe
@@ -37,7 +37,7 @@ class BookstoreUser(idInput:Int) extends EntityActor[BookstoreUserVO](idInput){
   
   //Overriding this to add email unique check first
   override def customCreateHandling:StateFunction = {
-    case Event(vo:BookstoreUserVO, _) =>
+    case Event(vo:BookstoreUserFO, _) =>
       val checkFut = emailUnique(vo.email)
       checkFut.
         map(b => FinishCreate(vo)).
@@ -47,14 +47,14 @@ class BookstoreUser(idInput:Int) extends EntityActor[BookstoreUserVO](idInput){
   
   def initializedHandling:StateFunction = {
     case Event(UpdatePersonalInfo(input), data:InitializedData) =>
-      val newVo = data.vo.copy(firstName = input.firstName, lastName = input.lastName, email = input.email)
+      val newFo = data.fo.copy(firstName = input.firstName, lastName = input.lastName, email = input.email)
       val persistFut = 
         for{
-          _ <- emailUnique(input.email, Some(data.vo.id)) 
-          updated <- repo.updateUserInfo(newVo)
+          _ <- emailUnique(input.email, Some(data.fo.id)) 
+          updated <- repo.updateUserInfo(newFo)
         } yield updated
-      requestVoForSender
-      persist(data.vo, persistFut, id => newVo)
+      requestFoForSender
+      persist(data.fo, persistFut, id => newFo)
   }
   
   /**

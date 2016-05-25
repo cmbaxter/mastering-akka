@@ -11,7 +11,7 @@ class InventoryBoot extends Bootstrap{
 
   def bootup(system:ActorSystem) = {
     import system.dispatcher    
-    val bookManager = system.actorOf(BookManager.props, BookManager.Name)    
-    List(new BookEndpoint(bookManager))
+    val inventoryClerk = system.actorOf(InventoryClerk.props, InventoryClerk.Name)    
+    List(new InventoryEndpoint(inventoryClerk))
   }
 }

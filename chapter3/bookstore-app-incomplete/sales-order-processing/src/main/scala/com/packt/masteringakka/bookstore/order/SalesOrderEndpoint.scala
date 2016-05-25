@@ -16,8 +16,10 @@ import org.json4s.ext.EnumNameSerializer
  * Http endpoint class for sales order related actions
  */
 @Sharable
-class SalesOrderEndpoint(salesHandler:ActorRef)(implicit val ec:ExecutionContext) extends BookstorePlan{
+class SalesOrderEndpoint(salesAssociate:ActorRef)(implicit val ec:ExecutionContext) extends BookstorePlan{
   import akka.pattern.ask
+  import SalesAssociate._
+  import SalesOrder._
   
   override def additionalSerializers = List(new EnumNameSerializer(SalesOrderStatus))
   
@@ -32,24 +34,24 @@ class SalesOrderEndpoint(salesHandler:ActorRef)(implicit val ec:ExecutionContext
   
   def intent = {
     case req @ GET(Path(Seg("api" :: "order" :: IntPathElement(id) :: Nil))) =>
-      val f = (salesHandler ? FindOrderById(id))
+      val f = (salesAssociate ? FindOrderById(id))
       respond(f, req)
       
     case req @ GET(Path(Seg("api" :: "order" :: Nil))) & Params(UserIdParam(userId)) =>
-      val f = (salesHandler ? FindOrdersForUser(userId))
+      val f = (salesAssociate ? FindOrdersForUser(userId))
       respond(f, req) 
       
     case req @ GET(Path(Seg("api" :: "order" :: Nil))) & Params(BookIdParam(bookId)) =>
-      val f = (salesHandler ? FindOrdersForBook(bookId))
+      val f = (salesAssociate ? FindOrdersForBook(bookId))
       respond(f, req) 
       
     case req @ GET(Path(Seg("api" :: "order" :: Nil))) & Params(BookTagParam(tag)) =>
-      val f = (salesHandler ? FindOrdersForBookTag(tag))
+      val f = (salesAssociate ? FindOrdersForBookTag(tag))
       respond(f, req)       
     
     case req @ POST(Path(Seg("api" :: "order" :: Nil))) =>
       val createReq = parseJson[CreateOrder](Body.string(req))
-      val f = (salesHandler ? createReq)
+      val f = (salesAssociate ? createReq)
       respond(f, req)          
   }
 }

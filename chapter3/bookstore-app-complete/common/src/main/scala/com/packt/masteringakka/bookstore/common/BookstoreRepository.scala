@@ -41,20 +41,20 @@ trait BookstoreRepository{
 /**
  * Extension for BookstoreRepository for dealing with entity types
  */
-trait EntityRepository[VO <: ValueObject[VO]] extends BookstoreRepository{
+trait EntityRepository[FO <: EntityFieldsObject[FO]] extends BookstoreRepository{
   /**
    * Load the entity from the repo
    * @param id The id of the entity
-   * @return a Future wrapping an optional value object
+   * @return a Future wrapping an optional fields object
    */
-  def loadEntity(id:Int):Future[Option[VO]]
+  def loadEntity(id:Int):Future[Option[FO]]
   
   /**
    * Save the entity to the repo
-   * @param vo The value object representation of the entity
+   * @param vo The fields object representation of the entity
    * @return a Future wrapping the number of rows updated
    */
-  def persistEntity(vo:VO):Future[Int]
+  def persistEntity(fo:FO):Future[Int]
   
   /**
    * Delete the entity from the repo

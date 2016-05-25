@@ -29,7 +29,7 @@ class UserEndpoint(crm:ActorRef)(implicit val ec:ExecutionContext) extends Books
     
     case req @ POST(Path(Seg("api" :: "user" :: Nil))) =>
       val input = parseJson[BookstoreUser.UserInput](Body.string(req))
-      val f = (crm ? CreateUser(input))
+      val f = (crm ? SignupNewUser(input))
       respond(f, req)
       
     case req @ PUT(Path(Seg("api" :: "user" :: IntPathElement(userId) :: Nil))) =>
@@ -38,7 +38,7 @@ class UserEndpoint(crm:ActorRef)(implicit val ec:ExecutionContext) extends Books
       respond(f, req) 
       
     case req @ DELETE(Path(Seg("api" :: "user" :: IntPathElement(userId) :: Nil))) =>
-      val f = (crm ? DeleteUser(userId))
+      val f = (crm ? RemoveUser(userId))
       respond(f, req)   
   }
 }
