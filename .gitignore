@@ -5,3 +5,4 @@ target/
 .classpath
 .DS_Store
 **/*.DS_Store
+**/server.log
