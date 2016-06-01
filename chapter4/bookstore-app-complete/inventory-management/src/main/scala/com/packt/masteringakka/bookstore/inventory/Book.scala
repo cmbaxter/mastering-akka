@@ -6,54 +6,21 @@ import java.util.Date
 import akka.actor.ReceiveTimeout
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import com.packt.masteringakka.bookstore.common.EntityFieldsObject
-import com.packt.masteringakka.bookstore.common.EntityActor
-import com.packt.masteringakka.bookstore.common.FailureType
-import com.packt.masteringakka.bookstore.common.Failure
-import com.packt.masteringakka.bookstore.common.ErrorMessage
-import com.packt.masteringakka.bookstore.common.PersistentEntity
-import com.packt.masteringakka.bookstore.common.EntityEvent
+import com.packt.masteringakka.bookstore.common._
 
 object BookFO{
-  def empty = BookFO("", "", "", Nil, 0.0, 0, new Date(0), new Date(0))
+  def empty = BookFO("", "", "", Nil, 0.0, 0, new Date(0))
 }
 
 /**
  * Value object representation of a Book
  */
 case class BookFO(id:String, title:String, author:String, tags:List[String], cost:Double, 
-  inventoryAmount:Int, createTs:Date, modifyTs:Date, deleted:Boolean = false) extends EntityFieldsObject[String, BookFO]{
+  inventoryAmount:Int, createTs:Date, deleted:Boolean = false) extends EntityFieldsObject[String, BookFO]{
   def assignId(id:String) = this.copy(id = id)
   def markDeleted = this.copy(deleted = true)
 }
 
-/**
- * Companion to the Book entity where the vocab is defined
- */
-private [bookstore] object Book{
-  
-  object Command{
-    case class CreateBook(book:BookFO)
-    case class AddTag(tag:String)
-    case class RemoveTag(tag:String)
-    case class AddInventory(amount:Int)
-    case class AllocateInventory(orderId:Int, amount:Int)
-  }
-  
-  object Event{
-    case class BookCreated(book:BookFO) extends EntityEvent
-    case class TagAdded(tag:String) extends EntityEvent
-    case class TagRemoved(tag:String) extends EntityEvent
-    case class InventoryAdded(amount:Int) extends EntityEvent
-    case class InventoryAllocated(orderId:Int, amount:Int) extends EntityEvent
-    case class InventoryBackordered(orderId:Int) extends EntityEvent
-    case class BookDeleted(id:String) extends EntityEvent
-  }
-
-  def props(id:String) = Props(classOf[Book], id)
-  
-  def BookAlreadyCreated = ErrorMessage("book.alreadyexists", Some("This book has already been created and can not handle another CreateBook request"))
-}
 
 /**
  * Entity class representing a Book within the bookstore app
@@ -65,6 +32,7 @@ private[inventory] class Book(id:String) extends PersistentEntity[BookFO](id){
   import PersistentEntity._
   
   def initialState = BookFO.empty
+  override def snapshotAfterCount = Some(5)
   
   def additionalCommandHandling:Receive = {
     case CreateBook(book) =>
@@ -104,6 +72,11 @@ private[inventory] class Book(id:String) extends PersistentEntity[BookFO](id){
       persist(fo, repo.allocateInventory(fo.id, amount), _ => fo.copy(inventoryAmount = fo.inventoryAmount - amount))*/       
   }
   
+  def isCreateMessage(cmd:Any) = cmd match{
+    case cr:CreateBook => true
+    case _ => false
+  }
+  
   override def newDeleteEvent = Some(BookDeleted(id))
   
   
@@ -119,4 +92,141 @@ private[inventory] class Book(id:String) extends PersistentEntity[BookFO](id){
     case BookDeleted(id) =>
       state = state.markDeleted
   }
+}
+
+/**
+ * Companion to the Book entity where the vocab is defined
+ */
+object Book{ 
+  import collection.JavaConversions._
+  object Command{
+    case class CreateBook(book:BookFO)
+    case class AddTag(tag:String)
+    case class RemoveTag(tag:String)
+    case class AddInventory(amount:Int)
+    case class AllocateInventory(orderId:Int, amount:Int)
+  }
+  
+  object Event{
+    case class BookCreated(book:BookFO) extends EntityEvent{
+      def toDatamodel = {
+        val bookDM = Datamodel.Book.newBuilder().
+          setId(book.id).
+          setTitle(book.title).
+          setAuthor(book.author).
+          addAllTag(book.tags).
+          setCost(book.cost).
+          setInventoryAmount(book.inventoryAmount).
+          setCreateTs(book.createTs.getTime).
+          setDeleted(book.deleted).
+          build
+          
+        Datamodel.BookCreated.newBuilder.
+          setBook(bookDM).
+          build
+      }
+    }
+    object BookCreated extends DatamodelReader{
+      def fromDatamodel = {
+        case bc:Datamodel.BookCreated =>
+          val bookDm = bc.getBook()
+          val book = BookFO(bookDm.getId(), bookDm.getTitle(), bookDm.getAuthor(),
+            bookDm.getTagList().toList, bookDm.getCost(), bookDm.getInventoryAmount(),
+            new Date(bookDm.getCreateTs()), bookDm.getDeleted())
+          BookCreated(book)
+      }
+    }
+    
+    case class TagAdded(tag:String) extends EntityEvent{
+      def toDatamodel = {
+        Datamodel.TagAdded.newBuilder().
+          setTag(tag).
+          build
+      }
+    }
+    object TagAdded extends DatamodelReader{
+      def fromDatamodel = {
+        case ta:Datamodel.TagAdded =>
+          TagAdded(ta.getTag())
+      }
+    }
+    
+    
+    case class TagRemoved(tag:String) extends EntityEvent{
+      def toDatamodel = {
+        Datamodel.TagRemoved.newBuilder().
+          setTag(tag).
+          build
+      }      
+    }
+    
+    object TagRemoved extends DatamodelReader{
+      def fromDatamodel = {
+        case ta:Datamodel.TagRemoved =>
+          TagRemoved(ta.getTag())
+      }
+    }    
+    
+    case class InventoryAdded(amount:Int) extends EntityEvent{
+      def toDatamodel = {
+        Datamodel.InventoryAdded.newBuilder().
+          setAmount(amount).
+          build
+      }
+    }
+    object InventoryAdded extends DatamodelReader{
+      def fromDatamodel = {
+        case ia:Datamodel.InventoryAdded =>
+          InventoryAdded(ia.getAmount())
+      }
+    }
+    
+    case class InventoryAllocated(orderId:Int, amount:Int) extends EntityEvent{
+      def toDatamodel = {
+        Datamodel.InventoryAllocated.newBuilder().
+          setOrderId(orderId).
+          setAmount(amount).
+          build
+      }
+    }
+    object InventoryAllocated extends DatamodelReader{
+      def fromDatamodel = {
+        case ia:Datamodel.InventoryAllocated =>
+          InventoryAllocated(ia.getOrderId(), ia.getAmount())
+      }
+    }
+    
+    case class InventoryBackordered(orderId:Int) extends EntityEvent{
+      def toDatamodel = {
+        Datamodel.InventoryBackordered.newBuilder().
+          setOrderId(orderId).
+          build
+      }
+    }
+    object InventoryBackordered extends DatamodelReader{
+      def fromDatamodel = {
+        case ib:Datamodel.InventoryBackordered =>
+          InventoryBackordered(ib.getOrderId())
+      }
+    }
+        
+    case class BookDeleted(id:String) extends EntityEvent{
+      def toDatamodel = {
+        Datamodel.BookDeleted.newBuilder().
+          setId(id).
+          build
+          
+      }
+    }
+    object BookDeleted extends DatamodelReader{
+      def fromDatamodel = {
+        case bd:Datamodel.BookDeleted =>
+          BookDeleted(bd.getId())
+      }
+    }
+  }
+
+  def props(id:String) = Props(classOf[Book], id)
+  
+  def BookAlreadyCreated = ErrorMessage("book.alreadyexists", Some("This book has already been created and can not handle another CreateBook request"))
 }

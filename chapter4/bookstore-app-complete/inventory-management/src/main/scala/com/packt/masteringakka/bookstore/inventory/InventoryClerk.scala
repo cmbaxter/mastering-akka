@@ -69,7 +69,7 @@ class InventoryClerk extends PersistentEntityFactory[BookFO, Book]{
     case CatalogNewBook(title, author, tags, cost) =>
       log.info("Cataloging new book with title {}", title)
       val id = UUID.randomUUID().toString()
-      val fo = BookFO(id, title, author, tags, cost, 0, new Date, new Date)
+      val fo = BookFO(id, title, author, tags, cost, 0, new Date)
       val command = Book.Command.CreateBook(fo)
       forwardCommand(id, command)
       

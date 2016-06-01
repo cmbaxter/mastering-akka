@@ -23,8 +23,7 @@ class JsonSerializer extends SerializerWithStringManifest{
     val m = Manifest.classType[AnyRef](Class.forName(manifest))
     val json = new String(bytes, "utf8")
     read[AnyRef](json)(formats, m)
-  }
-  
+  }  
   
   def identifier:Int = 999
   def manifest(o:AnyRef):String = o.getClass.getName
