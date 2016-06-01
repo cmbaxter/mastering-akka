@@ -28,10 +28,10 @@ object WorkMaster {
   case object StartProcessing extends Command
   case object DoWorkerWork extends Command
   final case class IterationCount(count: Long) extends Command
-  def props(workerCount: Int) = Props(classOf[WordCountMaster], workerCount)
+  def props(workerCount: Int) = Props(classOf[WorkMaster], workerCount)
 }
 
-class WordCountMaster(workerCount: Int) extends Actor {
+class WorkMaster(workerCount: Int) extends Actor {
   import WorkMaster._
 
   val workers = context.actorOf(
@@ -90,7 +90,7 @@ object ParallelismExample extends App {
   val workerCount = args.headOption.getOrElse("8").toInt
   println(s"Using $workerCount worker instances")
 
-  val system = ActorSystem("wordcount")
+  val system = ActorSystem("parallelism")
   import system.dispatcher
   sys.addShutdownHook(system.terminate)
 
