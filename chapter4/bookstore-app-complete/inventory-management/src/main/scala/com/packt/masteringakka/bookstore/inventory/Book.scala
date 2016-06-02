@@ -64,12 +64,25 @@ private[inventory] class Book(id:String) extends PersistentEntity[BookFO](id){
       
     case AddInventory(amount) =>
       persist(InventoryAdded(amount))(handleEventAndRespond())
-      
-    
-      
-    /*case Event(AllocateInventory(amount), InitializedData(fo)) =>
-      requestFoForSender
-      persist(fo, repo.allocateInventory(fo.id, amount), _ => fo.copy(inventoryAmount = fo.inventoryAmount - amount))*/       
+                
+    case AllocateInventory(id, amount) =>
+      val event = 
+        if (amount > state.inventoryAmount ){
+          InventoryBackordered(id)
+        } 
+        else{
+          InventoryAllocated(id, amount)           
+        }
+      persist(event){ ev =>
+        ev match{
+          case bo:InventoryBackordered =>
+            handleEvent(ev)
+            sender() ! Failure(FailureType.Validation , InventoryNotAvailError )
+          
+          case _ =>
+            handleEventAndRespond()(ev)
+        }
+      }             
   }
   
   def isCreateMessage(cmd:Any) = cmd match{
@@ -90,7 +103,11 @@ private[inventory] class Book(id:String) extends PersistentEntity[BookFO](id){
     case InventoryAdded(amount) =>
       state = state.copy(inventoryAmount = state.inventoryAmount + amount)
     case BookDeleted(id) =>
-      state = state.markDeleted
+      state = state.markDeleted      
+    case InventoryAllocated(id, amount) =>
+      state = state.copy(inventoryAmount = state.inventoryAmount - amount)
+    case InventoryBackordered(id) =>
+      //nothing to do here
   }
 }
 
@@ -104,7 +121,7 @@ object Book{
     case class AddTag(tag:String)
     case class RemoveTag(tag:String)
     case class AddInventory(amount:Int)
-    case class AllocateInventory(orderId:Int, amount:Int)
+    case class AllocateInventory(orderId:String, amount:Int)
   }
   
   object Event{
@@ -181,7 +198,7 @@ object Book{
       }
     }
     
-    case class InventoryAllocated(orderId:Int, amount:Int) extends EntityEvent{
+    case class InventoryAllocated(orderId:String, amount:Int) extends EntityEvent{
       def toDatamodel = {
         Datamodel.InventoryAllocated.newBuilder().
           setOrderId(orderId).
@@ -196,7 +213,7 @@ object Book{
       }
     }
     
-    case class InventoryBackordered(orderId:Int) extends EntityEvent{
+    case class InventoryBackordered(orderId:String) extends EntityEvent{
       def toDatamodel = {
         Datamodel.InventoryBackordered.newBuilder().
           setOrderId(orderId).
@@ -228,5 +245,6 @@ object Book{
 
   def props(id:String) = Props(classOf[Book], id)
   
-  def BookAlreadyCreated = ErrorMessage("book.alreadyexists", Some("This book has already been created and can not handle another CreateBook request"))
+  val BookAlreadyCreated = ErrorMessage("book.alreadyexists", Some("This book has already been created and can not handle another CreateBook request"))
+  val InventoryNotAvailError = ErrorMessage("inventory.notavailable", Some("Inventory for an item on an order can not be allocated"))
 }

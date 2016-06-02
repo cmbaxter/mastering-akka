@@ -1,7 +1,6 @@
 package com.packt.masteringakka.bookstore.order
 
 import java.util.Date
-import com.packt.masteringakka.bookstore.common.EntityActor
 import akka.actor.ActorRef
 import com.packt.masteringakka.bookstore.user.BookstoreUserFO
 import com.packt.masteringakka.bookstore.inventory.BookFO
@@ -11,12 +10,7 @@ import akka.actor.ActorIdentity
 import akka.actor.FSM
 import com.packt.masteringakka.bookstore.user.CustomerRelationsManager
 import com.packt.masteringakka.bookstore.inventory.InventoryClerk
-import com.packt.masteringakka.bookstore.common.FullResult
-import com.packt.masteringakka.bookstore.common.Failure
-import com.packt.masteringakka.bookstore.common.FailureType
-import com.packt.masteringakka.bookstore.common.ServiceResult
-import com.packt.masteringakka.bookstore.common.ErrorMessage
-import com.packt.masteringakka.bookstore.common.EmptyResult
+import com.packt.masteringakka.bookstore.common._
 import com.packt.masteringakka.bookstore.credit.CreditTransactionStatus
 import akka.actor.Props
 import com.packt.masteringakka.bookstore.credit.CreditCardInfo
@@ -27,32 +21,150 @@ import com.packt.masteringakka.bookstore.credit.CreditAssociate
 object SalesOrderStatus extends Enumeration{
   val InProgress, Approved, BackOrdered, Cancelled = Value
 }
-case class SalesOrderLineItemFO(id:Int, orderId:Int, bookId:Int, quantity:Int, cost:Double, createTs:Date,  modifyTs:Date)
+case class SalesOrderLineItemFO(lineItemNumber:Int, bookId:String, quantity:Int, cost:Double)
 
-case class SalesOrderFO(id:Int, userId:Int, creditTxnId:Int, 
+
+object SalesOrderFO{
+  def empty = SalesOrderFO("", "", "", SalesOrderStatus.InProgress, 0, Nil, new Date(0))
+}
+case class SalesOrderFO(id:String, userId:String, creditTxnId:String, 
     status:SalesOrderStatus.Value, totalCost:Double, 
-    lineItems:List[SalesOrderLineItemFO], createTs:Date, modifyTs:Date, deleted:Boolean = false) extends EntityFieldsObject[Int, SalesOrderFO]{
-    def assignId(id:Int) = this.copy(id = id)
+    lineItems:List[SalesOrderLineItemFO], createTs:Date, deleted:Boolean = false) extends EntityFieldsObject[String, SalesOrderFO]{
+    def assignId(id:String) = this.copy(id = id)
     def markDeleted = this.copy(deleted = true)
+}
+
+/**
+ * Aggregate root for the SalesOrder and SalesOrderLineItem entities
+ */
+class SalesOrder(id:String) extends PersistentEntity[SalesOrderFO](id){
+  import SalesOrder._
+  import Command._
+  import Event._
+  import context.dispatcher
+  
+  def initialState = SalesOrderFO.empty
+  
+  def additionalCommandHandling:Receive = {
+    case co:CreateOrder =>
+      //Kick off the validation process
+      val validator = context.actorOf(SalesOrderCreateValidator.props)
+      validator.forward(co)
+      
+    case CreateValidatedOrder(order) =>
+      //Now we can persist the complete order
+      persist(OrderCreated(order)){ event =>        
+        handleEventAndRespond()(event)
+        
+        //For now, still using akka event bus.  Will fix this in chapter 5
+        val items = state.lineItems.map(i => (i.bookId, i.quantity ))
+        val invevent = InventoryClerk.OrderCreated(state.id, items)
+        context.system.eventStream.publish(invevent)        
+      }
+      
+    case UpdateOrderStatus(status) =>
+      persist(OrderStatusUpdated(status))(handleEvent)
+  }
+  
+  def handleEvent(event:EntityEvent) = event match {
+    case OrderCreated(order) =>
+      state = order
+      
+    case OrderStatusUpdated(status) =>
+      state = state.copy(status = status)
+  }
+  
+  def isCreateMessage(cmd:Any) = cmd match{
+    case co:CreateOrder => true
+    case cvo:CreateValidatedOrder => true
+    case _ => false
+  }  
 }
 
 /**
  * Companion to the SalesOrder aggregate root entity
  */
 object SalesOrder{
-  import EntityActor._
+  import collection.JavaConversions._
   
-  def props(id:Int) = Props(classOf[SalesOrder], id)
+  def props(id:String) = Props(classOf[SalesOrder], id)
   
-  case class LineItemRequest(bookId:Int, quantity:Int)
-  case class CreateOrder(userId:Int, lineItems:List[LineItemRequest], cardInfo:CreditCardInfo)  
-  case class UpdateOrderStatus(status:SalesOrderStatus.Value)
+  case class LineItemRequest(bookId:String, quantity:Int)
   
+  object Command{
+    case class CreateOrder(newOrderId:String, userEmail:String, lineItems:List[LineItemRequest], cardInfo:CreditCardInfo) 
+    case class CreateValidatedOrder(order:SalesOrderFO)
+    case class UpdateOrderStatus(status:SalesOrderStatus.Value)    
+  }
+
+  object Event{
+    case class OrderCreated(order:SalesOrderFO) extends EntityEvent{
+      def toDatamodel = {
+        val lineItemsDm = order.lineItems.map{ item =>
+          Datamodel.SalesOrderLineItem.newBuilder().
+            setBookId(item.bookId).
+            setCost(item.cost ).
+            setQuantity(item.quantity).
+            setLineItemNumber(item.lineItemNumber)
+            .build
+        }
+        val orderDm = Datamodel.SalesOrder.newBuilder().
+          setId(order.id).
+          setCreateTs(order.createTs.getTime).
+          setStatus(order.status.toString).
+          addAllLineItem(lineItemsDm).
+          setUserId(order.userId ).
+          setCreditTxnId(order.creditTxnId).
+          setTotalCost(order.totalCost).
+          build
+        
+        Datamodel.OrderCreated.newBuilder().
+          setOrder(orderDm).
+          build
+      }
+    }
+    object OrderCreated extends DatamodelReader{
+      def fromDatamodel = {
+        case dmo:Datamodel.SalesOrder =>
+          val items = dmo.getLineItemList().map{ item =>
+            SalesOrderLineItemFO(item.getLineItemNumber(), item.getBookId(), item.getQuantity(), item.getCost())
+          }
+          val order = SalesOrderFO(dmo.getId(), dmo.getUserId(), dmo.getCreditTxnId(),
+            SalesOrderStatus.withName(dmo.getStatus()), dmo.getTotalCost(), items.toList, new Date(dmo.getCreateTs()))
+          OrderCreated(order)
+      }
+    }
+    
+    case class OrderStatusUpdated(status:SalesOrderStatus.Value) extends EntityEvent{
+      def toDatamodel = Datamodel.OrderStatusUpdated.newBuilder().
+        setStatus(status.toString).
+        build
+    }    
+    object OrderStatusUpdated extends DatamodelReader{
+      def fromDatamodel = {
+        case dm:Datamodel.OrderStatusUpdated =>
+          OrderStatusUpdated(SalesOrderStatus.withName(dm.getStatus()))
+      }
+    }
+  }
+}
+
+private[order] object SalesOrderCreateValidator{
+  def props = Props[SalesOrderCreateValidator]
+  
+  sealed trait State
+  case object WaitingForRequest extends State
   case object ResolvingDependencies extends State
   case object LookingUpEntities extends State
-  case object ChargingCard extends State
+  case object ChargingCard extends State  
   
-  case class Inputs(originator:ActorRef, request:CreateOrder)
+  sealed trait Data{
+    def inputs:Inputs
+  }
+  case object NoData extends Data{
+    def inputs = Inputs(ActorRef.noSender, null)
+  }
+  case class Inputs(originator:ActorRef, request:SalesOrder.Command.CreateOrder)
   trait InputsData extends Data{
     def inputs:Inputs
     def originator = inputs.originator 
@@ -60,8 +172,8 @@ object SalesOrder{
   case class UnresolvedDependencies(inputs:Inputs, userAssociate:Option[ActorRef] = None, 
     invClerk:Option[ActorRef] = None, creditAssociate:Option[ActorRef] = None) extends InputsData
 
-  case class ResolvedDependencies(inputs:Inputs, expectedBooks:Set[Int], 
-    user:Option[BookstoreUserFO], books:Map[Int, BookFO], userAssociate:ActorRef, 
+  case class ResolvedDependencies(inputs:Inputs, expectedBooks:Set[String], 
+    user:Option[BookstoreUserFO], books:Map[String, BookFO], userAssociate:ActorRef, 
     invClerk:ActorRef, creditAssociate:ActorRef) extends InputsData
 
   case class LookedUpData(inputs:Inputs, user:BookstoreUserFO, 
@@ -79,27 +191,21 @@ object SalesOrder{
   val InventoryNotAvailError = ErrorMessage("order.inventory.notavailable", Some("Inventory for an item on this order is no longer available"))  
 }
 
-/**
- * Aggregate root for the SalesOrder and SalesOrderLineItem entities
- */
-class SalesOrder(idInput:Int) extends EntityActor[SalesOrderFO](idInput){
-  import SalesOrder._
-  import SalesOrderRepository._
-  import EntityActor._
-  import context.dispatcher
+private[order] class SalesOrderCreateValidator extends FSM[SalesOrderCreateValidator.State, SalesOrderCreateValidator.Data]{
+  import SalesOrderCreateValidator._
+  import SalesOrder.Command._
   
-  val repo = new SalesOrderRepository
-  val errorMapper:ErrorMapper = PartialFunction.empty
+  startWith(WaitingForRequest, NoData)
   
-  override def customCreateHandling:StateFunction = {
-    case Event(req:CreateOrder, _) =>
-      lookup(InventoryClerk.Name  ) ! Identify(ResolutionIdent.Book)
+  when(WaitingForRequest){
+    case Event(request:CreateOrder, _) =>
+      lookup(InventoryClerk.Name) ! Identify(ResolutionIdent.Book)
       lookup(CustomerRelationsManager.Name) ! Identify(ResolutionIdent.User )
-      lookup(CreditAssociate.Name ) ! Identify(ResolutionIdent.Credit)
-      goto(ResolvingDependencies) using UnresolvedDependencies(Inputs(sender(), req))      
+      lookup(CreditAssociate.Name) ! Identify(ResolutionIdent.Credit)
+      goto(ResolvingDependencies) using UnresolvedDependencies(Inputs(sender(), request))
   }
   
-  /*when(ResolvingDependencies, ResolveTimeout )(transform {
+  when(ResolvingDependencies, ResolveTimeout )(transform {
     case Event(ActorIdentity(identifier:ResolutionIdent.Value, actor @ Some(ref)), 
       data:UnresolvedDependencies) =>
         
@@ -115,13 +221,13 @@ class SalesOrder(idInput:Int) extends EntityActor[SalesOrderFO](idInput){
       Some(invClerk), Some(creditAssociate)), _, _, _) =>
         
       log.info("Resolved all dependencies, looking up entities")
-      userAssociate ! CustomerRelationsManager.FindUserById(inputs.request.userId)
+      userAssociate ! CustomerRelationsManager.FindUserByEmail(inputs.request.userEmail)
       val expectedBooks = inputs.request.lineItems.map(_.bookId).toSet
       expectedBooks.foreach(id => invClerk ! InventoryClerk.FindBook(id))
       goto(LookingUpEntities) using ResolvedDependencies(inputs, expectedBooks, None, Map.empty, invClerk, userAssociate, creditAssociate)
-  })*/
+  })
   
-  /*when(LookingUpEntities, 10 seconds)(transform {
+  when(LookingUpEntities, 10 seconds)(transform {
     case Event(FullResult(b:BookFO), data:ResolvedDependencies) =>      
       log.info("Looked up book: {}", b) 
       
@@ -148,7 +254,7 @@ class SalesOrder(idInput:Int) extends EntityActor[SalesOrderFO](idInput){
       
     case Event(EmptyResult, data:ResolvedDependencies) => 
       val (etype, error) = 
-        if (sender().path.name == InventoryClerk.Name ) ("book", InvalidBookIdError) 
+        if (sender().path.name.contains("book")) ("book", InvalidBookIdError) 
         else ("user", InvalidUserIdError )
       log.info("Unexpected result type of EmptyResult received looking up a {} entity", etype)
       data.originator ! Failure(FailureType.Validation, error)
@@ -161,10 +267,12 @@ class SalesOrder(idInput:Int) extends EntityActor[SalesOrderFO](idInput){
       
       log.info("Successfully looked up all entities and inventory is available, charging credit card")
       val lineItems = inputs.request.lineItems.
-        flatMap{item => 
+        zipWithIndex.
+        flatMap{
+          case (item, idx) =>
           bookMap.
             get(item.bookId).
-            map(b => SalesOrderLineItemFO(0, 0, b.id, item.quantity, item.quantity * b.cost, newDate, newDate))
+            map(b => SalesOrderLineItemFO(idx + 1, b.id, item.quantity, item.quantity * b.cost))
         }
          
       val total = lineItems.map(_.cost).sum
@@ -173,27 +281,28 @@ class SalesOrder(idInput:Int) extends EntityActor[SalesOrderFO](idInput){
   }) 
   
   when(ChargingCard, 10 seconds){
-    case Event(FullResult(txn:CreditCardTransactionFO), data:LookedUpData) if txn.status == CreditTransactionStatus.Approved  =>           
-      val order = SalesOrderFO(0, data.user.id, txn.id, SalesOrderStatus.InProgress, data.total, data.items, newDate, newDate)
-      requestFoForSender(data.inputs.originator)
-      persist(order, repo.persistEntity(order), id => order.copy(id = id), true)
+    case Event(FullResult(txn:CreditCardTransactionFO), data:LookedUpData) if txn.status == CreditTransactionStatus.Approved  =>     
+      val order = SalesOrderFO(data.inputs.request.newOrderId, 
+        data.user.id, txn.id, SalesOrderStatus.InProgress, data.total, data.items, newDate)
+      context.parent.tell(CreateValidatedOrder(order), data.inputs.originator )
+      stop            
       
     case Event(FullResult(txn:CreditCardTransactionFO), data:LookedUpData) =>
       log.info("Credit was rejected for request: {}", data.inputs.request)
       data.originator ! Failure(FailureType.Validation, CreditRejectedError )
       stop      
-  } */ 
-  
-  override def postCreate(fo:SalesOrderFO){
-    val items = fo.lineItems.map(i => (i.bookId, i.quantity ))
-    val event = InventoryClerk.OrderCreated(fo.id, items)
-    context.system.eventStream.publish(event)
   }
   
-  def initializedHandling:StateFunction = {
-    case Event(UpdateOrderStatus(status), data:InitializedData) =>
-      log.info("Setting status on order {} to {}", data.fo.id, status)
-      persist(data.fo, repo.updateOrderStatus(data.fo.id, status), _ => data.fo.copy(status = status))
+  whenUnhandled{
+    case Event(StateTimeout , data) =>
+      log.error("Received state timeout in process to validate an order create request")
+      data.inputs.originator ! unexpectedFail
+      stop
+      
+    case Event(other, data) =>
+      log.error("Received unexpected message of {} in state {}", other, stateName)
+      data.inputs.originator ! unexpectedFail
+      stop
   }
   
   def unexpectedFail = Failure(FailureType.Service, ServiceResult.UnexpectedFailure )

@@ -14,7 +14,7 @@ object CreditTransactionStatus extends Enumeration{
 }
 case class CreditCardInfo(cardHolder:String, cardType:String, cardNumber:String, expiration:Date)
 case class CreditCardTransactionFO(id:Int, cardInfo:CreditCardInfo, amount:Double, 
-  status:CreditTransactionStatus.Value, confirmationCode:Option[String], createTs:Date, modifyTs:Date, deleted:Boolean = false) extends EntityFieldsObject[CreditCardTransactionFO]{
+  status:CreditTransactionStatus.Value, confirmationCode:Option[String], createTs:Date, modifyTs:Date, deleted:Boolean = false) extends EntityFieldsObject[Int, CreditCardTransactionFO]{
   def assignId(id:Int) = {
     this.copy(id = id)
   }

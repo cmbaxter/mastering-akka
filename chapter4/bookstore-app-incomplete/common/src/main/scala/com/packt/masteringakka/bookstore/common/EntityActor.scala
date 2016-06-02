@@ -37,7 +37,7 @@ object EntityActor{
   type ErrorMapper = PartialFunction[Throwable, Failure]
 }
 
-abstract class EntityActor[FO <: EntityFieldsObject[FO]](idInput:Int) extends BookstoreActor with FSM[EntityActor.State, EntityActor.Data] with Stash{
+abstract class EntityActor[FO <: EntityFieldsObject[Int, FO]](idInput:Int) extends BookstoreActor with FSM[EntityActor.State, EntityActor.Data] with Stash{
   import EntityActor._
   import akka.pattern.pipe
   import concurrent.duration._
@@ -185,22 +185,7 @@ abstract class EntityActor[FO <: EntityFieldsObject[FO]](idInput:Int) extends Bo
   def requestFoForSender(ref:ActorRef):Unit = self.tell(GetFieldsObject, ref)
 }
 
-/**
- * Trait to mix into case classes that represent lightweight representations of the fields for
- * an entity modeled as an actor
- */
-trait EntityFieldsObject[FO]{
-  /**
-   * Assigns an id to the fields object, returning a new instance
-   * @param id The id to assign
-   */
-  def assignId(id:Int):FO
-  def id:Int
-  def deleted:Boolean
-  def markDeleted:FO
-}
-
-abstract class EntityFactory[FO <: EntityFieldsObject[FO], E <: EntityActor[FO] : ClassTag] extends BookstoreActor{
+abstract class EntityAggregate[FO <: EntityFieldsObject[Int, FO], E <: EntityActor[FO] : ClassTag] extends BookstoreActor{
   def lookupOrCreateChild(id:Int) = {
     val name = entityActorName(id)
     context.child(name).getOrElse{

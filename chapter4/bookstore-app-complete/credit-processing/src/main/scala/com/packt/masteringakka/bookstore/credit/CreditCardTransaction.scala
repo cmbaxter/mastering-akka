@@ -1,68 +1,100 @@
 package com.packt.masteringakka.bookstore.credit
 
 import akka.actor.Props
-import com.packt.masteringakka.bookstore.common.EntityActor
+import com.packt.masteringakka.bookstore.common._
 import java.util.Date
-import dispatch._
-import org.json4s._
-import org.json4s.native.Serialization
-import org.json4s.native.Serialization.{read, write}
-import com.packt.masteringakka.bookstore.common.EntityFieldsObject
 
 object CreditTransactionStatus extends Enumeration{
   val Approved, Rejected = Value
 }
 case class CreditCardInfo(cardHolder:String, cardType:String, cardNumber:String, expiration:Date)
-case class CreditCardTransactionFO(id:Int, cardInfo:CreditCardInfo, amount:Double, 
-  status:CreditTransactionStatus.Value, confirmationCode:Option[String], createTs:Date, modifyTs:Date, deleted:Boolean = false) extends EntityFieldsObject[Int, CreditCardTransactionFO]{
-  def assignId(id:Int) = {
+case class CreditCardTransactionFO(id:String, cardInfo:CreditCardInfo, amount:Double, 
+  status:CreditTransactionStatus.Value, confirmationCode:Option[String], createTs:Date, deleted:Boolean = false) extends EntityFieldsObject[String, CreditCardTransactionFO]{
+  def assignId(id:String) = {
     this.copy(id = id)
   }
   def markDeleted = this.copy(deleted = true)
 }
+object CreditCardTransactionFO{
+  def empty = CreditCardTransactionFO("", CreditCardInfo("", "", "", new Date(0)), 0, CreditTransactionStatus.Rejected, None, new Date(0))
+}
+
 
 /**
  * Companion to the CreditCardTransaction entity
  */
 object CreditCardTransaction{
-  def props(id:Int) = Props(classOf[CreditCardTransaction], id)
+  def props(id:String) = Props(classOf[CreditCardTransaction], id) 
   
-  implicit val formats = Serialization.formats(NoTypeHints)     
-  case class ChargeRequest(cardHolder:String, cardType:String, cardNumber:String, expiration:Date, amount:Double)
-  case class ChargeResponse(confirmationCode:String)  
+  object Command{
+    case class CreateCreditTransaction(txn:CreditCardTransactionFO)
+  }
+  
+  object Event{
+    case class CreditTransactionCreated(txn:CreditCardTransactionFO) extends EntityEvent{
+      def toDatamodel = {
+        val cardInfoDm = Datamodel.CreditCardInfo.newBuilder().
+          setCardHolder(txn.cardInfo.cardHolder ).
+          setCardNumber(txn.cardInfo.cardNumber).
+          setCardType(txn.cardInfo.cardType ).
+          setExpiration(txn.cardInfo.expiration.getTime).
+          build
+        
+        val builder = Datamodel.CreditCardTransaction.newBuilder().
+          setAmount(txn.amount ).
+          setCardInfo(cardInfoDm).
+          setCreateTs(txn.createTs.getTime).
+          setId(txn.id).
+          setStatus(txn.status.toString)
+          
+        txn.confirmationCode.foreach(c => builder.setConfirmationCode(c))
+        builder.build
+      }
+    }
+    object CreditTransactionCreated extends DatamodelReader{
+      def fromDatamodel = {
+        case dm:Datamodel.CreditTransactionCreated =>
+          val txnDm = dm.getTxn()
+          val cardInfoDm = txnDm.getCardInfo()
+          val conf = 
+            if (txnDm.hasConfirmationCode()) Some(txnDm.getConfirmationCode())
+            else None
+          
+          CreditCardTransactionFO(txnDm.getId(), CreditCardInfo(cardInfoDm.getCardHolder(), cardInfoDm.getCardType(),
+            cardInfoDm.getCardNumber(), new Date(cardInfoDm.getExpiration())), txnDm.getAmount(), 
+            CreditTransactionStatus.withName(txnDm.getStatus()), conf, new Date(txnDm.getCreateTs()))
+      }
+    }
+  }
 }
 
 /**
  * Entity class representing a credit transaction in the bookstore app
  */
-class CreditCardTransaction(idInput:Int) extends EntityActor[CreditCardTransactionFO](idInput){
+class CreditCardTransaction(id:String) extends PersistentEntity[CreditCardTransactionFO](id){
   import CreditCardTransaction._
+  import Command._
+  import Event._
   import context.dispatcher
   import akka.pattern.pipe
   
   val settings = CreditSettings(context.system)
-  val errorMapper = PartialFunction.empty
-  val repo = new CreditCardTransactionRepository
   
-  override def customCreateHandling:StateFunction = {
-    case Event(fo:CreditCardTransactionFO, _) =>
-      chargeCard(fo.cardInfo, fo.amount ).
-        map(resp => FinishCreate(fo.copy(confirmationCode = Some(resp.confirmationCode)))).
-        to(self, sender())      
-      stay
+  def initialState = CreditCardTransactionFO.empty
+  
+  def additionalCommandHandling = {
+    case CreateCreditTransaction(txn) =>
+      persist(CreditTransactionCreated(txn)){handleEventAndRespond()}
   }
   
-  def initializedHandling = PartialFunction.empty
+  def handleEvent(event:EntityEvent) = event match {
+    case CreditTransactionCreated(txn) =>
+      state = txn
+  }
   
-  /**
-   * Calls the external service to charge the credit card
-   * @param info The card info to charge
-   * @amount The amount to charge
-   * @return a Future wrapping the response from the charge request
-   */
-  def chargeCard(info:CreditCardInfo, amount:Double) = { 
-    val jsonBody = write(ChargeRequest(info.cardHolder, info.cardType, info.cardNumber, info.expiration, amount))
-    val request = url(settings.creditChargeUrl) << jsonBody
-    Http(request OK as.String).map(read[ChargeResponse])
-  } 
+  def isCreateMessage(cmd:Any) = cmd match{
+    case cr:CreateCreditTransaction => true
+    case _ => false
+  }
+
 }

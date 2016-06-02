@@ -33,7 +33,7 @@ class SalesOrderEndpoint(salesAssociate:ActorRef)(implicit val ec:ExecutionConte
   object BookTagParam extends Params.Extract("bookTag", Params.first ~> Params.nonempty )  
   
   def intent = {
-    case req @ GET(Path(Seg("api" :: "order" :: IntPathElement(id) :: Nil))) =>
+    case req @ GET(Path(Seg("api" :: "order" :: id :: Nil))) =>
       val f = (salesAssociate ? FindOrderById(id))
       respond(f, req)
       
@@ -50,7 +50,7 @@ class SalesOrderEndpoint(salesAssociate:ActorRef)(implicit val ec:ExecutionConte
       respond(f, req)       
     
     case req @ POST(Path(Seg("api" :: "order" :: Nil))) =>
-      val createReq = parseJson[CreateOrder](Body.string(req))
+      val createReq = parseJson[CreateNewOrder](Body.string(req))
       val f = (salesAssociate ? createReq)
       respond(f, req)          
   }

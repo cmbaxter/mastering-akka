@@ -29,7 +29,7 @@ class InventoryEndpoint(inventoryClerk:ActorRef)(implicit val ec:ExecutionContex
   object AuthorParam extends Params.Extract("author", Params.first ~> Params.nonempty)
 
   def intent = {
-    case req @ GET(Path(Seg("api" :: "book" :: IntPathElement(bookId) :: Nil))) =>
+    case req @ GET(Path(Seg("api" :: "book" :: bookId :: Nil))) =>
       val f = (inventoryClerk ? FindBook(bookId))
       respond(f, req)
       
@@ -46,7 +46,7 @@ class InventoryEndpoint(inventoryClerk:ActorRef)(implicit val ec:ExecutionContex
       val f = (inventoryClerk ? createBook)
       respond(f, req)
       
-    case req @ Path(Seg("api" :: "book" :: IntPathElement(bookId) :: "tag" :: tag :: Nil)) =>
+    case req @ Path(Seg("api" :: "book" :: bookId :: "tag" :: tag :: Nil)) =>
       req match{
         case PUT(_) => 
           respond((inventoryClerk ? CategorizeBook(bookId, tag)), req)
@@ -56,11 +56,11 @@ class InventoryEndpoint(inventoryClerk:ActorRef)(implicit val ec:ExecutionContex
           req.respond(Pass)
       }
       
-    case req @ PUT(Path(Seg("api" :: "book" :: IntPathElement(bookId) :: "inventory" :: IntPathElement(amount) :: Nil))) =>
+    case req @ PUT(Path(Seg("api" :: "book" :: bookId :: "inventory" :: IntPathElement(amount) :: Nil))) =>
       val f = (inventoryClerk ? IncreaseBookInventory(bookId, amount))
       respond(f, req)
       
-    case req @ DELETE(Path(Seg("api" :: "book" :: IntPathElement(bookId) :: Nil))) =>
+    case req @ DELETE(Path(Seg("api" :: "book" :: bookId :: Nil))) =>
       val f = (inventoryClerk ? RemoveBookFromCatalog(bookId))
       respond(f, req)  
     

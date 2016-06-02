@@ -41,7 +41,7 @@ trait BookstoreRepository{
 /**
  * Extension for BookstoreRepository for dealing with entity types
  */
-trait EntityRepository[FO <: EntityFieldsObject[FO]] extends BookstoreRepository{
+trait EntityRepository[FO <: EntityFieldsObject[Int, FO]] extends BookstoreRepository{
   /**
    * Load the entity from the repo
    * @param id The id of the entity

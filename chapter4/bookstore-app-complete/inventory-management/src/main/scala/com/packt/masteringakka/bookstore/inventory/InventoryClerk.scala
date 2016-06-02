@@ -10,7 +10,7 @@ import com.packt.masteringakka.bookstore.common.FullResult
 import java.util.Date
 import com.packt.masteringakka.bookstore.common.EntityFactory
 import java.util.UUID
-import com.packt.masteringakka.bookstore.common.PersistentEntityFactory
+import com.packt.masteringakka.bookstore.common.Aggregate
 
 /**
  * Companion to the InventoryClerk actor where the vocab is defined 
@@ -29,9 +29,9 @@ object InventoryClerk{
   case class RemoveBookFromCatalog(id:String)
   
   //Events
-  case class OrderCreated(id:Int, books:List[(Int,Int)])
-  case class InventoryAllocated(orderId:Int)
-  case class InventoryBackOrdered(orderId:Int)
+  case class OrderCreated(id:String, books:List[(String,Int)])
+  case class InventoryAllocated(orderId:String)
+  case class InventoryBackOrdered(orderId:String)
   
   def props = Props[InventoryClerk]
   
@@ -41,10 +41,11 @@ object InventoryClerk{
 /**
  * Aggregate root actor for managing the book entities 
  */
-class InventoryClerk extends PersistentEntityFactory[BookFO, Book]{
+class InventoryClerk extends Aggregate[BookFO, Book]{
   import InventoryClerk._
   import com.packt.masteringakka.bookstore.common.PersistentEntity._
   import context.dispatcher
+  import Book.Command._
   
   //Listen for the OrderCreatd event
   context.system.eventStream.subscribe(self, classOf[OrderCreated])
@@ -53,7 +54,7 @@ class InventoryClerk extends PersistentEntityFactory[BookFO, Book]{
     case FindBook(id) =>
       log.info("Finding book {}", id)
       val book = lookupOrCreateChild(id)
-      book.forward(GetState)
+      forwardCommand(id, GetState)
       
     //Can't handle these lookup requests until we do CQRS in chapter 5
     /*case FindBooksByTags(tags) =>
@@ -70,22 +71,22 @@ class InventoryClerk extends PersistentEntityFactory[BookFO, Book]{
       log.info("Cataloging new book with title {}", title)
       val id = UUID.randomUUID().toString()
       val fo = BookFO(id, title, author, tags, cost, 0, new Date)
-      val command = Book.Command.CreateBook(fo)
+      val command = CreateBook(fo)
       forwardCommand(id, command)
       
     case IncreaseBookInventory(id, amount) =>
-      forwardCommand(id, Book.Command.AddInventory(amount))
+      forwardCommand(id, AddInventory(amount))
       
     case CategorizeBook(id, tag) =>
-      forwardCommand(id, Book.Command.AddTag(tag))
+      forwardCommand(id, AddTag(tag))
       
     case UncategorizeBook(id, tag) =>
-      forwardCommand(id, Book.Command.RemoveTag(tag))
+      forwardCommand(id, RemoveTag(tag))
       
     case RemoveBookFromCatalog(id) =>
       forwardCommand(id, MarkAsDeleted)
       
-    /*case OrderCreated(id, lineItems) =>
+    case OrderCreated(id, lineItems) =>
       import akka.pattern.ask
       import concurrent.duration._
       implicit val timeout = Timeout(5 seconds)
@@ -96,7 +97,7 @@ class InventoryClerk extends PersistentEntityFactory[BookFO, Book]{
         lineItems.
           map{
             case (bookId, quant) =>
-              val f = (lookupOrCreateChild(bookId) ? Book.AllocateInventory(quant)).mapTo[ServiceResult[BookFO]]
+              val f = (lookupOrCreateChild(bookId) ? AllocateInventory(id, quant)).mapTo[ServiceResult[BookFO]]
               f.filter(_.isValid)
           }
       
@@ -111,7 +112,7 @@ class InventoryClerk extends PersistentEntityFactory[BookFO, Book]{
             log.warning("Inventory back ordered for order {}", id)
             InventoryBackOrdered(id)
         }.
-        foreach(context.system.eventStream.publish) */    
+        foreach(context.system.eventStream.publish)    
   }
     
   def entityProps(id:String) = Book.props(id)

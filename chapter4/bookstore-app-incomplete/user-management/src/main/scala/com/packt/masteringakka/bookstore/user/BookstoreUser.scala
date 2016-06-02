@@ -11,7 +11,7 @@ import com.packt.masteringakka.bookstore.common.ErrorMessage
 import com.packt.masteringakka.bookstore.common.EntityFieldsObject
 
 case class BookstoreUserFO(id:Int, firstName:String, lastName:String, 
-  email:String, createTs:Date, modifyTs:Date, deleted:Boolean = false) extends EntityFieldsObject[BookstoreUserFO]{
+  email:String, createTs:Date, modifyTs:Date, deleted:Boolean = false) extends EntityFieldsObject[Int, BookstoreUserFO]{
   def assignId(id:Int) = this.copy(id = id)
   def markDeleted = this.copy(deleted = true)
 }

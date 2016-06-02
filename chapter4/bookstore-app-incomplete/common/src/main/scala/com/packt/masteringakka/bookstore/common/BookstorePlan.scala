@@ -51,15 +51,15 @@ trait BookstorePlan extends async.Plan with ServerErrorResponse{
       
       //Got a good result that we can respond with as json
       case util.Success(FullResult(b:AnyRef)) => 
-        resp.respond(asJson(ApiResponse(ApiResonseMeta(Ok.code), Some(b))))
+        resp.respond(asJson(ApiResponse(ApiResponseMeta(Ok.code), Some(b))))
         
       //Got an EmptyResult which will become a 404 with json indicating the not found
       case util.Success(EmptyResult) =>
-        resp.respond(asJson(ApiResponse(ApiResonseMeta(NotFound.code, Some(ErrorMessage("notfound")))), NotFound)) 
+        resp.respond(asJson(ApiResponse(ApiResponseMeta(NotFound.code, Some(ErrorMessage("notfound")))), NotFound)) 
         
       //Got an InvalidEntityError, that will translate into a 404
       case util.Success(Failure(FailureType.Validation, ErrorMessage.InvalidEntityId, _)) =>
-        resp.respond(asJson(ApiResponse(ApiResonseMeta(NotFound.code, Some(ErrorMessage("notfound")))), NotFound))         
+        resp.respond(asJson(ApiResponse(ApiResponseMeta(NotFound.code, Some(ErrorMessage("notfound")))), NotFound))         
         
       //Got a Failure.  Will either be a 400 for a validation fail or a 500 for everything else
       case util.Success(fail:Failure) =>
@@ -67,17 +67,17 @@ trait BookstorePlan extends async.Plan with ServerErrorResponse{
           case FailureType.Validation => BadRequest
           case _ => InternalServerError
         }
-        val apiResp = ApiResponse(ApiResonseMeta(status.code, Some(fail.message)))
+        val apiResp = ApiResponse(ApiResponseMeta(status.code, Some(fail.message)))
         resp.respond(asJson(apiResp, status))    
         
       //Got a Success for a result type that is not a ServiceResult.  Respond with an unexpected exception
       case util.Success(x) =>
-        val apiResp = ApiResponse(ApiResonseMeta(InternalServerError.code, Some(ServiceResult.UnexpectedFailure )))
+        val apiResp = ApiResponse(ApiResponseMeta(InternalServerError.code, Some(ServiceResult.UnexpectedFailure )))
         resp.respond(asJson(apiResp, InternalServerError))
              
       //The Future failed, so respond with a 500
       case util.Failure(ex) => 
-        val apiResp = ApiResponse(ApiResonseMeta(InternalServerError.code, Some(ServiceResult.UnexpectedFailure )))
+        val apiResp = ApiResponse(ApiResponseMeta(InternalServerError.code, Some(ServiceResult.UnexpectedFailure )))
         resp.respond(asJson(apiResp, InternalServerError))     
     }
   }

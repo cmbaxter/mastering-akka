@@ -2,7 +2,6 @@ package com.packt.masteringakka.bookstore.server
 import akka.actor._
 import com.typesafe.config.ConfigFactory
 import collection.JavaConversions._
-import com.packt.masteringakka.bookstore.common.PostgresDb
 import com.packt.masteringakka.bookstore.common.Bootstrap
 import akka.event.Logging
 
@@ -11,7 +10,7 @@ import akka.event.Logging
  */
 object Server extends App{
   val conf = ConfigFactory.load.getConfig("bookstore")
-  PostgresDb.init(conf) 
+  
   implicit val system = ActorSystem("Bookstore", conf)
   val log = Logging(system.eventStream, "Server")
   import system.dispatcher

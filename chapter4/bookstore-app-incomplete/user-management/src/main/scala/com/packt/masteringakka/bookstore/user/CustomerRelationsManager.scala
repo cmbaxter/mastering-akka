@@ -5,7 +5,7 @@ import com.packt.masteringakka.bookstore.common.EntityActor
 import akka.util.Timeout
 import akka.actor.Props
 import java.util.Date
-import com.packt.masteringakka.bookstore.common.EntityFactory
+import com.packt.masteringakka.bookstore.common.EntityAggregate
 
 object CustomerRelationsManager{
   val Name = "crm"
@@ -21,7 +21,7 @@ object CustomerRelationsManager{
 /**
  * Actor class that receives requests for BookstoreUser and delegates to the appropriate entity instance
  */
-class CustomerRelationsManager extends EntityFactory[BookstoreUserFO, BookstoreUser]{
+class CustomerRelationsManager extends EntityAggregate[BookstoreUserFO, BookstoreUser]{
   import com.packt.masteringakka.bookstore.common.EntityActor._
   import CustomerRelationsManager._
   import context.dispatcher
