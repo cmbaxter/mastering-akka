@@ -8,7 +8,6 @@ import akka.util.Timeout
 import scala.concurrent.Future
 import com.packt.masteringakka.bookstore.common.FullResult
 import java.util.Date
-import com.packt.masteringakka.bookstore.common.EntityFactory
 import java.util.UUID
 import com.packt.masteringakka.bookstore.common.Aggregate
 
