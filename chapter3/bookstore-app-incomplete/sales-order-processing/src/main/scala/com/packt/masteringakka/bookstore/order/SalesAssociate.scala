@@ -24,7 +24,7 @@ object SalesAssociate{
 /**
  * Factory for performing actions related to sales orders
  */
-class SalesAssociate extends EntityFactory[SalesOrderFO, SalesOrder]{
+class SalesAssociate extends EntityAggregate[SalesOrderFO, SalesOrder]{
   import SalesAssociate._
   import InventoryClerk._
   import SalesOrder._

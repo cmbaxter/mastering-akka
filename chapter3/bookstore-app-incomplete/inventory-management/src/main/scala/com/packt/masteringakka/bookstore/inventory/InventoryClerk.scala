@@ -8,7 +8,7 @@ import akka.util.Timeout
 import scala.concurrent.Future
 import com.packt.masteringakka.bookstore.common.FullResult
 import java.util.Date
-import com.packt.masteringakka.bookstore.common.EntityFactory
+import com.packt.masteringakka.bookstore.common.EntityAggregate
 
 /**
  * Companion to the InventoryClerk actor where the vocab is defined 
@@ -37,9 +37,9 @@ object InventoryClerk{
 }
 
 /**
- * Aggregate root actor for managing the book entities 
+ * Aggregate actor for managing the book entities 
  */
-class InventoryClerk extends EntityFactory[BookFO, Book]{
+class InventoryClerk extends EntityAggregate[BookFO, Book]{
   import InventoryClerk._
   import com.packt.masteringakka.bookstore.common.EntityActor._
   import context.dispatcher

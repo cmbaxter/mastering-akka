@@ -5,7 +5,7 @@ import scala.concurrent.ExecutionContext
 import java.util.Date
 import com.packt.masteringakka.bookstore.common.BookstoreActor
 import com.packt.masteringakka.bookstore.common.BookstoreRepository
-import com.packt.masteringakka.bookstore.common.EntityFactory
+import com.packt.masteringakka.bookstore.common.EntityAggregate
 
 /**
  * Companion to the CreditAssociate actor
@@ -17,9 +17,9 @@ object CreditAssociate{
 }
 
 /**
- * Factory type actor for creating and finding CreditCardTransaction entities
+ * Aggregate actor for creating and finding CreditCardTransaction entities
  */
-class CreditAssociate extends EntityFactory[CreditCardTransactionFO, CreditCardTransaction]{
+class CreditAssociate extends EntityAggregate[CreditCardTransactionFO, CreditCardTransaction]{
   import akka.pattern.pipe
   import context.dispatcher  
   import CreditAssociate._

@@ -200,7 +200,7 @@ trait EntityFieldsObject[FO]{
   def markDeleted:FO
 }
 
-abstract class EntityFactory[FO <: EntityFieldsObject[FO], E <: EntityActor[FO] : ClassTag] extends BookstoreActor{
+abstract class EntityAggregate[FO <: EntityFieldsObject[FO], E <: EntityActor[FO] : ClassTag] extends BookstoreActor{
   def lookupOrCreateChild(id:Int) = {
     val name = entityActorName(id)
     context.child(name).getOrElse{
