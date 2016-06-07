@@ -19,9 +19,6 @@ object SalesAssociate{
    
   case class CreateNewOrder(userEmail:String, lineItems:List[SalesOrder.LineItemRequest], cardInfo:CreditCardInfo)
   case class FindOrderById(id:String)
-  case class FindOrdersForBook(bookId:Int)
-  case class FindOrdersForUser(userId:Int)
-  case class FindOrdersForBookTag(tag:String)
 }
 
 /**

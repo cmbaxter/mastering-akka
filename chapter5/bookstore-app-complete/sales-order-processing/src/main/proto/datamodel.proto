@@ -25,4 +25,5 @@ message OrderCreated{
 
 message OrderStatusUpdated{
   required string status = 1;
+  required string orderId = 2;
 }

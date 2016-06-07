@@ -16,6 +16,7 @@ object ViewBuilder{
   sealed trait IndexAction
   case class UpdateAction(id:String, expression:String, params:Map[String,Any]) extends IndexAction
   case class InsertAction(id:String, rm:ReadModelObject) extends IndexAction
+  case object NoAction extends IndexAction
 }
 
 trait ViewBuilder[RM <: ReadModelObject] extends BookstoreActor with Stash with ElasticsearchUpdateSupport{
@@ -46,6 +47,9 @@ trait ViewBuilder[RM <: ReadModelObject] extends BookstoreActor with Stash with 
           
         case u:UpdateAction =>
           updateDocumentField(u.id, env.sequenceNr - 1, u.expression, u.params)
+          
+        case NoAction =>
+          //Nothing to do here
       }
   }
  

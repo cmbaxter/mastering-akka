@@ -63,14 +63,14 @@ class SalesOrder(id:String) extends PersistentEntity[SalesOrderFO](id){
       }
       
     case UpdateOrderStatus(status) =>
-      persist(OrderStatusUpdated(status))(handleEvent)
+      persist(OrderStatusUpdated(id, status))(handleEvent)
   }
   
   def handleEvent(event:EntityEvent) = event match {
     case OrderCreated(order) =>
       state = order
       
-    case OrderStatusUpdated(status) =>
+    case OrderStatusUpdated(orderId, status) =>
       state = state.copy(status = status)
   }
   
@@ -82,11 +82,12 @@ class SalesOrder(id:String) extends PersistentEntity[SalesOrderFO](id){
 }
 
 /**
- * Companion to the SalesOrder aggregate root entity
+ * Companion to the SalesOrder aggregate 
  */
 object SalesOrder{
   import collection.JavaConversions._
   
+  val EntityType = "salesorder"
   def props(id:String) = Props(classOf[SalesOrder], id)
   
   case class LineItemRequest(bookId:String, quantity:Int)
@@ -98,8 +99,8 @@ object SalesOrder{
   }
 
   object Event{
-    trait OrderEvent extends EntityEvent{def entityType = "order"}
-    case class OrderCreated(order:SalesOrderFO) extends OrderEvent{
+    trait SalesOrderEvent extends EntityEvent{def entityType = EntityType }
+    case class OrderCreated(order:SalesOrderFO) extends SalesOrderEvent{
       def toDatamodel = {
         val lineItemsDm = order.lineItems.map{ item =>
           Datamodel.SalesOrderLineItem.newBuilder().
@@ -126,7 +127,8 @@ object SalesOrder{
     }
     object OrderCreated extends DatamodelReader{
       def fromDatamodel = {
-        case dmo:Datamodel.SalesOrder =>
+        case doc:Datamodel.OrderCreated =>
+          val dmo = doc.getOrder()
           val items = dmo.getLineItemList().map{ item =>
             SalesOrderLineItemFO(item.getLineItemNumber(), item.getBookId(), item.getQuantity(), item.getCost())
           }
@@ -136,15 +138,16 @@ object SalesOrder{
       }
     }
     
-    case class OrderStatusUpdated(status:SalesOrderStatus.Value) extends OrderEvent{
+    case class OrderStatusUpdated(orderId:String, status:SalesOrderStatus.Value) extends SalesOrderEvent{
       def toDatamodel = Datamodel.OrderStatusUpdated.newBuilder().
+        setOrderId(orderId).
         setStatus(status.toString).
         build
     }    
     object OrderStatusUpdated extends DatamodelReader{
       def fromDatamodel = {
         case dm:Datamodel.OrderStatusUpdated =>
-          OrderStatusUpdated(SalesOrderStatus.withName(dm.getStatus()))
+          OrderStatusUpdated(dm.getOrderId(), SalesOrderStatus.withName(dm.getStatus()))
       }
     }
   }

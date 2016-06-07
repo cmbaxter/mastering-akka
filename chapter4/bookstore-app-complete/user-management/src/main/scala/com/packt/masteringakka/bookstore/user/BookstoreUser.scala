@@ -44,7 +44,7 @@ object BookstoreUser{
       def fromDatamodel = {
         case dm:Datamodel.UserCreated =>
           val user = dm.getUser()
-          BookstoreUserFO(user.getEmail(), user.getFirstName(), user.getLastName(), new Date(user.getCreateTs()), user.getDeleted())
+          UserCreated(BookstoreUserFO(user.getEmail(), user.getFirstName(), user.getLastName(), new Date(user.getCreateTs()), user.getDeleted()))
       }
     }
     

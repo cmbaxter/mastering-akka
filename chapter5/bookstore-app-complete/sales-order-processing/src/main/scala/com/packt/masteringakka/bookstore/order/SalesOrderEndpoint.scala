@@ -16,18 +16,19 @@ import org.json4s.ext.EnumNameSerializer
  * Http endpoint class for sales order related actions
  */
 @Sharable
-class SalesOrderEndpoint(salesAssociate:ActorRef)(implicit val ec:ExecutionContext) extends BookstorePlan{
+class SalesOrderEndpoint(salesAssociate:ActorRef, salesOrderView:ActorRef)(implicit val ec:ExecutionContext) extends BookstorePlan{
   import akka.pattern.ask
   import SalesAssociate._
   import SalesOrder._
+  import SalesOrderView._
   
   override def additionalSerializers = List(new EnumNameSerializer(SalesOrderStatus))
   
   /** Unfilterd Param for the userId input for searching by userId*/
-  object UserIdParam extends Params.Extract("userId", Params.first ~> Params.int)
+  object EmailParam extends Params.Extract("email", Params.first ~> Params.nonempty )
   
   /** Unfilterd Param for the bookId input for searching by bookId*/
-  object BookIdParam extends Params.Extract("bookId", Params.first ~> Params.int)
+  object BookIdParam extends Params.Extract("bookId", Params.first ~> Params.nonempty )
   
   /** Unfilterd Param for the bookTag input for searching by books by tag*/
   object BookTagParam extends Params.Extract("bookTag", Params.first ~> Params.nonempty )  
@@ -37,16 +38,16 @@ class SalesOrderEndpoint(salesAssociate:ActorRef)(implicit val ec:ExecutionConte
       val f = (salesAssociate ? FindOrderById(id))
       respond(f, req)
       
-    case req @ GET(Path(Seg("api" :: "order" :: Nil))) & Params(UserIdParam(userId)) =>
-      val f = (salesAssociate ? FindOrdersForUser(userId))
+    case req @ GET(Path(Seg("api" :: "order" :: Nil))) & Params(EmailParam(email)) =>
+      val f = (salesOrderView ? FindOrdersForUser(email))
       respond(f, req) 
       
     case req @ GET(Path(Seg("api" :: "order" :: Nil))) & Params(BookIdParam(bookId)) =>
-      val f = (salesAssociate ? FindOrdersForBook(bookId))
+      val f = (salesOrderView ? FindOrdersForBook(bookId))
       respond(f, req) 
       
     case req @ GET(Path(Seg("api" :: "order" :: Nil))) & Params(BookTagParam(tag)) =>
-      val f = (salesAssociate ? FindOrdersForBookTag(tag))
+      val f = (salesOrderView ? FindOrdersForBookTag(tag))
       respond(f, req)       
     
     case req @ POST(Path(Seg("api" :: "order" :: Nil))) =>

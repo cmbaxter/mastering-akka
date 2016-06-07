@@ -125,7 +125,8 @@ object SalesOrder{
     }
     object OrderCreated extends DatamodelReader{
       def fromDatamodel = {
-        case dmo:Datamodel.SalesOrder =>
+        case doc:Datamodel.OrderCreated =>
+          val dmo = doc.getOrder()
           val items = dmo.getLineItemList().map{ item =>
             SalesOrderLineItemFO(item.getLineItemNumber(), item.getBookId(), item.getQuantity(), item.getCost())
           }

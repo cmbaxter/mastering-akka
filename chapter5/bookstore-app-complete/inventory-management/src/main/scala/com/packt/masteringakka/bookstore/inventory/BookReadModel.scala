@@ -18,6 +18,7 @@ trait BookReadModel{
 }
 
 object BookViewBuilder{
+  val Name = "book-view-builder"
   case class BookRM(id:String, title:String, author:String, tags:List[String], cost:Double, 
     inventoryAmount:Int, createTs:Date, deleted:Boolean = false) extends ReadModelObject 
   def props = Props[BookViewBuilder]

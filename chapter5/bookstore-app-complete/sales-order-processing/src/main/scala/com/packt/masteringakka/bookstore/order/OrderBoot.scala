@@ -8,6 +8,8 @@ class OrderBoot extends Bootstrap {
   def bootup(system:ActorSystem) = {
     import system.dispatcher
     val salesAssociate = system.actorOf(SalesAssociate.props, SalesAssociate.Name)
-    List(new SalesOrderEndpoint(salesAssociate))
+    val salesOrderView = system.actorOf(SalesOrderView.props, SalesOrderView.Name)
+    system.actorOf(SalesOrderViewBuilder.props, SalesOrderViewBuilder.Name )
+    List(new SalesOrderEndpoint(salesAssociate, salesOrderView))
   }
 }

@@ -48,7 +48,9 @@ object CreditCardTransaction{
           setStatus(txn.status.toString)
           
         txn.confirmationCode.foreach(c => builder.setConfirmationCode(c))
-        builder.build
+        Datamodel.CreditTransactionCreated.newBuilder().
+          setTxn(builder.build).
+          build
       }
     }
     object CreditTransactionCreated extends DatamodelReader{

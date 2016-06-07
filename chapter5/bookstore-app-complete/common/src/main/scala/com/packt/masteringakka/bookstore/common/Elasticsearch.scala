@@ -9,6 +9,11 @@ import org.json4s.native.Serialization.{read, write}
 import akka.pattern.pipe
 import akka.actor.Stash
 import scala.concurrent.ExecutionContext
+import com.typesafe.config.Config
+import akka.actor.Extension
+import akka.actor.ExtensionIdProvider
+import akka.actor.ExtensionId
+import akka.actor.ExtendedActorSystem
 
 object ElasticsearchApi {
   case class ShardData(total:Int, failed:Int, successful:Int)
@@ -29,11 +34,12 @@ object ElasticsearchApi {
 trait ElasticsearchSupport{ me:BookstoreActor =>
   import ElasticsearchApi._
   
-  val host = "http://localhost:9200"
+  val esSettings = ElasticsearchSettings(context.system)
+    
   def indexRoot:String
   def entityType:String 
   
-  def baseUrl = s"$host/${indexRoot}/$entityType"
+  def baseUrl = s"${esSettings.rootUrl}/${indexRoot}/$entityType"
   
   def queryElasticsearch(query:String)(implicit ec:ExecutionContext):Future[List[JObject]] = {
     val req = url(s"$baseUrl/_search") <<? Map("q" -> query)
@@ -67,7 +73,7 @@ trait ElasticsearchUpdateSupport extends ElasticsearchSupport{ me:ViewBuilder[_]
   }
   
   def clearIndex(implicit ec:ExecutionContext) = {    
-    val req = url(s"$host/${indexRoot}/").DELETE
+    val req = url(s"${esSettings.rootUrl}/${indexRoot}/").DELETE
     callAndWait[DeleteResult](req)
   }
   
@@ -90,4 +96,16 @@ trait ElasticsearchUpdateSupport extends ElasticsearchSupport{ me:ViewBuilder[_]
     case other =>
       stash     
   }  
+}
+
+class ElasticsearchSettingsImpl(conf:Config) extends Extension{
+  val esConfig = conf.getConfig("elasticsearch")
+  val host = esConfig.getString("host")
+  val port = esConfig.getInt("port")
+  val rootUrl = s"http://$host:$port"
+}
+object ElasticsearchSettings extends ExtensionId[ElasticsearchSettingsImpl] with ExtensionIdProvider { 
+  override def lookup = ElasticsearchSettings 
+  override def createExtension(system: ExtendedActorSystem) =
+    new ElasticsearchSettingsImpl(system.settings.config)
 }
