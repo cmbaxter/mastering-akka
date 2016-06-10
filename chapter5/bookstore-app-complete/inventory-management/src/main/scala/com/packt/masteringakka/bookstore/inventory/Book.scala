@@ -6,6 +6,7 @@ import com.packt.masteringakka.bookstore.common._
 import scala.collection.JavaConversions.asScalaBuffer
 import scala.collection.JavaConversions.seqAsJavaList
 
+
 object BookFO{
   def empty = BookFO("", "", "", Nil, 0.0, 0, new Date(0))
 }
@@ -48,7 +49,7 @@ private[inventory] class Book(id:String) extends PersistentEntity[BookFO](id){
         sender() ! stateResponse()
       }
       else{
-        persist(TagAdded(id, tag))(handleEventAndRespond())
+        persist(TagAdded(tag))(handleEventAndRespond())
       }
       
     case RemoveTag(tag) =>
@@ -57,19 +58,19 @@ private[inventory] class Book(id:String) extends PersistentEntity[BookFO](id){
         sender() ! stateResponse()
       }
       else{
-        persist(TagRemoved(id, tag))(handleEventAndRespond())
+        persist(TagRemoved(tag))(handleEventAndRespond())
       }
       
     case AddInventory(amount) =>
-      persist(InventoryAdded(id, amount))(handleEventAndRespond())
+      persist(InventoryAdded(amount))(handleEventAndRespond())
                 
     case AllocateInventory(orderId, amount) =>
       val event = 
         if (amount > state.inventoryAmount ){
-          InventoryBackordered(id, orderId)
+          InventoryBackordered(orderId)
         } 
         else{
-          InventoryAllocated(id, orderId, amount)           
+          InventoryAllocated(orderId, amount)           
         }
       persist(event){ ev =>
         ev match{
@@ -94,17 +95,17 @@ private[inventory] class Book(id:String) extends PersistentEntity[BookFO](id){
   def handleEvent(event:EntityEvent):Unit = event match {
     case BookCreated(book) => 
       state = book
-    case TagAdded(bookId, tag) =>
+    case TagAdded(tag) =>
       state = state.copy(tags = tag :: state.tags)
-    case TagRemoved(bookId, tag) =>
+    case TagRemoved(tag) =>
       state = state.copy(tags = state.tags.filterNot(_ == tag))
-    case InventoryAdded(bookId, amount) =>
+    case InventoryAdded(amount) =>
       state = state.copy(inventoryAmount = state.inventoryAmount + amount)
     case BookDeleted(bookId) =>
       state = state.markDeleted      
-    case InventoryAllocated(bookId, orderId, amount) =>
+    case InventoryAllocated(orderId, amount) =>
       state = state.copy(inventoryAmount = state.inventoryAmount - amount)
-    case InventoryBackordered(bookId, orderId) =>
+    case InventoryBackordered(orderId) =>
       //nothing to do here
   }
 }
@@ -155,27 +156,25 @@ object Book{
       }
     }
     
-    case class TagAdded(bookId:String, tag:String) extends BookEvent{
+    case class TagAdded(tag:String) extends BookEvent{
       def toDatamodel = {
         Datamodel.TagAdded.newBuilder().
           setTag(tag).
-          setBookId(bookId).
           build
       }
     }
     object TagAdded extends DatamodelReader{
       def fromDatamodel = {
         case ta:Datamodel.TagAdded =>
-          TagAdded(ta.getBookId(), ta.getTag())
+          TagAdded(ta.getTag())
       }
     }
     
     
-    case class TagRemoved(bookId:String, tag:String) extends BookEvent{
+    case class TagRemoved(tag:String) extends BookEvent{
       def toDatamodel = {
         Datamodel.TagRemoved.newBuilder().
           setTag(tag).
-          setBookId(bookId).
           build
       }      
     }
@@ -183,30 +182,28 @@ object Book{
     object TagRemoved extends DatamodelReader{
       def fromDatamodel = {
         case tr:Datamodel.TagRemoved =>
-          TagRemoved(tr.getBookId(), tr.getTag())
+          TagRemoved(tr.getTag())
       }
     }    
     
-    case class InventoryAdded(bookId:String, amount:Int) extends BookEvent{
+    case class InventoryAdded(amount:Int) extends BookEvent{
       def toDatamodel = {
         Datamodel.InventoryAdded.newBuilder().
           setAmount(amount).
-          setBookId(bookId).
           build
       }
     }
     object InventoryAdded extends DatamodelReader{
       def fromDatamodel = {
         case ia:Datamodel.InventoryAdded =>
-          InventoryAdded(ia.getBookId(), ia.getAmount())
+          InventoryAdded(ia.getAmount())
       }
     }
     
-    case class InventoryAllocated(bookId:String, orderId:String, amount:Int) extends BookEvent{
+    case class InventoryAllocated(orderId:String, amount:Int) extends BookEvent{
       def toDatamodel = {
         Datamodel.InventoryAllocated.newBuilder().
           setOrderId(orderId).
-          setBookId(bookId).
           setAmount(amount).
           build
       }
@@ -214,29 +211,28 @@ object Book{
     object InventoryAllocated extends DatamodelReader{
       def fromDatamodel = {
         case ia:Datamodel.InventoryAllocated =>
-          InventoryAllocated(ia.getBookId(), ia.getOrderId(), ia.getAmount())
+          InventoryAllocated(ia.getOrderId(), ia.getAmount())
       }
     }
     
-    case class InventoryBackordered(bookId:String, orderId:String) extends BookEvent{
+    case class InventoryBackordered(orderId:String) extends BookEvent{
       def toDatamodel = {
         Datamodel.InventoryBackordered.newBuilder().
           setOrderId(orderId).
-          setBookId(bookId).
           build
       }
     }
     object InventoryBackordered extends DatamodelReader{
       def fromDatamodel = {
         case ib:Datamodel.InventoryBackordered =>
-          InventoryBackordered(ib.getBookId(), ib.getOrderId())
+          InventoryBackordered(ib.getOrderId())
       }
     }
         
-    case class BookDeleted(bookId:String) extends BookEvent{
+    case class BookDeleted(id:String) extends BookEvent{
       def toDatamodel = {
         Datamodel.BookDeleted.newBuilder().
-          setBookId(bookId).
+          setBookId(id).
           build
           
       }

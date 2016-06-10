@@ -16,17 +16,18 @@ import akka.actor.ExtensionId
 import akka.actor.ExtendedActorSystem
 
 object ElasticsearchApi {
+  trait EsResponse
   case class ShardData(total:Int, failed:Int, successful:Int)
-  case class IndexingResult(_shards:ShardData, _index:String, _type:String, _id:String, _version:Int, created:Option[Boolean])
+  case class IndexingResult(_shards:ShardData, _index:String, _type:String, _id:String, _version:Int, created:Option[Boolean]) extends EsResponse
   
   case class UpdateScript(inline:String, params:Map[String,Any])
   case class UpdateRequest(script:UpdateScript)
   
   case class SearchHit(_source:JObject)
   case class QueryHits(hits:List[SearchHit])
-  case class QueryResponse(hits:QueryHits)   
+  case class QueryResponse(hits:QueryHits) extends EsResponse 
   
-  case class DeleteResult(acknowledged:Boolean)
+  case class DeleteResult(acknowledged:Boolean) extends EsResponse
   
   implicit val formats = Serialization.formats(NoTypeHints)
 }
@@ -37,6 +38,7 @@ trait ElasticsearchSupport{ me:BookstoreActor =>
   val esSettings = ElasticsearchSettings(context.system)
     
   def indexRoot:String
+  
   def entityType:String 
   
   def baseUrl = s"${esSettings.rootUrl}/${indexRoot}/$entityType"
@@ -64,27 +66,22 @@ trait ElasticsearchUpdateSupport extends ElasticsearchSupport{ me:ViewBuilder[_]
     
     val req = url(requestUrl) << write(request)
     callAndWait[IndexingResult](req)
-  }  
-  
-  def callAndWait[T <: AnyRef : Manifest](req:Req)(implicit ec:ExecutionContext) = {
-    val fut = callElasticsearch[T](req)
-    context.become(waitingForEsResult)
-    fut pipeTo self    
   }
   
   def clearIndex(implicit ec:ExecutionContext) = {    
     val req = url(s"${esSettings.rootUrl}/${indexRoot}/").DELETE
     callAndWait[DeleteResult](req)
-  }
+  }  
   
-  def waitingForEsResult:Receive = {
-    case ir:IndexingResult =>
-      log.info("Successfully processed a read model projection agaist elasticsearch: {}", ir)
-      context.become(handlingEvents)
-      unstashAll
-      
-    case del:DeleteResult =>
-      log.info("Successfully deleted index {}", indexRoot)
+  def callAndWait[T <: AnyRef : Manifest](req:Req)(implicit ec:ExecutionContext) = {
+    val fut = callElasticsearch[T](req)
+    context.become(waitingForEsResult(req))
+    fut pipeTo self    
+  }
+ 
+  def waitingForEsResult(req:Req):Receive = {
+    case es:EsResponse =>
+      log.info("Successfully processed a request against the index for url: {}", req.toRequest.getUrl())
       context.become(handlingEvents)
       unstashAll      
       

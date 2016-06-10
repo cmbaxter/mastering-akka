@@ -30,27 +30,30 @@ class BookViewBuilder extends BookReadModel with ViewBuilder[BookViewBuilder.Boo
   import Book.Event._
   import context.dispatcher
   
-  def actionFor = {
+  def actionFor(bookId:String, event:Any) = event match {
     case BookCreated(book) =>
       log.info("Saving a new book entity into the elasticsearch index: {}", book)
       val bookRM = BookRM(book.id, book.title, book.author, book.tags, book.cost, book.inventoryAmount,
         book.createTs, book.deleted )      
       InsertAction(book.id, bookRM)
       
-    case TagAdded(bookId, tag) =>
+    case TagAdded(tag) =>
       UpdateAction(bookId, "tags += tag", Map("tag" -> tag))
       
-    case TagRemoved(bookId, tag) =>
+    case TagRemoved(tag) =>
       UpdateAction(bookId, "tags -= tag", Map("tag" -> tag))      
       
-    case InventoryAdded(bookId, amount) =>
+    case InventoryAdded(amount) =>
       UpdateAction(bookId, "inventoryAmount += amount", Map("amount" -> amount))
       
-    case InventoryAllocated(bookId, orderId, amount) =>
+    case InventoryAllocated(orderId, amount) =>
       UpdateAction(bookId, "inventoryAmount -= amount", Map("amount" -> amount))  
                 
-    case BookDeleted(id) =>
-      UpdateAction(id, "deleted = delBool", Map("delBool" -> true))
+    case BookDeleted(bookId) =>
+      UpdateAction(bookId, "deleted = delBool", Map("delBool" -> true))
+      
+    case InventoryBackordered(orderId) =>
+      NoAction(bookId)
   }
 }
 

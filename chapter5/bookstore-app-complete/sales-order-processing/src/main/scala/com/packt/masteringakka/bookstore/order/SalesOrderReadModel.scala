@@ -27,15 +27,15 @@ class SalesOrderViewBuilder extends SalesOrderReadModel with ViewBuilder[SalesOr
   
   val invClerk = context.actorSelection(s"/user/${InventoryClerk.Name}")
   
-  def actionFor = {
+  def actionFor(id:String, event:Any) = event match {
     case OrderCreated(order) =>
       //Load all of the books that we need to denormalize the data
       order.lineItems.foreach(item => invClerk ! InventoryClerk.FindBook(item.bookId))
       context.become(loadingData(order, Map.empty, order.lineItems.size))
-      NoAction
+      DeferredCreate
       
-    case OrderStatusUpdated(orderId, status) =>
-      UpdateAction(orderId, "status = newStatus", Map("newStatus" -> status.toString()))
+    case OrderStatusUpdated(status) =>
+      UpdateAction(id, "status = newStatus", Map("newStatus" -> status.toString()))
   } 
   
   def loadingData(order:SalesOrderFO, books:Map[String,BookFO], needed:Int):Receive = {

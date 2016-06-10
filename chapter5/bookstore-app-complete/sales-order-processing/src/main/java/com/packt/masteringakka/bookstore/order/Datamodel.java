@@ -2817,21 +2817,6 @@ public final class Datamodel {
      */
     com.google.protobuf.ByteString
         getStatusBytes();
-
-    // required string orderId = 2;
-    /**
-     * <code>required string orderId = 2;</code>
-     */
-    boolean hasOrderId();
-    /**
-     * <code>required string orderId = 2;</code>
-     */
-    java.lang.String getOrderId();
-    /**
-     * <code>required string orderId = 2;</code>
-     */
-    com.google.protobuf.ByteString
-        getOrderIdBytes();
   }
   /**
    * Protobuf type {@code com.packt.masteringakka.bookstore.order.OrderStatusUpdated}
@@ -2887,11 +2872,6 @@ public final class Datamodel {
             case 10: {
               bitField0_ |= 0x00000001;
               status_ = input.readBytes();
-              break;
-            }
-            case 18: {
-              bitField0_ |= 0x00000002;
-              orderId_ = input.readBytes();
               break;
             }
           }
@@ -2977,52 +2957,8 @@ public final class Datamodel {
       }
     }
 
-    // required string orderId = 2;
-    public static final int ORDERID_FIELD_NUMBER = 2;
-    private java.lang.Object orderId_;
-    /**
-     * <code>required string orderId = 2;</code>
-     */
-    public boolean hasOrderId() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>required string orderId = 2;</code>
-     */
-    public java.lang.String getOrderId() {
-      java.lang.Object ref = orderId_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          orderId_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>required string orderId = 2;</code>
-     */
-    public com.google.protobuf.ByteString
-        getOrderIdBytes() {
-      java.lang.Object ref = orderId_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        orderId_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
     private void initFields() {
       status_ = "";
-      orderId_ = "";
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -3030,10 +2966,6 @@ public final class Datamodel {
       if (isInitialized != -1) return isInitialized == 1;
 
       if (!hasStatus()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasOrderId()) {
         memoizedIsInitialized = 0;
         return false;
       }
@@ -3047,9 +2979,6 @@ public final class Datamodel {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         output.writeBytes(1, getStatusBytes());
       }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeBytes(2, getOrderIdBytes());
-      }
       getUnknownFields().writeTo(output);
     }
 
@@ -3062,10 +2991,6 @@ public final class Datamodel {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(1, getStatusBytes());
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, getOrderIdBytes());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -3185,8 +3110,6 @@ public final class Datamodel {
         super.clear();
         status_ = "";
         bitField0_ = (bitField0_ & ~0x00000001);
-        orderId_ = "";
-        bitField0_ = (bitField0_ & ~0x00000002);
         return this;
       }
 
@@ -3219,10 +3142,6 @@ public final class Datamodel {
           to_bitField0_ |= 0x00000001;
         }
         result.status_ = status_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        result.orderId_ = orderId_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -3244,21 +3163,12 @@ public final class Datamodel {
           status_ = other.status_;
           onChanged();
         }
-        if (other.hasOrderId()) {
-          bitField0_ |= 0x00000002;
-          orderId_ = other.orderId_;
-          onChanged();
-        }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
         if (!hasStatus()) {
-          
-          return false;
-        }
-        if (!hasOrderId()) {
           
           return false;
         }
@@ -3358,80 +3268,6 @@ public final class Datamodel {
         return this;
       }
 
-      // required string orderId = 2;
-      private java.lang.Object orderId_ = "";
-      /**
-       * <code>required string orderId = 2;</code>
-       */
-      public boolean hasOrderId() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>required string orderId = 2;</code>
-       */
-      public java.lang.String getOrderId() {
-        java.lang.Object ref = orderId_;
-        if (!(ref instanceof java.lang.String)) {
-          java.lang.String s = ((com.google.protobuf.ByteString) ref)
-              .toStringUtf8();
-          orderId_ = s;
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>required string orderId = 2;</code>
-       */
-      public com.google.protobuf.ByteString
-          getOrderIdBytes() {
-        java.lang.Object ref = orderId_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          orderId_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>required string orderId = 2;</code>
-       */
-      public Builder setOrderId(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-        orderId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string orderId = 2;</code>
-       */
-      public Builder clearOrderId() {
-        bitField0_ = (bitField0_ & ~0x00000002);
-        orderId_ = getDefaultInstance().getOrderId();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string orderId = 2;</code>
-       */
-      public Builder setOrderIdBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-        orderId_ = value;
-        onChanged();
-        return this;
-      }
-
       // @@protoc_insertion_point(builder_scope:com.packt.masteringakka.bookstore.order.OrderStatusUpdated)
     }
 
@@ -3483,8 +3319,8 @@ public final class Datamodel {
       "\030\005 \002(\t\022\020\n\010createTs\030\006 \002(\003\022\021\n\ttotalCost\030\007 " +
       "\002(\001\"R\n\014OrderCreated\022B\n\005order\030\001 \002(\01323.com",
       ".packt.masteringakka.bookstore.order.Sal" +
-      "esOrder\"5\n\022OrderStatusUpdated\022\016\n\006status\030" +
-      "\001 \002(\t\022\017\n\007orderId\030\002 \002(\tB\rB\tDatamodelH\001"
+      "esOrder\"$\n\022OrderStatusUpdated\022\016\n\006status\030" +
+      "\001 \002(\tB\rB\tDatamodelH\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -3514,7 +3350,7 @@ public final class Datamodel {
           internal_static_com_packt_masteringakka_bookstore_order_OrderStatusUpdated_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_packt_masteringakka_bookstore_order_OrderStatusUpdated_descriptor,
-              new java.lang.String[] { "Status", "OrderId", });
+              new java.lang.String[] { "Status", });
           return null;
         }
       };

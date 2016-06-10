@@ -63,14 +63,14 @@ class SalesOrder(id:String) extends PersistentEntity[SalesOrderFO](id){
       }
       
     case UpdateOrderStatus(status) =>
-      persist(OrderStatusUpdated(id, status))(handleEvent)
+      persist(OrderStatusUpdated(status))(handleEvent)
   }
   
   def handleEvent(event:EntityEvent) = event match {
     case OrderCreated(order) =>
       state = order
       
-    case OrderStatusUpdated(orderId, status) =>
+    case OrderStatusUpdated(status) =>
       state = state.copy(status = status)
   }
   
@@ -138,16 +138,15 @@ object SalesOrder{
       }
     }
     
-    case class OrderStatusUpdated(orderId:String, status:SalesOrderStatus.Value) extends SalesOrderEvent{
+    case class OrderStatusUpdated(status:SalesOrderStatus.Value) extends SalesOrderEvent{
       def toDatamodel = Datamodel.OrderStatusUpdated.newBuilder().
-        setOrderId(orderId).
         setStatus(status.toString).
         build
     }    
     object OrderStatusUpdated extends DatamodelReader{
       def fromDatamodel = {
         case dm:Datamodel.OrderStatusUpdated =>
-          OrderStatusUpdated(dm.getOrderId(), SalesOrderStatus.withName(dm.getStatus()))
+          OrderStatusUpdated(SalesOrderStatus.withName(dm.getStatus()))
       }
     }
   }

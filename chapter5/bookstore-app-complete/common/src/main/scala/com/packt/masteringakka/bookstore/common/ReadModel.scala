@@ -16,7 +16,8 @@ object ViewBuilder{
   sealed trait IndexAction
   case class UpdateAction(id:String, expression:String, params:Map[String,Any]) extends IndexAction
   case class InsertAction(id:String, rm:ReadModelObject) extends IndexAction
-  case object NoAction extends IndexAction
+  case class NoAction(id:String) extends IndexAction
+  case object DeferredCreate extends IndexAction
 }
 
 trait ViewBuilder[RM <: ReadModelObject] extends BookstoreActor with Stash with ElasticsearchUpdateSupport{
@@ -35,21 +36,24 @@ trait ViewBuilder[RM <: ReadModelObject] extends BookstoreActor with Stash with 
   
   def receive = handlingEvents
   
-  def actionFor:PartialFunction[Any,IndexAction]
+  def actionFor(id:String, event:Any):IndexAction
   
   def handlingEvents:Receive = {
     case env:EventEnvelope =>
-      val actionOpt = actionFor.lift(env.event)
-      
-      actionOpt.foreach{
+     
+      val Array(et, id) = env.persistenceId.split("-")   
+      actionFor(id, env.event) match {
         case i:InsertAction =>
           updateIndex(i.id, i.rm, None)
           
         case u:UpdateAction =>
           updateDocumentField(u.id, env.sequenceNr - 1, u.expression, u.params)
           
-        case NoAction =>
-          //Nothing to do here
+        case NoAction(id) =>
+          updateDocumentField(id, env.sequenceNr - 1, "", Map.empty) 
+        
+        case DeferredCreate =>
+          //Nothing happening here          
       }
   }
  
