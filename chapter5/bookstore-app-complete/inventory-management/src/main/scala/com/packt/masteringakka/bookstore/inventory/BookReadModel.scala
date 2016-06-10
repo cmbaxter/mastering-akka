@@ -29,6 +29,8 @@ class BookViewBuilder extends BookReadModel with ViewBuilder[BookViewBuilder.Boo
   import BookViewBuilder._
   import Book.Event._
   import context.dispatcher
+
+  def projectionId = "book-view-builder"
   
   def actionFor(bookId:String, event:Any) = event match {
     case BookCreated(book) =>

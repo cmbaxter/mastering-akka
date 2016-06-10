@@ -24,8 +24,10 @@ class SalesOrderViewBuilder extends SalesOrderReadModel with ViewBuilder[SalesOr
   import SalesOrder.Event._
   import ViewBuilder._
   import SalesOrderViewBuilder._
-  
+    
   val invClerk = context.actorSelection(s"/user/${InventoryClerk.Name}")
+  
+  def projectionId = "sales-order-view-builder"
   
   def actionFor(id:String, event:Any) = event match {
     case OrderCreated(order) =>

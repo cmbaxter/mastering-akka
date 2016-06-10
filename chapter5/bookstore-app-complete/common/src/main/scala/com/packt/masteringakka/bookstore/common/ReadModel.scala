@@ -34,6 +34,10 @@ trait ViewBuilder[RM <: ReadModelObject] extends BookstoreActor with Stash with 
   implicit val materializer = ActorMaterializer()
   eventsSource.runForeach(self ! _)
   
+  val resumableProjection = ResumableProjection(projectionId, context.system)
+  
+  def projectionId:String
+  
   def receive = handlingEvents
   
   def actionFor(id:String, event:Any):IndexAction
@@ -41,7 +45,7 @@ trait ViewBuilder[RM <: ReadModelObject] extends BookstoreActor with Stash with 
   def handlingEvents:Receive = {
     case env:EventEnvelope =>
      
-      val Array(et, id) = env.persistenceId.split("-")   
+      val id = env.persistenceId.toLowerCase().drop(entityType.length() + 1)   
       actionFor(id, env.event) match {
         case i:InsertAction =>
           updateIndex(i.id, i.rm, None)
