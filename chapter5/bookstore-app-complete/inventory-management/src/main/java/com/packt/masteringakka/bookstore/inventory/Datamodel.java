@@ -3268,6 +3268,21 @@ public final class Datamodel {
      * <code>required int32 amount = 2;</code>
      */
     int getAmount();
+
+    // required string bookId = 3;
+    /**
+     * <code>required string bookId = 3;</code>
+     */
+    boolean hasBookId();
+    /**
+     * <code>required string bookId = 3;</code>
+     */
+    java.lang.String getBookId();
+    /**
+     * <code>required string bookId = 3;</code>
+     */
+    com.google.protobuf.ByteString
+        getBookIdBytes();
   }
   /**
    * Protobuf type {@code com.packt.masteringakka.bookstore.inventory.InventoryAllocated}
@@ -3328,6 +3343,11 @@ public final class Datamodel {
             case 16: {
               bitField0_ |= 0x00000002;
               amount_ = input.readInt32();
+              break;
+            }
+            case 26: {
+              bitField0_ |= 0x00000004;
+              bookId_ = input.readBytes();
               break;
             }
           }
@@ -3429,9 +3449,53 @@ public final class Datamodel {
       return amount_;
     }
 
+    // required string bookId = 3;
+    public static final int BOOKID_FIELD_NUMBER = 3;
+    private java.lang.Object bookId_;
+    /**
+     * <code>required string bookId = 3;</code>
+     */
+    public boolean hasBookId() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>required string bookId = 3;</code>
+     */
+    public java.lang.String getBookId() {
+      java.lang.Object ref = bookId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          bookId_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>required string bookId = 3;</code>
+     */
+    public com.google.protobuf.ByteString
+        getBookIdBytes() {
+      java.lang.Object ref = bookId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        bookId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private void initFields() {
       orderId_ = "";
       amount_ = 0;
+      bookId_ = "";
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -3443,6 +3507,10 @@ public final class Datamodel {
         return false;
       }
       if (!hasAmount()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      if (!hasBookId()) {
         memoizedIsInitialized = 0;
         return false;
       }
@@ -3458,6 +3526,9 @@ public final class Datamodel {
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         output.writeInt32(2, amount_);
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        output.writeBytes(3, getBookIdBytes());
       }
       getUnknownFields().writeTo(output);
     }
@@ -3475,6 +3546,10 @@ public final class Datamodel {
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(2, amount_);
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(3, getBookIdBytes());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -3596,6 +3671,8 @@ public final class Datamodel {
         bitField0_ = (bitField0_ & ~0x00000001);
         amount_ = 0;
         bitField0_ = (bitField0_ & ~0x00000002);
+        bookId_ = "";
+        bitField0_ = (bitField0_ & ~0x00000004);
         return this;
       }
 
@@ -3632,6 +3709,10 @@ public final class Datamodel {
           to_bitField0_ |= 0x00000002;
         }
         result.amount_ = amount_;
+        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+          to_bitField0_ |= 0x00000004;
+        }
+        result.bookId_ = bookId_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -3656,6 +3737,11 @@ public final class Datamodel {
         if (other.hasAmount()) {
           setAmount(other.getAmount());
         }
+        if (other.hasBookId()) {
+          bitField0_ |= 0x00000004;
+          bookId_ = other.bookId_;
+          onChanged();
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
@@ -3666,6 +3752,10 @@ public final class Datamodel {
           return false;
         }
         if (!hasAmount()) {
+          
+          return false;
+        }
+        if (!hasBookId()) {
           
           return false;
         }
@@ -3798,6 +3888,80 @@ public final class Datamodel {
         return this;
       }
 
+      // required string bookId = 3;
+      private java.lang.Object bookId_ = "";
+      /**
+       * <code>required string bookId = 3;</code>
+       */
+      public boolean hasBookId() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>required string bookId = 3;</code>
+       */
+      public java.lang.String getBookId() {
+        java.lang.Object ref = bookId_;
+        if (!(ref instanceof java.lang.String)) {
+          java.lang.String s = ((com.google.protobuf.ByteString) ref)
+              .toStringUtf8();
+          bookId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>required string bookId = 3;</code>
+       */
+      public com.google.protobuf.ByteString
+          getBookIdBytes() {
+        java.lang.Object ref = bookId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          bookId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>required string bookId = 3;</code>
+       */
+      public Builder setBookId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+        bookId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required string bookId = 3;</code>
+       */
+      public Builder clearBookId() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        bookId_ = getDefaultInstance().getBookId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required string bookId = 3;</code>
+       */
+      public Builder setBookIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+        bookId_ = value;
+        onChanged();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:com.packt.masteringakka.bookstore.inventory.InventoryAllocated)
     }
 
@@ -3826,6 +3990,21 @@ public final class Datamodel {
      */
     com.google.protobuf.ByteString
         getOrderIdBytes();
+
+    // required string bookId = 2;
+    /**
+     * <code>required string bookId = 2;</code>
+     */
+    boolean hasBookId();
+    /**
+     * <code>required string bookId = 2;</code>
+     */
+    java.lang.String getBookId();
+    /**
+     * <code>required string bookId = 2;</code>
+     */
+    com.google.protobuf.ByteString
+        getBookIdBytes();
   }
   /**
    * Protobuf type {@code com.packt.masteringakka.bookstore.inventory.InventoryBackordered}
@@ -3881,6 +4060,11 @@ public final class Datamodel {
             case 10: {
               bitField0_ |= 0x00000001;
               orderId_ = input.readBytes();
+              break;
+            }
+            case 18: {
+              bitField0_ |= 0x00000002;
+              bookId_ = input.readBytes();
               break;
             }
           }
@@ -3966,8 +4150,52 @@ public final class Datamodel {
       }
     }
 
+    // required string bookId = 2;
+    public static final int BOOKID_FIELD_NUMBER = 2;
+    private java.lang.Object bookId_;
+    /**
+     * <code>required string bookId = 2;</code>
+     */
+    public boolean hasBookId() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    /**
+     * <code>required string bookId = 2;</code>
+     */
+    public java.lang.String getBookId() {
+      java.lang.Object ref = bookId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          bookId_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>required string bookId = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getBookIdBytes() {
+      java.lang.Object ref = bookId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        bookId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private void initFields() {
       orderId_ = "";
+      bookId_ = "";
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -3975,6 +4203,10 @@ public final class Datamodel {
       if (isInitialized != -1) return isInitialized == 1;
 
       if (!hasOrderId()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      if (!hasBookId()) {
         memoizedIsInitialized = 0;
         return false;
       }
@@ -3988,6 +4220,9 @@ public final class Datamodel {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         output.writeBytes(1, getOrderIdBytes());
       }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeBytes(2, getBookIdBytes());
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -4000,6 +4235,10 @@ public final class Datamodel {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(1, getOrderIdBytes());
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(2, getBookIdBytes());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -4119,6 +4358,8 @@ public final class Datamodel {
         super.clear();
         orderId_ = "";
         bitField0_ = (bitField0_ & ~0x00000001);
+        bookId_ = "";
+        bitField0_ = (bitField0_ & ~0x00000002);
         return this;
       }
 
@@ -4151,6 +4392,10 @@ public final class Datamodel {
           to_bitField0_ |= 0x00000001;
         }
         result.orderId_ = orderId_;
+        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+          to_bitField0_ |= 0x00000002;
+        }
+        result.bookId_ = bookId_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -4172,12 +4417,21 @@ public final class Datamodel {
           orderId_ = other.orderId_;
           onChanged();
         }
+        if (other.hasBookId()) {
+          bitField0_ |= 0x00000002;
+          bookId_ = other.bookId_;
+          onChanged();
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
         if (!hasOrderId()) {
+          
+          return false;
+        }
+        if (!hasBookId()) {
           
           return false;
         }
@@ -4273,6 +4527,80 @@ public final class Datamodel {
   }
   bitField0_ |= 0x00000001;
         orderId_ = value;
+        onChanged();
+        return this;
+      }
+
+      // required string bookId = 2;
+      private java.lang.Object bookId_ = "";
+      /**
+       * <code>required string bookId = 2;</code>
+       */
+      public boolean hasBookId() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
+      }
+      /**
+       * <code>required string bookId = 2;</code>
+       */
+      public java.lang.String getBookId() {
+        java.lang.Object ref = bookId_;
+        if (!(ref instanceof java.lang.String)) {
+          java.lang.String s = ((com.google.protobuf.ByteString) ref)
+              .toStringUtf8();
+          bookId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>required string bookId = 2;</code>
+       */
+      public com.google.protobuf.ByteString
+          getBookIdBytes() {
+        java.lang.Object ref = bookId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          bookId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>required string bookId = 2;</code>
+       */
+      public Builder setBookId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        bookId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required string bookId = 2;</code>
+       */
+      public Builder clearBookId() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        bookId_ = getDefaultInstance().getBookId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required string bookId = 2;</code>
+       */
+      public Builder setBookIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        bookId_ = value;
         onChanged();
         return this;
       }
@@ -4825,11 +5153,11 @@ public final class Datamodel {
       "\001 \002(\01321.com.packt.masteringakka.bookstor" +
       "e.inventory.Book\"\027\n\010TagAdded\022\013\n\003tag\030\001 \002(" +
       "\t\"\031\n\nTagRemoved\022\013\n\003tag\030\001 \002(\t\" \n\016Inventor" +
-      "yAdded\022\016\n\006amount\030\001 \002(\005\"5\n\022InventoryAlloc",
-      "ated\022\017\n\007orderId\030\001 \002(\t\022\016\n\006amount\030\002 \002(\005\"\'\n" +
-      "\024InventoryBackordered\022\017\n\007orderId\030\001 \002(\t\"\035" +
-      "\n\013BookDeleted\022\016\n\006bookId\030\001 \002(\tB\rB\tDatamod" +
-      "elH\001"
+      "yAdded\022\016\n\006amount\030\001 \002(\005\"E\n\022InventoryAlloc",
+      "ated\022\017\n\007orderId\030\001 \002(\t\022\016\n\006amount\030\002 \002(\005\022\016\n" +
+      "\006bookId\030\003 \002(\t\"7\n\024InventoryBackordered\022\017\n" +
+      "\007orderId\030\001 \002(\t\022\016\n\006bookId\030\002 \002(\t\"\035\n\013BookDe" +
+      "leted\022\016\n\006bookId\030\001 \002(\tB\rB\tDatamodelH\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -4871,13 +5199,13 @@ public final class Datamodel {
           internal_static_com_packt_masteringakka_bookstore_inventory_InventoryAllocated_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_packt_masteringakka_bookstore_inventory_InventoryAllocated_descriptor,
-              new java.lang.String[] { "OrderId", "Amount", });
+              new java.lang.String[] { "OrderId", "Amount", "BookId", });
           internal_static_com_packt_masteringakka_bookstore_inventory_InventoryBackordered_descriptor =
             getDescriptor().getMessageTypes().get(6);
           internal_static_com_packt_masteringakka_bookstore_inventory_InventoryBackordered_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_packt_masteringakka_bookstore_inventory_InventoryBackordered_descriptor,
-              new java.lang.String[] { "OrderId", });
+              new java.lang.String[] { "OrderId", "BookId", });
           internal_static_com_packt_masteringakka_bookstore_inventory_BookDeleted_descriptor =
             getDescriptor().getMessageTypes().get(7);
           internal_static_com_packt_masteringakka_bookstore_inventory_BookDeleted_fieldAccessorTable = new

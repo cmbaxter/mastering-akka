@@ -22,7 +22,7 @@ class SalesOrderEndpoint(salesAssociate:ActorRef, salesOrderView:ActorRef)(impli
   import SalesOrder._
   import SalesOrderView._
   
-  override def additionalSerializers = List(new EnumNameSerializer(SalesOrderStatus))
+  override def additionalSerializers = List(new EnumNameSerializer(LineItemStatus))
   
   /** Unfilterd Param for the userId input for searching by userId*/
   object EmailParam extends Params.Extract("email", Params.first ~> Params.nonempty )

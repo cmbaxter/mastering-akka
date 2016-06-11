@@ -13,19 +13,24 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Interface into a projection's offset storage system so that it can be properly resumed
  */
 abstract class ResumableProjection(identifier:String){
-  def storeLatestOffset(offset:Long)(implicit ex:ExecutionContext):Future[Boolean]
-  def fetchLatestOffset(implicit ex:ExecutionContext):Future[Long]
+  def storeLatestOffset(offset:Long):Future[Boolean]
+  def fetchLatestOffset:Future[Option[Long]]
 }
 
 object ResumableProjection{
-  def apply(identifier:String, system:ActorSystem) = new CassandraResumableProjection(identifier, system)
+  def apply(identifier:String, system:ActorSystem) = 
+    new CassandraResumableProjection(identifier, system)
 }
 
 class CassandraResumableProjection(identifier:String, system:ActorSystem) extends ResumableProjection(identifier){
   val projectionStorage = CassandraProjectionStorage(system)
   
-  def storeLatestOffset(offset:Long)(implicit ex:ExecutionContext):Future[Boolean] = null
-  def fetchLatestOffset(implicit ex:ExecutionContext):Future[Long] = null
+  def storeLatestOffset(offset:Long):Future[Boolean] = {
+    projectionStorage.updateOffset(identifier, offset + 1)
+  }
+  def fetchLatestOffset:Future[Option[Long]] = {
+    projectionStorage.fetchLatestOffset(identifier)
+  }
 }
 
 class CassandraProjectionStorageExt(system:ActorSystem) extends Extension{
@@ -68,10 +73,18 @@ class CassandraProjectionStorageExt(system:ActorSystem) extends Extension{
       log.error(ex, "Error initializing projection storage system")
   }
     
-  def updateOffset(identifier:String, offset:Long):Future[Done] = {
-    val fut:Future[Done] = 
-      session.executeAsync(s"update bookstore.projectionoffsets set offset = $offset where identifier = '$identifier'").map(toDone)
-    fut
+  def updateOffset(identifier:String, offset:Long):Future[Boolean] = {
+    val fut:Future[_] = 
+      session.executeAsync(s"update bookstore.projectionoffsets set offset = $offset where identifier = '$identifier'")
+    fut.map(_ => true).recover{case ex => false}
+  }
+  
+  def fetchLatestOffset(identifier:String):Future[Option[Long]] = {
+    import collection.JavaConversions._
+    val f:Future[ResultSet] = session.executeAsync(s"select offset from bookstore.projectionoffsets where identifier = '$identifier'")
+    f.map{ rs =>
+      rs.all().headOption.map(_.getLong(0))
+    }
   }
   
   def toDone(a:Any):Done = Done

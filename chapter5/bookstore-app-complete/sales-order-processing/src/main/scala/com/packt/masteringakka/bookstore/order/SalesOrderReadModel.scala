@@ -14,9 +14,9 @@ trait SalesOrderReadModel{
 object SalesOrderViewBuilder{
   val Name = "sales-order-view-builder"
   case class LineItemBook(id:String, title:String, author:String, tags:List[String])
-  case class SalesOrderLineItem(lineItemNumber:Int, book:LineItemBook, quantity:Int, cost:Double)
+  case class SalesOrderLineItem(lineItemNumber:Int, book:LineItemBook, quantity:Int, cost:Double, status:String)
   case class SalesOrderRM(id:String, userEmail:String, creditTxnId:String, 
-    status:String, totalCost:Double, lineItems:List[SalesOrderLineItem], createTs:Date, deleted:Boolean = false) extends ReadModelObject
+    totalCost:Double, lineItems:Map[String, SalesOrderLineItem], createTs:Date, deleted:Boolean = false) extends ReadModelObject
   def props = Props[SalesOrderViewBuilder]  
 }
 
@@ -36,8 +36,8 @@ class SalesOrderViewBuilder extends SalesOrderReadModel with ViewBuilder[SalesOr
       context.become(loadingData(order, Map.empty, order.lineItems.size))
       DeferredCreate
       
-    case OrderStatusUpdated(status) =>
-      UpdateAction(id, "status = newStatus", Map("newStatus" -> status.toString()))
+    case LineItemStatusUpdated(bookId, itemNumber, status) =>
+      UpdateAction(id, s"lineItems['${itemNumber}'].status = newStatus", Map("newStatus" -> status.toString()))
   } 
   
   def loadingData(order:SalesOrderFO, books:Map[String,BookFO], needed:Int):Receive = {
@@ -56,11 +56,11 @@ class SalesOrderViewBuilder extends SalesOrderReadModel with ViewBuilder[SalesOr
         val lineItems = order.lineItems.flatMap{ item =>
           newBooks.get(item.bookId).map{b => 
             val itemBook = LineItemBook(b.id, b.title, b.author, b.tags)
-            SalesOrderLineItem(item.lineItemNumber, itemBook, item.quantity, item.cost )
+            (item.lineItemNumber.toString, SalesOrderLineItem(item.lineItemNumber, itemBook, item.quantity, item.cost, item.status.toString))
           }
         }
         val salesOrderRm = SalesOrderRM(order.id, order.userId, order.creditTxnId, 
-          order.status.toString, order.totalCost, lineItems, order.createTs, order.deleted )
+          order.totalCost, lineItems.toMap, order.createTs, order.deleted )
         updateIndex(order.id, salesOrderRm, None)(context.dispatcher)
       }
       else{

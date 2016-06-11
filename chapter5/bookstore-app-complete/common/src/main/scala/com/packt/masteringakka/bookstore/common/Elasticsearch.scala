@@ -86,7 +86,15 @@ trait ElasticsearchUpdateSupport extends ElasticsearchSupport{ me:ViewBuilder[_]
       unstashAll      
       
     case akka.actor.Status.Failure(ex) =>
-      log.error(ex, "Error calling elasticsearch when building the read model")
+      val wrappedEx = Option(ex.getCause())
+      wrappedEx match{
+        case Some(StatusCode(sc)) =>
+          log.warning("Got a non-OK status code talking to elasticsearch: {}", sc)
+          
+        case other =>
+          log.error(ex, "Error calling elasticsearch when building the read model")    
+      }
+      
       context.become(handlingEvents)
       unstashAll
       

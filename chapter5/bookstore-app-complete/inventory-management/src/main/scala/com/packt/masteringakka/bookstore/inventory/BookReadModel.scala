@@ -48,13 +48,13 @@ class BookViewBuilder extends BookReadModel with ViewBuilder[BookViewBuilder.Boo
     case InventoryAdded(amount) =>
       UpdateAction(bookId, "inventoryAmount += amount", Map("amount" -> amount))
       
-    case InventoryAllocated(orderId, amount) =>
+    case InventoryAllocated(orderId, bookId, amount) =>
       UpdateAction(bookId, "inventoryAmount -= amount", Map("amount" -> amount))  
                 
     case BookDeleted(bookId) =>
       UpdateAction(bookId, "deleted = delBool", Map("delBool" -> true))
       
-    case InventoryBackordered(orderId) =>
+    case InventoryBackordered(orderId, bookId) =>
       NoAction(bookId)
   }
 }

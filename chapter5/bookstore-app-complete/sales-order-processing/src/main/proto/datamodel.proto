@@ -7,6 +7,7 @@ message SalesOrderLineItem{
   required string bookId = 2;
   required int32 quantity = 3;
   required double cost = 4;
+  required string status = 5;
 } 
  
 message SalesOrder {
@@ -14,16 +15,16 @@ message SalesOrder {
   required string userId = 2;
   required string creditTxnId = 3;
   repeated SalesOrderLineItem lineItem = 4;
-  required string status = 5;
-  required int64 createTs = 6;
-  required double totalCost = 7;
+  required int64 createTs = 5;
+  required double totalCost = 6;
 }
 
 message OrderCreated{
   required SalesOrder order = 1;
 }
 
-message OrderStatusUpdated{
-  required string status = 1;
-
+message LineItemStatusUpdated{
+  required string bookId = 1;
+  required string status = 2;
+  required int32 lineItemNumber = 3;
 }

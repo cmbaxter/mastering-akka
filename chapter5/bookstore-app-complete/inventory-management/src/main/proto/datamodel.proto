@@ -33,10 +33,12 @@ message InventoryAdded{
 message InventoryAllocated{
   required string orderId = 1;
   required int32 amount = 2;
+  required string bookId = 3;
 }
 
 message InventoryBackordered{
   required string orderId = 1;
+  required string bookId = 2;
 }
 
 message BookDeleted{

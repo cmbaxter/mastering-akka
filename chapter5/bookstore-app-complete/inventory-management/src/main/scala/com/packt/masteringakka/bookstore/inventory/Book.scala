@@ -67,21 +67,12 @@ private[inventory] class Book(id:String) extends PersistentEntity[BookFO](id){
     case AllocateInventory(orderId, amount) =>
       val event = 
         if (amount > state.inventoryAmount ){
-          InventoryBackordered(orderId)
+          InventoryBackordered(orderId, id)
         } 
         else{
-          InventoryAllocated(orderId, amount)           
+          InventoryAllocated(orderId, id, amount)           
         }
-      persist(event){ ev =>
-        ev match{
-          case bo:InventoryBackordered =>
-            handleEvent(ev)
-            sender() ! Failure(FailureType.Validation , InventoryNotAvailError )
-          
-          case _ =>
-            handleEventAndRespond()(ev)
-        }
-      }             
+      persist(event)(handleEventAndRespond())            
   }
   
   def isCreateMessage(cmd:Any) = cmd match{
@@ -103,9 +94,9 @@ private[inventory] class Book(id:String) extends PersistentEntity[BookFO](id){
       state = state.copy(inventoryAmount = state.inventoryAmount + amount)
     case BookDeleted(bookId) =>
       state = state.markDeleted      
-    case InventoryAllocated(orderId, amount) =>
+    case InventoryAllocated(orderId, bookId, amount) =>
       state = state.copy(inventoryAmount = state.inventoryAmount - amount)
-    case InventoryBackordered(orderId) =>
+    case InventoryBackordered(orderId, bookId) =>
       //nothing to do here
   }
 }
@@ -200,32 +191,34 @@ object Book{
       }
     }
     
-    case class InventoryAllocated(orderId:String, amount:Int) extends BookEvent{
+    case class InventoryAllocated(orderId:String, bookId:String, amount:Int) extends BookEvent{
       def toDatamodel = {
         Datamodel.InventoryAllocated.newBuilder().
           setOrderId(orderId).
           setAmount(amount).
+          setBookId(bookId ).
           build
       }
     }
     object InventoryAllocated extends DatamodelReader{
       def fromDatamodel = {
         case ia:Datamodel.InventoryAllocated =>
-          InventoryAllocated(ia.getOrderId(), ia.getAmount())
+          InventoryAllocated(ia.getOrderId(), ia.getBookId(), ia.getAmount())
       }
     }
     
-    case class InventoryBackordered(orderId:String) extends BookEvent{
+    case class InventoryBackordered(orderId:String, bookId:String) extends BookEvent{
       def toDatamodel = {
         Datamodel.InventoryBackordered.newBuilder().
           setOrderId(orderId).
+          setBookId(bookId ).
           build
       }
     }
     object InventoryBackordered extends DatamodelReader{
       def fromDatamodel = {
         case ib:Datamodel.InventoryBackordered =>
-          InventoryBackordered(ib.getOrderId())
+          InventoryBackordered(ib.getOrderId(), ib.getBookId())
       }
     }
         

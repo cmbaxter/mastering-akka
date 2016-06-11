@@ -55,6 +55,21 @@ public final class Datamodel {
      * <code>required double cost = 4;</code>
      */
     double getCost();
+
+    // required string status = 5;
+    /**
+     * <code>required string status = 5;</code>
+     */
+    boolean hasStatus();
+    /**
+     * <code>required string status = 5;</code>
+     */
+    java.lang.String getStatus();
+    /**
+     * <code>required string status = 5;</code>
+     */
+    com.google.protobuf.ByteString
+        getStatusBytes();
   }
   /**
    * Protobuf type {@code com.packt.masteringakka.bookstore.order.SalesOrderLineItem}
@@ -125,6 +140,11 @@ public final class Datamodel {
             case 33: {
               bitField0_ |= 0x00000008;
               cost_ = input.readDouble();
+              break;
+            }
+            case 42: {
+              bitField0_ |= 0x00000010;
+              status_ = input.readBytes();
               break;
             }
           }
@@ -258,11 +278,55 @@ public final class Datamodel {
       return cost_;
     }
 
+    // required string status = 5;
+    public static final int STATUS_FIELD_NUMBER = 5;
+    private java.lang.Object status_;
+    /**
+     * <code>required string status = 5;</code>
+     */
+    public boolean hasStatus() {
+      return ((bitField0_ & 0x00000010) == 0x00000010);
+    }
+    /**
+     * <code>required string status = 5;</code>
+     */
+    public java.lang.String getStatus() {
+      java.lang.Object ref = status_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          status_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>required string status = 5;</code>
+     */
+    public com.google.protobuf.ByteString
+        getStatusBytes() {
+      java.lang.Object ref = status_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        status_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private void initFields() {
       lineItemNumber_ = 0;
       bookId_ = "";
       quantity_ = 0;
       cost_ = 0D;
+      status_ = "";
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -285,6 +349,10 @@ public final class Datamodel {
         memoizedIsInitialized = 0;
         return false;
       }
+      if (!hasStatus()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
       memoizedIsInitialized = 1;
       return true;
     }
@@ -303,6 +371,9 @@ public final class Datamodel {
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         output.writeDouble(4, cost_);
+      }
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+        output.writeBytes(5, getStatusBytes());
       }
       getUnknownFields().writeTo(output);
     }
@@ -328,6 +399,10 @@ public final class Datamodel {
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         size += com.google.protobuf.CodedOutputStream
           .computeDoubleSize(4, cost_);
+      }
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(5, getStatusBytes());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -453,6 +528,8 @@ public final class Datamodel {
         bitField0_ = (bitField0_ & ~0x00000004);
         cost_ = 0D;
         bitField0_ = (bitField0_ & ~0x00000008);
+        status_ = "";
+        bitField0_ = (bitField0_ & ~0x00000010);
         return this;
       }
 
@@ -497,6 +574,10 @@ public final class Datamodel {
           to_bitField0_ |= 0x00000008;
         }
         result.cost_ = cost_;
+        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
+          to_bitField0_ |= 0x00000010;
+        }
+        result.status_ = status_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -527,6 +608,11 @@ public final class Datamodel {
         if (other.hasCost()) {
           setCost(other.getCost());
         }
+        if (other.hasStatus()) {
+          bitField0_ |= 0x00000010;
+          status_ = other.status_;
+          onChanged();
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
@@ -545,6 +631,10 @@ public final class Datamodel {
           return false;
         }
         if (!hasCost()) {
+          
+          return false;
+        }
+        if (!hasStatus()) {
           
           return false;
         }
@@ -743,6 +833,80 @@ public final class Datamodel {
         return this;
       }
 
+      // required string status = 5;
+      private java.lang.Object status_ = "";
+      /**
+       * <code>required string status = 5;</code>
+       */
+      public boolean hasStatus() {
+        return ((bitField0_ & 0x00000010) == 0x00000010);
+      }
+      /**
+       * <code>required string status = 5;</code>
+       */
+      public java.lang.String getStatus() {
+        java.lang.Object ref = status_;
+        if (!(ref instanceof java.lang.String)) {
+          java.lang.String s = ((com.google.protobuf.ByteString) ref)
+              .toStringUtf8();
+          status_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>required string status = 5;</code>
+       */
+      public com.google.protobuf.ByteString
+          getStatusBytes() {
+        java.lang.Object ref = status_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          status_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>required string status = 5;</code>
+       */
+      public Builder setStatus(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000010;
+        status_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required string status = 5;</code>
+       */
+      public Builder clearStatus() {
+        bitField0_ = (bitField0_ & ~0x00000010);
+        status_ = getDefaultInstance().getStatus();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required string status = 5;</code>
+       */
+      public Builder setStatusBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000010;
+        status_ = value;
+        onChanged();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:com.packt.masteringakka.bookstore.order.SalesOrderLineItem)
     }
 
@@ -827,38 +991,23 @@ public final class Datamodel {
     com.packt.masteringakka.bookstore.order.Datamodel.SalesOrderLineItemOrBuilder getLineItemOrBuilder(
         int index);
 
-    // required string status = 5;
+    // required int64 createTs = 5;
     /**
-     * <code>required string status = 5;</code>
-     */
-    boolean hasStatus();
-    /**
-     * <code>required string status = 5;</code>
-     */
-    java.lang.String getStatus();
-    /**
-     * <code>required string status = 5;</code>
-     */
-    com.google.protobuf.ByteString
-        getStatusBytes();
-
-    // required int64 createTs = 6;
-    /**
-     * <code>required int64 createTs = 6;</code>
+     * <code>required int64 createTs = 5;</code>
      */
     boolean hasCreateTs();
     /**
-     * <code>required int64 createTs = 6;</code>
+     * <code>required int64 createTs = 5;</code>
      */
     long getCreateTs();
 
-    // required double totalCost = 7;
+    // required double totalCost = 6;
     /**
-     * <code>required double totalCost = 7;</code>
+     * <code>required double totalCost = 6;</code>
      */
     boolean hasTotalCost();
     /**
-     * <code>required double totalCost = 7;</code>
+     * <code>required double totalCost = 6;</code>
      */
     double getTotalCost();
   }
@@ -936,18 +1085,13 @@ public final class Datamodel {
               lineItem_.add(input.readMessage(com.packt.masteringakka.bookstore.order.Datamodel.SalesOrderLineItem.PARSER, extensionRegistry));
               break;
             }
-            case 42: {
+            case 40: {
               bitField0_ |= 0x00000008;
-              status_ = input.readBytes();
-              break;
-            }
-            case 48: {
-              bitField0_ |= 0x00000010;
               createTs_ = input.readInt64();
               break;
             }
-            case 57: {
-              bitField0_ |= 0x00000020;
+            case 49: {
+              bitField0_ |= 0x00000010;
               totalCost_ = input.readDouble();
               break;
             }
@@ -1159,76 +1303,33 @@ public final class Datamodel {
       return lineItem_.get(index);
     }
 
-    // required string status = 5;
-    public static final int STATUS_FIELD_NUMBER = 5;
-    private java.lang.Object status_;
+    // required int64 createTs = 5;
+    public static final int CREATETS_FIELD_NUMBER = 5;
+    private long createTs_;
     /**
-     * <code>required string status = 5;</code>
+     * <code>required int64 createTs = 5;</code>
      */
-    public boolean hasStatus() {
+    public boolean hasCreateTs() {
       return ((bitField0_ & 0x00000008) == 0x00000008);
     }
     /**
-     * <code>required string status = 5;</code>
-     */
-    public java.lang.String getStatus() {
-      java.lang.Object ref = status_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          status_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>required string status = 5;</code>
-     */
-    public com.google.protobuf.ByteString
-        getStatusBytes() {
-      java.lang.Object ref = status_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        status_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    // required int64 createTs = 6;
-    public static final int CREATETS_FIELD_NUMBER = 6;
-    private long createTs_;
-    /**
-     * <code>required int64 createTs = 6;</code>
-     */
-    public boolean hasCreateTs() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
-    }
-    /**
-     * <code>required int64 createTs = 6;</code>
+     * <code>required int64 createTs = 5;</code>
      */
     public long getCreateTs() {
       return createTs_;
     }
 
-    // required double totalCost = 7;
-    public static final int TOTALCOST_FIELD_NUMBER = 7;
+    // required double totalCost = 6;
+    public static final int TOTALCOST_FIELD_NUMBER = 6;
     private double totalCost_;
     /**
-     * <code>required double totalCost = 7;</code>
+     * <code>required double totalCost = 6;</code>
      */
     public boolean hasTotalCost() {
-      return ((bitField0_ & 0x00000020) == 0x00000020);
+      return ((bitField0_ & 0x00000010) == 0x00000010);
     }
     /**
-     * <code>required double totalCost = 7;</code>
+     * <code>required double totalCost = 6;</code>
      */
     public double getTotalCost() {
       return totalCost_;
@@ -1239,7 +1340,6 @@ public final class Datamodel {
       userId_ = "";
       creditTxnId_ = "";
       lineItem_ = java.util.Collections.emptyList();
-      status_ = "";
       createTs_ = 0L;
       totalCost_ = 0D;
     }
@@ -1257,10 +1357,6 @@ public final class Datamodel {
         return false;
       }
       if (!hasCreditTxnId()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasStatus()) {
         memoizedIsInitialized = 0;
         return false;
       }
@@ -1298,13 +1394,10 @@ public final class Datamodel {
         output.writeMessage(4, lineItem_.get(i));
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeBytes(5, getStatusBytes());
+        output.writeInt64(5, createTs_);
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        output.writeInt64(6, createTs_);
-      }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        output.writeDouble(7, totalCost_);
+        output.writeDouble(6, totalCost_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -1333,15 +1426,11 @@ public final class Datamodel {
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(5, getStatusBytes());
+          .computeInt64Size(5, createTs_);
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(6, createTs_);
-      }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeDoubleSize(7, totalCost_);
+          .computeDoubleSize(6, totalCost_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -1472,12 +1561,10 @@ public final class Datamodel {
         } else {
           lineItemBuilder_.clear();
         }
-        status_ = "";
-        bitField0_ = (bitField0_ & ~0x00000010);
         createTs_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000020);
+        bitField0_ = (bitField0_ & ~0x00000010);
         totalCost_ = 0D;
-        bitField0_ = (bitField0_ & ~0x00000040);
+        bitField0_ = (bitField0_ & ~0x00000020);
         return this;
       }
 
@@ -1530,13 +1617,9 @@ public final class Datamodel {
         if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
           to_bitField0_ |= 0x00000008;
         }
-        result.status_ = status_;
+        result.createTs_ = createTs_;
         if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
           to_bitField0_ |= 0x00000010;
-        }
-        result.createTs_ = createTs_;
-        if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
-          to_bitField0_ |= 0x00000020;
         }
         result.totalCost_ = totalCost_;
         result.bitField0_ = to_bitField0_;
@@ -1596,11 +1679,6 @@ public final class Datamodel {
             }
           }
         }
-        if (other.hasStatus()) {
-          bitField0_ |= 0x00000010;
-          status_ = other.status_;
-          onChanged();
-        }
         if (other.hasCreateTs()) {
           setCreateTs(other.getCreateTs());
         }
@@ -1621,10 +1699,6 @@ public final class Datamodel {
           return false;
         }
         if (!hasCreditTxnId()) {
-          
-          return false;
-        }
-        if (!hasStatus()) {
           
           return false;
         }
@@ -2126,141 +2200,67 @@ public final class Datamodel {
         return lineItemBuilder_;
       }
 
-      // required string status = 5;
-      private java.lang.Object status_ = "";
+      // required int64 createTs = 5;
+      private long createTs_ ;
       /**
-       * <code>required string status = 5;</code>
+       * <code>required int64 createTs = 5;</code>
        */
-      public boolean hasStatus() {
+      public boolean hasCreateTs() {
         return ((bitField0_ & 0x00000010) == 0x00000010);
       }
       /**
-       * <code>required string status = 5;</code>
-       */
-      public java.lang.String getStatus() {
-        java.lang.Object ref = status_;
-        if (!(ref instanceof java.lang.String)) {
-          java.lang.String s = ((com.google.protobuf.ByteString) ref)
-              .toStringUtf8();
-          status_ = s;
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>required string status = 5;</code>
-       */
-      public com.google.protobuf.ByteString
-          getStatusBytes() {
-        java.lang.Object ref = status_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          status_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>required string status = 5;</code>
-       */
-      public Builder setStatus(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000010;
-        status_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string status = 5;</code>
-       */
-      public Builder clearStatus() {
-        bitField0_ = (bitField0_ & ~0x00000010);
-        status_ = getDefaultInstance().getStatus();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string status = 5;</code>
-       */
-      public Builder setStatusBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000010;
-        status_ = value;
-        onChanged();
-        return this;
-      }
-
-      // required int64 createTs = 6;
-      private long createTs_ ;
-      /**
-       * <code>required int64 createTs = 6;</code>
-       */
-      public boolean hasCreateTs() {
-        return ((bitField0_ & 0x00000020) == 0x00000020);
-      }
-      /**
-       * <code>required int64 createTs = 6;</code>
+       * <code>required int64 createTs = 5;</code>
        */
       public long getCreateTs() {
         return createTs_;
       }
       /**
-       * <code>required int64 createTs = 6;</code>
+       * <code>required int64 createTs = 5;</code>
        */
       public Builder setCreateTs(long value) {
-        bitField0_ |= 0x00000020;
+        bitField0_ |= 0x00000010;
         createTs_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>required int64 createTs = 6;</code>
+       * <code>required int64 createTs = 5;</code>
        */
       public Builder clearCreateTs() {
-        bitField0_ = (bitField0_ & ~0x00000020);
+        bitField0_ = (bitField0_ & ~0x00000010);
         createTs_ = 0L;
         onChanged();
         return this;
       }
 
-      // required double totalCost = 7;
+      // required double totalCost = 6;
       private double totalCost_ ;
       /**
-       * <code>required double totalCost = 7;</code>
+       * <code>required double totalCost = 6;</code>
        */
       public boolean hasTotalCost() {
-        return ((bitField0_ & 0x00000040) == 0x00000040);
+        return ((bitField0_ & 0x00000020) == 0x00000020);
       }
       /**
-       * <code>required double totalCost = 7;</code>
+       * <code>required double totalCost = 6;</code>
        */
       public double getTotalCost() {
         return totalCost_;
       }
       /**
-       * <code>required double totalCost = 7;</code>
+       * <code>required double totalCost = 6;</code>
        */
       public Builder setTotalCost(double value) {
-        bitField0_ |= 0x00000040;
+        bitField0_ |= 0x00000020;
         totalCost_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>required double totalCost = 7;</code>
+       * <code>required double totalCost = 6;</code>
        */
       public Builder clearTotalCost() {
-        bitField0_ = (bitField0_ & ~0x00000040);
+        bitField0_ = (bitField0_ & ~0x00000020);
         totalCost_ = 0D;
         onChanged();
         return this;
@@ -2800,43 +2800,68 @@ public final class Datamodel {
     // @@protoc_insertion_point(class_scope:com.packt.masteringakka.bookstore.order.OrderCreated)
   }
 
-  public interface OrderStatusUpdatedOrBuilder
+  public interface LineItemStatusUpdatedOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
-    // required string status = 1;
+    // required string bookId = 1;
     /**
-     * <code>required string status = 1;</code>
+     * <code>required string bookId = 1;</code>
+     */
+    boolean hasBookId();
+    /**
+     * <code>required string bookId = 1;</code>
+     */
+    java.lang.String getBookId();
+    /**
+     * <code>required string bookId = 1;</code>
+     */
+    com.google.protobuf.ByteString
+        getBookIdBytes();
+
+    // required string status = 2;
+    /**
+     * <code>required string status = 2;</code>
      */
     boolean hasStatus();
     /**
-     * <code>required string status = 1;</code>
+     * <code>required string status = 2;</code>
      */
     java.lang.String getStatus();
     /**
-     * <code>required string status = 1;</code>
+     * <code>required string status = 2;</code>
      */
     com.google.protobuf.ByteString
         getStatusBytes();
+
+    // required int32 lineItemNumber = 3;
+    /**
+     * <code>required int32 lineItemNumber = 3;</code>
+     */
+    boolean hasLineItemNumber();
+    /**
+     * <code>required int32 lineItemNumber = 3;</code>
+     */
+    int getLineItemNumber();
   }
   /**
-   * Protobuf type {@code com.packt.masteringakka.bookstore.order.OrderStatusUpdated}
+   * Protobuf type {@code com.packt.masteringakka.bookstore.order.LineItemStatusUpdated}
    */
-  public static final class OrderStatusUpdated extends
+  public static final class LineItemStatusUpdated extends
       com.google.protobuf.GeneratedMessage
-      implements OrderStatusUpdatedOrBuilder {
-    // Use OrderStatusUpdated.newBuilder() to construct.
-    private OrderStatusUpdated(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      implements LineItemStatusUpdatedOrBuilder {
+    // Use LineItemStatusUpdated.newBuilder() to construct.
+    private LineItemStatusUpdated(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
       this.unknownFields = builder.getUnknownFields();
     }
-    private OrderStatusUpdated(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+    private LineItemStatusUpdated(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
-    private static final OrderStatusUpdated defaultInstance;
-    public static OrderStatusUpdated getDefaultInstance() {
+    private static final LineItemStatusUpdated defaultInstance;
+    public static LineItemStatusUpdated getDefaultInstance() {
       return defaultInstance;
     }
 
-    public OrderStatusUpdated getDefaultInstanceForType() {
+    public LineItemStatusUpdated getDefaultInstanceForType() {
       return defaultInstance;
     }
 
@@ -2846,7 +2871,7 @@ public final class Datamodel {
         getUnknownFields() {
       return this.unknownFields;
     }
-    private OrderStatusUpdated(
+    private LineItemStatusUpdated(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -2871,7 +2896,17 @@ public final class Datamodel {
             }
             case 10: {
               bitField0_ |= 0x00000001;
+              bookId_ = input.readBytes();
+              break;
+            }
+            case 18: {
+              bitField0_ |= 0x00000002;
               status_ = input.readBytes();
+              break;
+            }
+            case 24: {
+              bitField0_ |= 0x00000004;
+              lineItemNumber_ = input.readInt32();
               break;
             }
           }
@@ -2888,43 +2923,86 @@ public final class Datamodel {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.packt.masteringakka.bookstore.order.Datamodel.internal_static_com_packt_masteringakka_bookstore_order_OrderStatusUpdated_descriptor;
+      return com.packt.masteringakka.bookstore.order.Datamodel.internal_static_com_packt_masteringakka_bookstore_order_LineItemStatusUpdated_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.packt.masteringakka.bookstore.order.Datamodel.internal_static_com_packt_masteringakka_bookstore_order_OrderStatusUpdated_fieldAccessorTable
+      return com.packt.masteringakka.bookstore.order.Datamodel.internal_static_com_packt_masteringakka_bookstore_order_LineItemStatusUpdated_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated.class, com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated.Builder.class);
+              com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated.class, com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated.Builder.class);
     }
 
-    public static com.google.protobuf.Parser<OrderStatusUpdated> PARSER =
-        new com.google.protobuf.AbstractParser<OrderStatusUpdated>() {
-      public OrderStatusUpdated parsePartialFrom(
+    public static com.google.protobuf.Parser<LineItemStatusUpdated> PARSER =
+        new com.google.protobuf.AbstractParser<LineItemStatusUpdated>() {
+      public LineItemStatusUpdated parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new OrderStatusUpdated(input, extensionRegistry);
+        return new LineItemStatusUpdated(input, extensionRegistry);
       }
     };
 
     @java.lang.Override
-    public com.google.protobuf.Parser<OrderStatusUpdated> getParserForType() {
+    public com.google.protobuf.Parser<LineItemStatusUpdated> getParserForType() {
       return PARSER;
     }
 
     private int bitField0_;
-    // required string status = 1;
-    public static final int STATUS_FIELD_NUMBER = 1;
-    private java.lang.Object status_;
+    // required string bookId = 1;
+    public static final int BOOKID_FIELD_NUMBER = 1;
+    private java.lang.Object bookId_;
     /**
-     * <code>required string status = 1;</code>
+     * <code>required string bookId = 1;</code>
      */
-    public boolean hasStatus() {
+    public boolean hasBookId() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>required string status = 1;</code>
+     * <code>required string bookId = 1;</code>
+     */
+    public java.lang.String getBookId() {
+      java.lang.Object ref = bookId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          bookId_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>required string bookId = 1;</code>
+     */
+    public com.google.protobuf.ByteString
+        getBookIdBytes() {
+      java.lang.Object ref = bookId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        bookId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    // required string status = 2;
+    public static final int STATUS_FIELD_NUMBER = 2;
+    private java.lang.Object status_;
+    /**
+     * <code>required string status = 2;</code>
+     */
+    public boolean hasStatus() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    /**
+     * <code>required string status = 2;</code>
      */
     public java.lang.String getStatus() {
       java.lang.Object ref = status_;
@@ -2941,7 +3019,7 @@ public final class Datamodel {
       }
     }
     /**
-     * <code>required string status = 1;</code>
+     * <code>required string status = 2;</code>
      */
     public com.google.protobuf.ByteString
         getStatusBytes() {
@@ -2957,15 +3035,41 @@ public final class Datamodel {
       }
     }
 
+    // required int32 lineItemNumber = 3;
+    public static final int LINEITEMNUMBER_FIELD_NUMBER = 3;
+    private int lineItemNumber_;
+    /**
+     * <code>required int32 lineItemNumber = 3;</code>
+     */
+    public boolean hasLineItemNumber() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>required int32 lineItemNumber = 3;</code>
+     */
+    public int getLineItemNumber() {
+      return lineItemNumber_;
+    }
+
     private void initFields() {
+      bookId_ = "";
       status_ = "";
+      lineItemNumber_ = 0;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized != -1) return isInitialized == 1;
 
+      if (!hasBookId()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
       if (!hasStatus()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      if (!hasLineItemNumber()) {
         memoizedIsInitialized = 0;
         return false;
       }
@@ -2977,7 +3081,13 @@ public final class Datamodel {
                         throws java.io.IOException {
       getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getStatusBytes());
+        output.writeBytes(1, getBookIdBytes());
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeBytes(2, getStatusBytes());
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        output.writeInt32(3, lineItemNumber_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -2990,7 +3100,15 @@ public final class Datamodel {
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getStatusBytes());
+          .computeBytesSize(1, getBookIdBytes());
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(2, getStatusBytes());
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(3, lineItemNumber_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -3004,53 +3122,53 @@ public final class Datamodel {
       return super.writeReplace();
     }
 
-    public static com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated parseFrom(
+    public static com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated parseFrom(
+    public static com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated parseFrom(byte[] data)
+    public static com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated parseFrom(
+    public static com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated parseFrom(java.io.InputStream input)
+    public static com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated parseFrom(
+    public static com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseFrom(input, extensionRegistry);
     }
-    public static com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated parseDelimitedFrom(java.io.InputStream input)
+    public static com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input);
     }
-    public static com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated parseDelimitedFrom(
+    public static com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input, extensionRegistry);
     }
-    public static com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated parseFrom(
+    public static com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated parseFrom(
+    public static com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -3059,7 +3177,7 @@ public final class Datamodel {
 
     public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated prototype) {
+    public static Builder newBuilder(com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated prototype) {
       return newBuilder().mergeFrom(prototype);
     }
     public Builder toBuilder() { return newBuilder(this); }
@@ -3071,24 +3189,24 @@ public final class Datamodel {
       return builder;
     }
     /**
-     * Protobuf type {@code com.packt.masteringakka.bookstore.order.OrderStatusUpdated}
+     * Protobuf type {@code com.packt.masteringakka.bookstore.order.LineItemStatusUpdated}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdatedOrBuilder {
+       implements com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdatedOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return com.packt.masteringakka.bookstore.order.Datamodel.internal_static_com_packt_masteringakka_bookstore_order_OrderStatusUpdated_descriptor;
+        return com.packt.masteringakka.bookstore.order.Datamodel.internal_static_com_packt_masteringakka_bookstore_order_LineItemStatusUpdated_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return com.packt.masteringakka.bookstore.order.Datamodel.internal_static_com_packt_masteringakka_bookstore_order_OrderStatusUpdated_fieldAccessorTable
+        return com.packt.masteringakka.bookstore.order.Datamodel.internal_static_com_packt_masteringakka_bookstore_order_LineItemStatusUpdated_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated.class, com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated.Builder.class);
+                com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated.class, com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated.Builder.class);
       }
 
-      // Construct using com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated.newBuilder()
+      // Construct using com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -3108,8 +3226,12 @@ public final class Datamodel {
 
       public Builder clear() {
         super.clear();
-        status_ = "";
+        bookId_ = "";
         bitField0_ = (bitField0_ & ~0x00000001);
+        status_ = "";
+        bitField0_ = (bitField0_ & ~0x00000002);
+        lineItemNumber_ = 0;
+        bitField0_ = (bitField0_ & ~0x00000004);
         return this;
       }
 
@@ -3119,56 +3241,80 @@ public final class Datamodel {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return com.packt.masteringakka.bookstore.order.Datamodel.internal_static_com_packt_masteringakka_bookstore_order_OrderStatusUpdated_descriptor;
+        return com.packt.masteringakka.bookstore.order.Datamodel.internal_static_com_packt_masteringakka_bookstore_order_LineItemStatusUpdated_descriptor;
       }
 
-      public com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated getDefaultInstanceForType() {
-        return com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated.getDefaultInstance();
+      public com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated getDefaultInstanceForType() {
+        return com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated.getDefaultInstance();
       }
 
-      public com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated build() {
-        com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated result = buildPartial();
+      public com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated build() {
+        com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
         return result;
       }
 
-      public com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated buildPartial() {
-        com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated result = new com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated(this);
+      public com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated buildPartial() {
+        com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated result = new com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated(this);
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
           to_bitField0_ |= 0x00000001;
         }
+        result.bookId_ = bookId_;
+        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+          to_bitField0_ |= 0x00000002;
+        }
         result.status_ = status_;
+        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+          to_bitField0_ |= 0x00000004;
+        }
+        result.lineItemNumber_ = lineItemNumber_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
       }
 
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated) {
-          return mergeFrom((com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated)other);
+        if (other instanceof com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated) {
+          return mergeFrom((com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated other) {
-        if (other == com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated.getDefaultInstance()) return this;
-        if (other.hasStatus()) {
+      public Builder mergeFrom(com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated other) {
+        if (other == com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated.getDefaultInstance()) return this;
+        if (other.hasBookId()) {
           bitField0_ |= 0x00000001;
+          bookId_ = other.bookId_;
+          onChanged();
+        }
+        if (other.hasStatus()) {
+          bitField0_ |= 0x00000002;
           status_ = other.status_;
           onChanged();
+        }
+        if (other.hasLineItemNumber()) {
+          setLineItemNumber(other.getLineItemNumber());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
+        if (!hasBookId()) {
+          
+          return false;
+        }
         if (!hasStatus()) {
+          
+          return false;
+        }
+        if (!hasLineItemNumber()) {
           
           return false;
         }
@@ -3179,11 +3325,11 @@ public final class Datamodel {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated parsedMessage = null;
+        com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.packt.masteringakka.bookstore.order.Datamodel.OrderStatusUpdated) e.getUnfinishedMessage();
+          parsedMessage = (com.packt.masteringakka.bookstore.order.Datamodel.LineItemStatusUpdated) e.getUnfinishedMessage();
           throw e;
         } finally {
           if (parsedMessage != null) {
@@ -3194,16 +3340,90 @@ public final class Datamodel {
       }
       private int bitField0_;
 
-      // required string status = 1;
-      private java.lang.Object status_ = "";
+      // required string bookId = 1;
+      private java.lang.Object bookId_ = "";
       /**
-       * <code>required string status = 1;</code>
+       * <code>required string bookId = 1;</code>
        */
-      public boolean hasStatus() {
+      public boolean hasBookId() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>required string status = 1;</code>
+       * <code>required string bookId = 1;</code>
+       */
+      public java.lang.String getBookId() {
+        java.lang.Object ref = bookId_;
+        if (!(ref instanceof java.lang.String)) {
+          java.lang.String s = ((com.google.protobuf.ByteString) ref)
+              .toStringUtf8();
+          bookId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>required string bookId = 1;</code>
+       */
+      public com.google.protobuf.ByteString
+          getBookIdBytes() {
+        java.lang.Object ref = bookId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          bookId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>required string bookId = 1;</code>
+       */
+      public Builder setBookId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        bookId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required string bookId = 1;</code>
+       */
+      public Builder clearBookId() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        bookId_ = getDefaultInstance().getBookId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required string bookId = 1;</code>
+       */
+      public Builder setBookIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        bookId_ = value;
+        onChanged();
+        return this;
+      }
+
+      // required string status = 2;
+      private java.lang.Object status_ = "";
+      /**
+       * <code>required string status = 2;</code>
+       */
+      public boolean hasStatus() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
+      }
+      /**
+       * <code>required string status = 2;</code>
        */
       public java.lang.String getStatus() {
         java.lang.Object ref = status_;
@@ -3217,7 +3437,7 @@ public final class Datamodel {
         }
       }
       /**
-       * <code>required string status = 1;</code>
+       * <code>required string status = 2;</code>
        */
       public com.google.protobuf.ByteString
           getStatusBytes() {
@@ -3233,50 +3453,83 @@ public final class Datamodel {
         }
       }
       /**
-       * <code>required string status = 1;</code>
+       * <code>required string status = 2;</code>
        */
       public Builder setStatus(
           java.lang.String value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000001;
+  bitField0_ |= 0x00000002;
         status_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>required string status = 1;</code>
+       * <code>required string status = 2;</code>
        */
       public Builder clearStatus() {
-        bitField0_ = (bitField0_ & ~0x00000001);
+        bitField0_ = (bitField0_ & ~0x00000002);
         status_ = getDefaultInstance().getStatus();
         onChanged();
         return this;
       }
       /**
-       * <code>required string status = 1;</code>
+       * <code>required string status = 2;</code>
        */
       public Builder setStatusBytes(
           com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000001;
+  bitField0_ |= 0x00000002;
         status_ = value;
         onChanged();
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:com.packt.masteringakka.bookstore.order.OrderStatusUpdated)
+      // required int32 lineItemNumber = 3;
+      private int lineItemNumber_ ;
+      /**
+       * <code>required int32 lineItemNumber = 3;</code>
+       */
+      public boolean hasLineItemNumber() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>required int32 lineItemNumber = 3;</code>
+       */
+      public int getLineItemNumber() {
+        return lineItemNumber_;
+      }
+      /**
+       * <code>required int32 lineItemNumber = 3;</code>
+       */
+      public Builder setLineItemNumber(int value) {
+        bitField0_ |= 0x00000004;
+        lineItemNumber_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required int32 lineItemNumber = 3;</code>
+       */
+      public Builder clearLineItemNumber() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        lineItemNumber_ = 0;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:com.packt.masteringakka.bookstore.order.LineItemStatusUpdated)
     }
 
     static {
-      defaultInstance = new OrderStatusUpdated(true);
+      defaultInstance = new LineItemStatusUpdated(true);
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:com.packt.masteringakka.bookstore.order.OrderStatusUpdated)
+    // @@protoc_insertion_point(class_scope:com.packt.masteringakka.bookstore.order.LineItemStatusUpdated)
   }
 
   private static com.google.protobuf.Descriptors.Descriptor
@@ -3295,10 +3548,10 @@ public final class Datamodel {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_packt_masteringakka_bookstore_order_OrderCreated_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_com_packt_masteringakka_bookstore_order_OrderStatusUpdated_descriptor;
+    internal_static_com_packt_masteringakka_bookstore_order_LineItemStatusUpdated_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_com_packt_masteringakka_bookstore_order_OrderStatusUpdated_fieldAccessorTable;
+      internal_static_com_packt_masteringakka_bookstore_order_LineItemStatusUpdated_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -3309,18 +3562,19 @@ public final class Datamodel {
   static {
     java.lang.String[] descriptorData = {
       "\n\036src/main/proto/datamodel.proto\022\'com.pa" +
-      "ckt.masteringakka.bookstore.order\"\\\n\022Sal" +
+      "ckt.masteringakka.bookstore.order\"l\n\022Sal" +
       "esOrderLineItem\022\026\n\016lineItemNumber\030\001 \002(\005\022" +
       "\016\n\006bookId\030\002 \002(\t\022\020\n\010quantity\030\003 \002(\005\022\014\n\004cos" +
-      "t\030\004 \002(\001\"\301\001\n\nSalesOrder\022\n\n\002id\030\001 \002(\t\022\016\n\006us" +
-      "erId\030\002 \002(\t\022\023\n\013creditTxnId\030\003 \002(\t\022M\n\010lineI" +
-      "tem\030\004 \003(\0132;.com.packt.masteringakka.book" +
-      "store.order.SalesOrderLineItem\022\016\n\006status" +
-      "\030\005 \002(\t\022\020\n\010createTs\030\006 \002(\003\022\021\n\ttotalCost\030\007 " +
+      "t\030\004 \002(\001\022\016\n\006status\030\005 \002(\t\"\261\001\n\nSalesOrder\022\n" +
+      "\n\002id\030\001 \002(\t\022\016\n\006userId\030\002 \002(\t\022\023\n\013creditTxnI" +
+      "d\030\003 \002(\t\022M\n\010lineItem\030\004 \003(\0132;.com.packt.ma" +
+      "steringakka.bookstore.order.SalesOrderLi" +
+      "neItem\022\020\n\010createTs\030\005 \002(\003\022\021\n\ttotalCost\030\006 " +
       "\002(\001\"R\n\014OrderCreated\022B\n\005order\030\001 \002(\01323.com",
       ".packt.masteringakka.bookstore.order.Sal" +
-      "esOrder\"$\n\022OrderStatusUpdated\022\016\n\006status\030" +
-      "\001 \002(\tB\rB\tDatamodelH\001"
+      "esOrder\"O\n\025LineItemStatusUpdated\022\016\n\006book" +
+      "Id\030\001 \002(\t\022\016\n\006status\030\002 \002(\t\022\026\n\016lineItemNumb" +
+      "er\030\003 \002(\005B\rB\tDatamodelH\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -3332,25 +3586,25 @@ public final class Datamodel {
           internal_static_com_packt_masteringakka_bookstore_order_SalesOrderLineItem_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_packt_masteringakka_bookstore_order_SalesOrderLineItem_descriptor,
-              new java.lang.String[] { "LineItemNumber", "BookId", "Quantity", "Cost", });
+              new java.lang.String[] { "LineItemNumber", "BookId", "Quantity", "Cost", "Status", });
           internal_static_com_packt_masteringakka_bookstore_order_SalesOrder_descriptor =
             getDescriptor().getMessageTypes().get(1);
           internal_static_com_packt_masteringakka_bookstore_order_SalesOrder_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_packt_masteringakka_bookstore_order_SalesOrder_descriptor,
-              new java.lang.String[] { "Id", "UserId", "CreditTxnId", "LineItem", "Status", "CreateTs", "TotalCost", });
+              new java.lang.String[] { "Id", "UserId", "CreditTxnId", "LineItem", "CreateTs", "TotalCost", });
           internal_static_com_packt_masteringakka_bookstore_order_OrderCreated_descriptor =
             getDescriptor().getMessageTypes().get(2);
           internal_static_com_packt_masteringakka_bookstore_order_OrderCreated_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_packt_masteringakka_bookstore_order_OrderCreated_descriptor,
               new java.lang.String[] { "Order", });
-          internal_static_com_packt_masteringakka_bookstore_order_OrderStatusUpdated_descriptor =
+          internal_static_com_packt_masteringakka_bookstore_order_LineItemStatusUpdated_descriptor =
             getDescriptor().getMessageTypes().get(3);
-          internal_static_com_packt_masteringakka_bookstore_order_OrderStatusUpdated_fieldAccessorTable = new
+          internal_static_com_packt_masteringakka_bookstore_order_LineItemStatusUpdated_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_com_packt_masteringakka_bookstore_order_OrderStatusUpdated_descriptor,
-              new java.lang.String[] { "Status", });
+              internal_static_com_packt_masteringakka_bookstore_order_LineItemStatusUpdated_descriptor,
+              new java.lang.String[] { "BookId", "Status", "LineItemNumber", });
           return null;
         }
       };
