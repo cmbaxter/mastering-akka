@@ -3,6 +3,7 @@ package com.packt.masteringakka.bookstore.common
 import akka.persistence.journal.EventAdapter
 import akka.persistence.journal.EventSeq
 import com.google.protobuf.Message
+import akka.persistence.journal.Tagged
 
 /**
  * Trait for a class that can write it's state into a protobuf message
@@ -36,7 +37,13 @@ class ProtobufDatamodelAdapter extends EventAdapter{
   override def manifest(event:Any) = event.getClass.getName
     
   override def toJournal(event:Any) = event match {
-    case wr:DatamodelWriter => wr.toDatamodel
+    case ev:EntityEvent with DatamodelWriter => 
+      val message = ev.toDatamodel
+      
+      //Add tags for the entity type and the event class name
+      val eventType = ev.getClass.getName().toLowerCase().split("\\$").last
+      Tagged(message, Set(ev.entityType, eventType))      
+      
     case _ => throw new RuntimeException(s"Protobuf adapter can't write adapt type: $event")
   }
   

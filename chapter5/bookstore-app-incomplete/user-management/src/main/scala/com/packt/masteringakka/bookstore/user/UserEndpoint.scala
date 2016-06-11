@@ -15,30 +15,25 @@ class UserEndpoint(crm:ActorRef)(implicit val ec:ExecutionContext) extends Books
   import akka.pattern.ask
   import CustomerRelationsManager._
   
-  /** Unfiltered param for email address */
-  object EmailParam extends Params.Extract("email", Params.first ~> Params.nonempty)
   
   def intent = {
-    case req @ GET(Path(Seg("api" :: "user" :: IntPathElement(userId) :: Nil))) =>
-      val f = (crm ? FindUserById(userId))
-      respond(f, req)
       
-    case req @ GET(Path(Seg("api" :: "user" :: Nil))) & Params(EmailParam(email)) =>
+    case req @ GET(Path(Seg("api" :: "user" :: email :: Nil))) =>
       val f = (crm ? FindUserByEmail(email))
       respond(f, req)      
     
     case req @ POST(Path(Seg("api" :: "user" :: Nil))) =>
-      val input = parseJson[BookstoreUser.UserInput](Body.string(req))
+      val input = parseJson[CustomerRelationsManager.CreateUserInput](Body.string(req))
       val f = (crm ? SignupNewUser(input))
       respond(f, req)
       
-    case req @ PUT(Path(Seg("api" :: "user" :: IntPathElement(userId) :: Nil))) =>
+    case req @ PUT(Path(Seg("api" :: "user" :: email :: Nil))) =>
       val input = parseJson[BookstoreUser.UserInput](Body.string(req))
-      val f = (crm ? UpdateUserInfo(userId, input))
+      val f = (crm ? UpdateUserInfo(email, input))
       respond(f, req) 
       
-    case req @ DELETE(Path(Seg("api" :: "user" :: IntPathElement(userId) :: Nil))) =>
-      val f = (crm ? RemoveUser(userId))
+    case req @ DELETE(Path(Seg("api" :: "user" :: email :: Nil))) =>
+      val f = (crm ? RemoveUser(email))
       respond(f, req)   
   }
 }

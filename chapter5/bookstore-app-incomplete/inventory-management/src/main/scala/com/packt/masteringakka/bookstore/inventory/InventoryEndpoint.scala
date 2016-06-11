@@ -13,9 +13,10 @@ import akka.pattern.ask
  * Http Endpoint for requests related to inventory management 
  */
 @Sharable
-class InventoryEndpoint(inventoryClerk:ActorRef)(implicit val ec:ExecutionContext) extends BookstorePlan{
+class InventoryEndpoint(inventoryClerk:ActorRef, bookView:ActorRef)(implicit val ec:ExecutionContext) extends BookstorePlan{
   import akka.pattern.ask
   import InventoryClerk._
+  import BookView._
   
   /**
    * Unfiltered param for handling the multi value tag param
@@ -34,11 +35,11 @@ class InventoryEndpoint(inventoryClerk:ActorRef)(implicit val ec:ExecutionContex
       respond(f, req)
       
     case req @ GET(Path(Seg("api" :: "book" :: Nil))) & Params(TagParam(tags)) =>
-      val f = (inventoryClerk ? FindBooksByTags(tags))
+      val f = (bookView ? FindBooksByTags(tags))
       respond(f, req) 
       
     case req @ GET(Path(Seg("api" :: "book" :: Nil))) & Params(AuthorParam(author)) =>
-      val f = (inventoryClerk ? FindBooksByAuthor(author))
+      val f = (bookView ? FindBooksByAuthor(author))
       respond(f, req)       
       
     case req @ POST(Path(Seg("api" :: "book" :: Nil))) =>

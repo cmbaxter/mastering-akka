@@ -1,25 +1,27 @@
 package com.packt.masteringakka.bookstore.inventory
 
-import com.packt.masteringakka.bookstore.common.BookstoreActor
 import akka.actor.Props
-import akka.actor.ActorRef
 import com.packt.masteringakka.bookstore.common.ServiceResult
 import akka.util.Timeout
 import scala.concurrent.Future
-import com.packt.masteringakka.bookstore.common.FullResult
 import java.util.Date
-import com.packt.masteringakka.bookstore.common.EntityFactory
 import java.util.UUID
 import com.packt.masteringakka.bookstore.common.Aggregate
+import akka.pattern.ask
+import com.packt.masteringakka.bookstore.common.PersistentEntity.GetState
+import com.packt.masteringakka.bookstore.common.PersistentEntity.MarkAsDeleted
+import scala.concurrent.duration.DurationInt
+import com.packt.masteringakka.bookstore.common.ResumableProjection
+import akka.persistence.query.PersistenceQuery
+import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
+import akka.stream.ActorMaterializer
+import akka.persistence.query.EventEnvelope
 
 /**
  * Companion to the InventoryClerk actor where the vocab is defined 
  */
 object InventoryClerk{
-  //Query operations
   case class FindBook(id:String)
-  case class FindBooksByTags(tags:Seq[String])
-  case class FindBooksByAuthor(author:String)
   
   //Command operations
   case class CatalogNewBook(title:String, author:String, tags:List[String], cost:Double)
@@ -28,10 +30,10 @@ object InventoryClerk{
   case class IncreaseBookInventory(bookId:String, amount:Int)
   case class RemoveBookFromCatalog(id:String)
   
-  //Events
-  case class OrderCreated(id:String, books:List[(String,Int)])
-  case class InventoryAllocated(orderId:String)
-  case class InventoryBackOrdered(orderId:String)
+  trait SalesOrderCreateInfo{
+    def id:String
+    def lineItemInfo:List[(String, Int)]
+  }
   
   def props = Props[InventoryClerk]
   
@@ -47,26 +49,22 @@ class InventoryClerk extends Aggregate[BookFO, Book]{
   import context.dispatcher
   import Book.Command._
   
-  //Listen for the OrderCreatd event
-  context.system.eventStream.subscribe(self, classOf[OrderCreated])
+  val projection = ResumableProjection("inventory-allocation", context.system)
+  implicit val mater = ActorMaterializer()
+  val journal = PersistenceQuery(context.system).
+    readJournalFor[CassandraReadJournal](CassandraReadJournal.Identifier)
+  projection.fetchLatestOffset.foreach{ o =>
+    journal.
+      eventsByTag("ordercreated", o.getOrElse(0L)).
+      runForeach(e => self ! e)
+  }
   
   def receive = {
     case FindBook(id) =>
       log.info("Finding book {}", id)
       val book = lookupOrCreateChild(id)
       forwardCommand(id, GetState)
-      
-    //Can't handle these lookup requests until we do CQRS in chapter 5
-    /*case FindBooksByTags(tags) =>
-      log.info("Finding books for tags {}", tags)
-      val result = multiEntityLookup(repo.findBookIdsByTags(tags))          
-      pipeResponse(result)
-      
-    case FindBooksByAuthor(author) =>
-      log.info("Finding books for author {}", author)
-      val result = multiEntityLookup(repo.findBookIdsByAuthor(author))
-      pipeResponse(result) */
-      
+          
     case CatalogNewBook(title, author, tags, cost) =>
       log.info("Cataloging new book with title {}", title)
       val id = UUID.randomUUID().toString()
@@ -86,33 +84,16 @@ class InventoryClerk extends Aggregate[BookFO, Book]{
     case RemoveBookFromCatalog(id) =>
       forwardCommand(id, MarkAsDeleted)
       
-    case OrderCreated(id, lineItems) =>
-      import akka.pattern.ask
-      import concurrent.duration._
-      implicit val timeout = Timeout(5 seconds)
+    case EventEnvelope(offset, pid, seq, order:SalesOrderCreateInfo) =>
       
       //Allocate inventory from each book
-      log.info("Received OrderCreated event for order id {}", id)
-      val futs = 
-        lineItems.
-          map{
-            case (bookId, quant) =>
-              val f = (lookupOrCreateChild(bookId) ? AllocateInventory(id, quant)).mapTo[ServiceResult[BookFO]]
-              f.filter(_.isValid)
-          }
-      
-      //If we get even one failure, consider it backordered
-      Future.sequence(futs).
-        map{ _ =>
-          log.info("Inventory available for order {}", id)
-          InventoryAllocated(id)        
-        }.
-        recover{
-          case ex => 
-            log.warning("Inventory back ordered for order {}", id)
-            InventoryBackOrdered(id)
-        }.
-        foreach(context.system.eventStream.publish)    
+      log.info("Received OrderCreated event for order id {}", order.id)
+      order.lineItemInfo.
+        foreach{
+          case (bookId, quant) =>
+            forwardCommand(bookId, AllocateInventory(order.id, quant))
+        }
+      projection.storeLatestOffset(offset)
   }
     
   def entityProps(id:String) = Book.props(id)

@@ -18,18 +18,17 @@ import com.packt.masteringakka.bookstore.common.EntityFieldsObject
 import com.packt.masteringakka.bookstore.credit.CreditCardTransactionFO
 import com.packt.masteringakka.bookstore.credit.CreditAssociate
 
-object SalesOrderStatus extends Enumeration{
-  val InProgress, Approved, BackOrdered, Cancelled = Value
+object LineItemStatus extends Enumeration{
+  val Unknown, Approved, BackOrdered = Value
 }
-case class SalesOrderLineItemFO(lineItemNumber:Int, bookId:String, quantity:Int, cost:Double)
+case class SalesOrderLineItemFO(lineItemNumber:Int, bookId:String, quantity:Int, cost:Double, status:LineItemStatus.Value)
 
 
 object SalesOrderFO{
-  def empty = SalesOrderFO("", "", "", SalesOrderStatus.InProgress, 0, Nil, new Date(0))
+  def empty = SalesOrderFO("", "", "", 0, Nil, new Date(0))
 }
 case class SalesOrderFO(id:String, userId:String, creditTxnId:String, 
-    status:SalesOrderStatus.Value, totalCost:Double, 
-    lineItems:List[SalesOrderLineItemFO], createTs:Date, deleted:Boolean = false) extends EntityFieldsObject[String, SalesOrderFO]{
+    totalCost:Double, lineItems:List[SalesOrderLineItemFO], createTs:Date, deleted:Boolean = false) extends EntityFieldsObject[String, SalesOrderFO]{
     def assignId(id:String) = this.copy(id = id)
     def markDeleted = this.copy(deleted = true)
 }
@@ -53,25 +52,26 @@ class SalesOrder(id:String) extends PersistentEntity[SalesOrderFO](id){
       
     case CreateValidatedOrder(order) =>
       //Now we can persist the complete order
-      persist(OrderCreated(order)){ event =>        
-        handleEventAndRespond()(event)
-        
-        //For now, still using akka event bus.  Will fix this in chapter 5
-        val items = state.lineItems.map(i => (i.bookId, i.quantity ))
-        val invevent = InventoryClerk.OrderCreated(state.id, items)
-        context.system.eventStream.publish(invevent)        
-      }
+      persist(OrderCreated(order))(handleEventAndRespond())
       
-    case UpdateOrderStatus(status) =>
-      persist(OrderStatusUpdated(status))(handleEvent)
+    case UpdateLineItemStatus(bookId, status) =>
+      val itemNumber = state.lineItems.
+        find(_.bookId == bookId).
+        map(_.lineItemNumber).
+        getOrElse(0)
+      persist(LineItemStatusUpdated(bookId, itemNumber, status))(handleEvent)
   }
   
   def handleEvent(event:EntityEvent) = event match {
     case OrderCreated(order) =>
       state = order
       
-    case OrderStatusUpdated(status) =>
-      state = state.copy(status = status)
+    case LineItemStatusUpdated(bookId, itemNumber, status) =>
+      val newItems = state.lineItems.map{
+        case item if item.bookId == bookId => item.copy(status = status)
+        case item => item
+      }
+      state = state.copy(lineItems = newItems)
   }
   
   def isCreateMessage(cmd:Any) = cmd match{
@@ -82,11 +82,12 @@ class SalesOrder(id:String) extends PersistentEntity[SalesOrderFO](id){
 }
 
 /**
- * Companion to the SalesOrder aggregate root entity
+ * Companion to the SalesOrder aggregate 
  */
 object SalesOrder{
   import collection.JavaConversions._
   
+  val EntityType = "salesorder"
   def props(id:String) = Props(classOf[SalesOrder], id)
   
   case class LineItemRequest(bookId:String, quantity:Int)
@@ -94,24 +95,30 @@ object SalesOrder{
   object Command{
     case class CreateOrder(newOrderId:String, userEmail:String, lineItems:List[LineItemRequest], cardInfo:CreditCardInfo) 
     case class CreateValidatedOrder(order:SalesOrderFO)
-    case class UpdateOrderStatus(status:SalesOrderStatus.Value)    
+    case class UpdateLineItemStatus(bookId:String, status:LineItemStatus.Value)    
   }
 
   object Event{
-    case class OrderCreated(order:SalesOrderFO) extends EntityEvent{
+    trait SalesOrderEvent extends EntityEvent{def entityType = EntityType }
+    case class OrderCreated(order:SalesOrderFO) extends SalesOrderEvent with InventoryClerk.SalesOrderCreateInfo{
+      def id = order.id
+      def lineItemInfo = order.lineItems.map{ item =>
+        (item.bookId, item.quantity )
+      }
+      
       def toDatamodel = {
         val lineItemsDm = order.lineItems.map{ item =>
           Datamodel.SalesOrderLineItem.newBuilder().
             setBookId(item.bookId).
             setCost(item.cost ).
             setQuantity(item.quantity).
-            setLineItemNumber(item.lineItemNumber)
+            setLineItemNumber(item.lineItemNumber).
+            setStatus(item.status.toString)
             .build
         }
         val orderDm = Datamodel.SalesOrder.newBuilder().
           setId(order.id).
           setCreateTs(order.createTs.getTime).
-          setStatus(order.status.toString).
           addAllLineItem(lineItemsDm).
           setUserId(order.userId ).
           setCreditTxnId(order.creditTxnId).
@@ -125,25 +132,29 @@ object SalesOrder{
     }
     object OrderCreated extends DatamodelReader{
       def fromDatamodel = {
-        case dmo:Datamodel.SalesOrder =>
+        case doc:Datamodel.OrderCreated =>
+          val dmo = doc.getOrder()
           val items = dmo.getLineItemList().map{ item =>
-            SalesOrderLineItemFO(item.getLineItemNumber(), item.getBookId(), item.getQuantity(), item.getCost())
+            SalesOrderLineItemFO(item.getLineItemNumber(), item.getBookId(), 
+              item.getQuantity(), item.getCost(), LineItemStatus.withName(item.getStatus))
           }
           val order = SalesOrderFO(dmo.getId(), dmo.getUserId(), dmo.getCreditTxnId(),
-            SalesOrderStatus.withName(dmo.getStatus()), dmo.getTotalCost(), items.toList, new Date(dmo.getCreateTs()))
+            dmo.getTotalCost(), items.toList, new Date(dmo.getCreateTs()))
           OrderCreated(order)
       }
     }
     
-    case class OrderStatusUpdated(status:SalesOrderStatus.Value) extends EntityEvent{
-      def toDatamodel = Datamodel.OrderStatusUpdated.newBuilder().
+    case class LineItemStatusUpdated(bookId:String, itemNumber:Int, status:LineItemStatus.Value) extends SalesOrderEvent{
+      def toDatamodel = Datamodel.LineItemStatusUpdated.newBuilder().
         setStatus(status.toString).
+        setBookId(bookId).
+        setLineItemNumber(itemNumber).
         build
     }    
-    object OrderStatusUpdated extends DatamodelReader{
+    object LineItemStatusUpdated extends DatamodelReader{
       def fromDatamodel = {
-        case dm:Datamodel.OrderStatusUpdated =>
-          OrderStatusUpdated(SalesOrderStatus.withName(dm.getStatus()))
+        case dm:Datamodel.LineItemStatusUpdated =>
+          LineItemStatusUpdated(dm.getBookId(), dm.getLineItemNumber(), LineItemStatus.withName(dm.getStatus()))
       }
     }
   }
@@ -272,7 +283,7 @@ private[order] class SalesOrderCreateValidator extends FSM[SalesOrderCreateValid
           case (item, idx) =>
           bookMap.
             get(item.bookId).
-            map(b => SalesOrderLineItemFO(idx + 1, b.id, item.quantity, item.quantity * b.cost))
+            map(b => SalesOrderLineItemFO(idx + 1, b.id, item.quantity, item.quantity * b.cost, LineItemStatus.Unknown ))
         }
          
       val total = lineItems.map(_.cost).sum
@@ -283,7 +294,7 @@ private[order] class SalesOrderCreateValidator extends FSM[SalesOrderCreateValid
   when(ChargingCard, 10 seconds){
     case Event(FullResult(txn:CreditCardTransactionFO), data:LookedUpData) if txn.status == CreditTransactionStatus.Approved  =>     
       val order = SalesOrderFO(data.inputs.request.newOrderId, 
-        data.user.id, txn.id, SalesOrderStatus.InProgress, data.total, data.items, newDate)
+        data.user.id, txn.id, data.total, data.items, newDate)
       context.parent.tell(CreateValidatedOrder(order), data.inputs.originator )
       stop            
       

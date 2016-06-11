@@ -17,6 +17,7 @@ object BookstoreUserFO{
 
 
 object BookstoreUser{
+  val EntityType = "bookstoreuser"
   case class UserInput(firstName:String, lastName:String)
   
   object Command{
@@ -25,7 +26,7 @@ object BookstoreUser{
   }
   
   object Event{
-    trait UserEvent extends EntityEvent{def entityType = "user"}
+    trait UserEvent extends EntityEvent{def entityType = EntityType}
     case class UserCreated(user:BookstoreUserFO) extends UserEvent{
       def toDatamodel = {
         val userDm = Datamodel.BookstoreUser.newBuilder().

@@ -8,9 +8,9 @@ import akka.actor.ActorSystem
  */
 class UserBoot extends Bootstrap{
   def bootup(system:ActorSystem) = {
-    import system.dispatcher
-    
+    import system.dispatcher    
     val crm = system.actorOf(CustomerRelationsManager.props, CustomerRelationsManager.Name)
+    system.actorOf(BookstoreUserViewBuilder.props, BookstoreUserViewBuilder.Name)
     List(new UserEndpoint(crm))
   }
 }

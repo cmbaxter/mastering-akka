@@ -1,6 +1,6 @@
 import NativePackagerHelper._
 
-name := "chapter4-bookstore-app-incomplete"
+name := "chapter5-bookstore-app-incomplete"
 
 lazy val commonSettings = Seq(
   organization := "com.packt.masteringakka",

@@ -62,7 +62,8 @@ trait ElasticsearchUpdateSupport extends ElasticsearchSupport{ me:ViewBuilder[_]
     val requestUrl = version match{
       case None => urlBase
       case Some(v) => s"$urlBase/_update?version=$v"
-    }     
+    } 
+    
     val req = url(requestUrl) << write(request)
     callAndWait[IndexingResult](req)
   }

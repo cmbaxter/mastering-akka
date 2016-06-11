@@ -1,76 +1,115 @@
 package com.packt.masteringakka.bookstore.user
 
 import java.util.Date
-import com.packt.masteringakka.bookstore.common.EntityActor
-import com.packt.masteringakka.bookstore.common.BookstoreRepository
+import com.packt.masteringakka.bookstore.common._
 import scala.concurrent.Future
 import akka.actor.Props
-import com.packt.masteringakka.bookstore.common.Failure
-import com.packt.masteringakka.bookstore.common.FailureType
-import com.packt.masteringakka.bookstore.common.ErrorMessage
-import com.packt.masteringakka.bookstore.common.EntityFieldsObject
 
-case class BookstoreUserFO(id:Int, firstName:String, lastName:String, 
-  email:String, createTs:Date, modifyTs:Date, deleted:Boolean = false) extends EntityFieldsObject[Int, BookstoreUserFO]{
-  def assignId(id:Int) = this.copy(id = id)
+case class BookstoreUserFO(email:String, firstName:String, lastName:String, 
+  createTs:Date, deleted:Boolean = false) extends EntityFieldsObject[String, BookstoreUserFO]{
+  def assignId(id:String) = this.copy(email = id)
+  def id = email
   def markDeleted = this.copy(deleted = true)
 }
-
-object BookstoreUser{
-  case class UserInput(firstName:String, lastName:String, email:String)
-  case class UpdatePersonalInfo(input:UserInput)
-  val EmailNotUniqueError = ErrorMessage("user.email.nonunique", Some("The email supplied for a create or update is not unique"))
-  class EmailNotUniqueException extends Exception
-  def props(id:Int) = Props(classOf[BookstoreUser], id)
+object BookstoreUserFO{
+  def empty = BookstoreUserFO("", "", "", new Date(0))
 }
 
-class BookstoreUser(idInput:Int) extends EntityActor[BookstoreUserFO](idInput){
+
+object BookstoreUser{
+  case class UserInput(firstName:String, lastName:String)
+  
+  object Command{
+    case class CreateUser(user:BookstoreUserFO)
+    case class UpdatePersonalInfo(input:UserInput)
+  }
+  
+  object Event{
+    trait UserEvent extends EntityEvent{def entityType = "user"}
+    case class UserCreated(user:BookstoreUserFO) extends UserEvent{
+      def toDatamodel = {
+        val userDm = Datamodel.BookstoreUser.newBuilder().
+          setEmail(user.email).
+          setFirstName(user.firstName ).
+          setLastName(user.lastName).
+          setCreateTs(user.createTs.getTime).
+          setDeleted(user.deleted).
+          build
+        
+        Datamodel.UserCreated.newBuilder().
+          setUser(userDm).
+          build
+      }
+    }
+    object UserCreated extends DatamodelReader{
+      def fromDatamodel = {
+        case dm:Datamodel.UserCreated =>
+          val user = dm.getUser()
+          UserCreated(BookstoreUserFO(user.getEmail(), user.getFirstName(), user.getLastName(), new Date(user.getCreateTs()), user.getDeleted()))
+      }
+    }
+    
+    case class PersonalInfoUpdated(firstName:String, lastName:String) extends UserEvent{
+      def toDatamodel = Datamodel.PersonalInfoUpdated.newBuilder().
+        setFirstName(firstName).
+        setLastName(lastName).
+        build
+    }
+    object PersonalInfoUpdated extends DatamodelReader{
+      def fromDatamodel = {
+        case dm:Datamodel.PersonalInfoUpdated =>
+          PersonalInfoUpdated(dm.getFirstName(), dm.getLastName())
+      }
+    }
+    
+    case class UserDeleted(email:String) extends UserEvent{
+      def toDatamodel = Datamodel.UserDeleted.newBuilder().
+        setEmail(email).
+        build
+    }   
+    object UserDeleted extends DatamodelReader{
+      def fromDatamodel = {
+        case dm:Datamodel.UserDeleted =>
+          UserDeleted(dm.getEmail())
+      }
+    }
+    
+  }
+  
+  def props(id:String) = Props(classOf[BookstoreUser], id)
+   
+}
+
+class BookstoreUser(email:String) extends PersistentEntity[BookstoreUserFO](email){
   import BookstoreUser._
-  import EntityActor._
+  import Command._
+  import Event._
   import akka.pattern.pipe
   import context.dispatcher
   
-  val repo = new BookstoreUserRepository
-  val errorMapper:ErrorMapper = {
-    case ex:EmailNotUniqueException => Failure(FailureType.Validation, EmailNotUniqueError )
-  }  
+  def initialState = BookstoreUserFO.empty
   
-  //Overriding this to add email unique check first
-  override def customCreateHandling:StateFunction = {
-    case Event(vo:BookstoreUserFO, _) =>
-      val checkFut = emailUnique(vo.email)
-      checkFut.
-        map(b => FinishCreate(vo)).
-        to(self, sender())     
-      stay
+  def additionalCommandHandling = {
+    case CreateUser(user) =>
+      persist(UserCreated(user)){handleEventAndRespond()}
+      
+    case UpdatePersonalInfo(input) =>
+      persist(PersonalInfoUpdated(input.firstName, input.lastName)){handleEventAndRespond()}
   }
   
-  def initializedHandling:StateFunction = {
-    case Event(UpdatePersonalInfo(input), data:InitializedData) =>
-      val newFo = data.fo.copy(firstName = input.firstName, lastName = input.lastName, email = input.email)
-      val persistFut = 
-        for{
-          _ <- emailUnique(input.email, Some(data.fo.id)) 
-          updated <- repo.updateUserInfo(newFo)
-        } yield updated
-      requestFoForSender
-      persist(data.fo, persistFut, id => newFo)
+  def handleEvent(event:EntityEvent) = event match {
+    case UserCreated(user) =>
+      state = user
+    case PersonalInfoUpdated(first, last) =>
+      state = state.copy(firstName = first, lastName = last)
+    case UserDeleted(email) =>
+      state = state.markDeleted
   }
   
-  /**
-   * Checks to make sure the email is unique
-   * @param email The email to check
-   * @param existingId Supplied when the user already exists to avoid matching on the same user
-   * when checking for uniqueness
-   * @return A Future for an Option[Boolean] which will be failed if the email is not unique
-   */
-  def emailUnique(email:String, existingId:Option[Int] = None) = {    
-    repo.
-      findUserIdByEmail(email).
-      flatMap{
-        case None => Future.successful(true)
-        case Some(id) if Some(id) == existingId => Future.successful(true)
-        case _ => Future.failed(new EmailNotUniqueException)
-      }
+  def isCreateMessage(cmd:Any) = cmd match{
+    case cr:CreateUser => true
+    case _ => false
   }  
+  
+  override def newDeleteEvent = Some(UserDeleted(email))
 }

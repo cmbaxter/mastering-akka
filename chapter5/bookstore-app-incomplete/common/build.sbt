@@ -1,4 +1,4 @@
-name := "chapter4-bookstore-common-incomplete"
+name := "chapter5-bookstore-common-incomplete"
 
  
 libraryDependencies ++= Seq(

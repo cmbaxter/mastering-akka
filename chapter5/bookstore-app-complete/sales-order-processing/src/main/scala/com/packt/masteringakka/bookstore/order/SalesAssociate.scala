@@ -37,8 +37,6 @@ class SalesAssociate extends Aggregate[SalesOrderFO, SalesOrder]{
   import PersistentEntity._
   import context.dispatcher
   
-  //context.system.eventStream.subscribe(self, classOf[InventoryAllocated])
-  //context.system.eventStream.subscribe(self, classOf[InventoryBackOrdered])
   val projection = ResumableProjection("order-status", context.system)
   implicit val mater = ActorMaterializer()
   val journal = PersistenceQuery(context.system).
@@ -56,20 +54,7 @@ class SalesAssociate extends Aggregate[SalesOrderFO, SalesOrder]{
   def receive = {
     case FindOrderById(id) =>
       val order = lookupOrCreateChild(id)
-      order.forward(GetState)      
-      
-    /*case FindOrdersForUser(userId) =>
-      val result = multiEntityLookup(repo.findOrderIdsForUser(userId))
-      pipeResponse(result)
-      
-    case FindOrdersForBook(bookId) =>
-      val result = multiEntityLookup(repo.findOrderIdsForBook(bookId))
-      pipeResponse(result)
-      
-    case FindOrdersForBookTag(tag) =>
-      val result = multiEntityLookup(repo.findOrderIdsForBookTag(tag))
-      pipeResponse(result)  
-    */
+      order.forward(GetState)           
     
     case req:CreateNewOrder =>
       val newId = UUID.randomUUID().toString
