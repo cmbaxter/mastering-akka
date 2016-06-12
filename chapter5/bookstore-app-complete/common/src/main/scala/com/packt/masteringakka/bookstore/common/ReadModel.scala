@@ -6,6 +6,7 @@ import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
 import akka.stream.ActorMaterializer
 import akka.persistence.query.EventEnvelope
 import java.util.Date
+import scala.concurrent.Future
 
 trait ReadModelObject extends AnyRef{
   def id:String
@@ -15,7 +16,11 @@ object ViewBuilder{
   import ElasticsearchApi._
   
   sealed trait IndexAction
-  case class UpdateAction(id:String, expression:String, params:Map[String,Any]) extends IndexAction
+  case class UpdateAction(id:String, expression:List[String], params:Map[String,Any]) extends IndexAction
+  object UpdateAction{
+    def apply(id:String, expression:String, params:Map[String,Any]):UpdateAction = 
+      UpdateAction(id, List(expression), params)
+  }
   case class InsertAction(id:String, rm:ReadModelObject) extends IndexAction
   case class NoAction(id:String) extends IndexAction
   case object DeferredCreate extends IndexAction
@@ -73,17 +78,17 @@ trait ViewBuilder[RM <: ReadModelObject] extends BookstoreActor with Stash with 
             andThen(updateProjection)
           
         case NoAction(id) =>
-          updateDocumentField(id, env.sequenceNr - 1, "", Map.empty).
+          updateDocumentField(id, env.sequenceNr - 1, Nil, Map.empty[String,Any]).
             andThen(updateProjection)
         
         case DeferredCreate =>
           //Nothing happening here          
       }
   }
- 
   
-  def updateDocumentField(id:String, seq:Long, expression:String, params:Map[String,Any]) = {
-    val request = UpdateRequest(UpdateScript(s"ctx._source.${expression}", params))
+  def updateDocumentField(id:String, seq:Long, expressions:List[String], params:Map[String,Any]):Future[IndexingResult] = {
+    val script = expressions.map(e => s"ctx._source.$e").mkString(";")    
+    val request = UpdateRequest(UpdateScript(script, params))
     updateIndex(id, request, Some(seq))    
   }  
   

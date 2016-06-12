@@ -11,15 +11,21 @@ import io.netty.channel.ChannelHandler.Sharable
  * Http endpoint class for performing user related actions
  */
 @Sharable
-class UserEndpoint(crm:ActorRef)(implicit val ec:ExecutionContext) extends BookstorePlan{
+class UserEndpoint(crm:ActorRef, view:ActorRef)(implicit val ec:ExecutionContext) extends BookstorePlan{
   import akka.pattern.ask
   import CustomerRelationsManager._
+  import BookstoreUserView._
   
+  object NameParam extends Params.Extract("name", Params.first ~> Params.nonempty )
   
   def intent = {
       
     case req @ GET(Path(Seg("api" :: "user" :: email :: Nil))) =>
       val f = (crm ? FindUserByEmail(email))
+      respond(f, req)
+      
+    case req @ GET(Path(Seg("api" :: "user" :: Nil))) & Params(NameParam(name)) =>
+      val f = (view ? FindUsersByName(name))
       respond(f, req)      
     
     case req @ POST(Path(Seg("api" :: "user" :: Nil))) =>

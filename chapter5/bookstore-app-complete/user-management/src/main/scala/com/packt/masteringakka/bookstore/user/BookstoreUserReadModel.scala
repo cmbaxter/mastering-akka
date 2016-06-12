@@ -4,6 +4,8 @@ import java.util.Date
 import com.packt.masteringakka.bookstore.common.ReadModelObject
 import com.packt.masteringakka.bookstore.common.ViewBuilder
 import akka.actor.Props
+import com.packt.masteringakka.bookstore.common.BookstoreActor
+import com.packt.masteringakka.bookstore.common.ElasticsearchSupport
 
 
 trait BookstoreUserReadModel{
@@ -32,9 +34,27 @@ class BookstoreUserViewBuilder extends ViewBuilder[BookstoreUserViewBuilder.Book
       InsertAction(id, rm)
       
     case PersonalInfoUpdated(first, last) =>
-      UpdateAction(id, "firstName = fn; ctx._source.lastName = ln", Map("fn" -> first, "ln" -> last))
+      UpdateAction(id, List("firstName = fn", "lastName = ln"), Map("fn" -> first, "ln" -> last))
+      
       
     case UserDeleted(email) =>
-      UpdateAction(id, "deleted = true", Map())
+      UpdateAction(id, "deleted = true", Map.empty[String,Any])
+  }
+}
+
+object BookstoreUserView{
+  val Name = "bookstore-user-view"
+  case class FindUsersByName(name:String)
+  def props = Props[BookstoreUserView]
+}
+
+class BookstoreUserView extends BookstoreActor with ElasticsearchSupport with BookstoreUserReadModel{
+  import BookstoreUserView._
+  import context.dispatcher
+  
+  def receive = {
+    case FindUsersByName(name) =>
+      val results = queryElasticsearch(s"firstName:$name OR lastName:$name")
+      pipeResponse(results)      
   }
 }
