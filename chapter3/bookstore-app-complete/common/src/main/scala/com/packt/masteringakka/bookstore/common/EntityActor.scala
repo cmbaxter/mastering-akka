@@ -201,7 +201,7 @@ trait EntityFieldsObject[FO]{
 }
 
 abstract class EntityAggregate[FO <: EntityFieldsObject[FO], E <: EntityActor[FO] : ClassTag] extends BookstoreActor{
-  def lookupOrCreateChild(id:Int) = {
+  def lookupOrCreateChild(id:Int): ActorRef = {
     val name = entityActorName(id)
     context.child(name).getOrElse{
       log.info("Creating new {} actor to handle a request for id {}", entityName, id)
