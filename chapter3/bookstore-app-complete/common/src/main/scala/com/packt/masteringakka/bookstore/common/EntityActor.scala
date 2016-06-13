@@ -35,6 +35,12 @@ object EntityActor{
   }  
   
   type ErrorMapper = PartialFunction[Throwable, Failure]
+
+  case class Loaded[FO](fo:Option[FO])
+  case class MissingData[FO](id:Int, deleted:Option[FO] = None) extends Data
+  case class InitializedData[FO](fo:FO) extends Data
+  case class PersistingData[FO](fo:FO, f:Int => FO, newInstance:Boolean = false) extends Data
+  case class FinishCreate[FO](fo:FO)
 }
 
 abstract class EntityActor[FO <: EntityFieldsObject[FO]](idInput:Int) extends BookstoreActor with FSM[EntityActor.State, EntityActor.Data] with Stash{
@@ -42,13 +48,7 @@ abstract class EntityActor[FO <: EntityFieldsObject[FO]](idInput:Int) extends Bo
   import akka.pattern.pipe
   import concurrent.duration._
   import context.dispatcher
-  
-  case class Loaded(fo:Option[FO])
-  case class MissingData(id:Int, deleted:Option[FO] = None) extends Data
-  case class InitializedData(fo:FO) extends Data
-  case class PersistingData(fo:FO, f:Int => FO, newInstance:Boolean = false) extends Data
-  case class FinishCreate(fo:FO)
-  
+
   val repo:EntityRepository[FO]
   val entityType = getClass.getSimpleName
   val errorMapper:ErrorMapper
@@ -86,7 +86,7 @@ abstract class EntityActor[FO <: EntityFieldsObject[FO]](idInput:Int) extends Bo
   }
   
   when(Missing, 1 second){
-    case Event(GetFieldsObject, data:MissingData) =>
+    case Event(GetFieldsObject, data:MissingData[FO]) =>
       val result = data.deleted.map(FullResult.apply).getOrElse(EmptyResult)
       sender ! result
       stay
@@ -123,7 +123,7 @@ abstract class EntityActor[FO <: EntityFieldsObject[FO]](idInput:Int) extends Bo
       sender ! FullResult(fo)
       stay  
       
-    case Event(Delete, InitializedData(fo)) =>
+    case Event(Delete, InitializedData(fo: FO)) =>
       requestFoForSender
       persist(fo, repo.deleteEntity(fo.id), _ => fo.markDeleted)      
   }
@@ -131,8 +131,8 @@ abstract class EntityActor[FO <: EntityFieldsObject[FO]](idInput:Int) extends Bo
   def initializedHandling:StateFunction
   
   when(Persisting){
-    case Event(i:Int, PersistingData(fo, f, newInstance)) =>  
-      val newFo = f(i)
+    case Event(i:Int, PersistingData(fo: FO, f: (Int => FO), newInstance)) =>
+      val newFo: FO = f(i)
       unstashAll
       
       if (newFo.deleted){
@@ -146,7 +146,7 @@ abstract class EntityActor[FO <: EntityFieldsObject[FO]](idInput:Int) extends Bo
         goto(Initialized) using InitializedData(newFo)
       }      
             
-    case Event(Status.Failure(ex), data:PersistingData) =>
+    case Event(Status.Failure(ex), data:PersistingData[FO]) =>
       log.error(ex, "Failed on an create/update operation to {} {}", entityType, data.fo.id)
       val response = mapError(ex)
       goto(Initialized) using InitializedData(data.fo) forMax(1 second) replying(response)
@@ -168,8 +168,7 @@ abstract class EntityActor[FO <: EntityFieldsObject[FO]](idInput:Int) extends Bo
       stop
   }  
   
-  def persist(fo:FO, f: => Future[Int], 
-    foF:Int => FO, newInstance:Boolean = false) = {
+  def persist(fo:FO, f: => Future[Int], foF: Int => FO, newInstance:Boolean = false) = {
     val daoResult = f
     daoResult.to(self, sender())
     goto(Persisting) using PersistingData(fo, foF, newInstance)         
@@ -192,7 +191,8 @@ abstract class EntityActor[FO <: EntityFieldsObject[FO]](idInput:Int) extends Bo
 trait EntityFieldsObject[FO]{
   /**
    * Assigns an id to the fields object, returning a new instance
-   * @param id The id to assign
+    *
+    * @param id The id to assign
    */
   def assignId(id:Int):FO
   def id:Int

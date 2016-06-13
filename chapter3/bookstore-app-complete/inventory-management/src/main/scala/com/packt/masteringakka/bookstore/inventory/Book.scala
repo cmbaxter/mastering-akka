@@ -51,7 +51,7 @@ private[inventory] class Book(idInput:Int) extends EntityActor[BookFO](idInput){
   }
   
   def initializedHandling:StateFunction = {
-    case Event(AddTag(tag), InitializedData(fo)) =>
+    case Event(AddTag(tag), InitializedData(fo: BookFO)) =>
       requestFoForSender
       if (fo.tags.contains(tag)){
         log.info("Not adding tag {} to book {}, tag already exists", tag, fo.id)
@@ -60,16 +60,16 @@ private[inventory] class Book(idInput:Int) extends EntityActor[BookFO](idInput){
       else
         persist(fo, repo.tagBook(fo.id, tag), _ => fo.copy(tags =  fo.tags :+ tag))      
             
-    case Event(RemoveTag(tag), InitializedData(fo)) =>
+    case Event(RemoveTag(tag), InitializedData(fo: BookFO)) =>
       requestFoForSender
       persist(fo, repo.untagBook(fo.id, tag), _ => fo.copy(tags = fo.tags.filterNot( _ == tag)))      
       
-    case Event(AddInventory(amount:Int), InitializedData(fo)) =>
+    case Event(AddInventory(amount:Int), InitializedData(fo: BookFO)) =>
       requestFoForSender
       persist(fo, repo.addInventoryToBook(fo.id, amount), 
         _ => fo.copy(inventoryAmount = fo.inventoryAmount + amount)) 
       
-    case Event(AllocateInventory(amount), InitializedData(fo)) =>
+    case Event(AllocateInventory(amount), InitializedData(fo: BookFO)) =>
       requestFoForSender
       persist(fo, repo.allocateInventory(fo.id, amount), _ => fo.copy(inventoryAmount = fo.inventoryAmount - amount))       
   }

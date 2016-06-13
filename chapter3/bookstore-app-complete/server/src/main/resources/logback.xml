@@ -9,6 +9,7 @@
     </encoder>
   </appender>
 
+  <logger name="akka" level="debug"/>
   <logger name="com.packt" level="debug"/>
 
   <root level="error">

@@ -107,43 +107,43 @@ clearTables
 ## Interacting with the user resource
 echo "Creating a user"
 createUser user.json
-#echo "Getting a store user by id"
-#getUserById 1
-#echo "Finding a store user by email address"
-#getUserByEmailAddress chris@masteringakka.com
-#echo "Editing a store user by id"
-#editUserById 1 user-edit.json
-##echo "Deleting a store user by id"
-##deleteUserById 1
-#
-### Interacting with the book resource
-#echo "Creating a book"
-#createBook book.json
-#echo "Getting a book by id"
-#getBookById 1
-#echo "Add tag to book by id"
-#addTagToBookById 1 ocean
-#echo "Remove tag from book by id"
-#removeTagFromBookById 1 ocean
-#echo "Finding a book by tag"
-#findBookByTag fiction
-#echo "Finding a book by two tags"
-#findBookByTwoTags fiction scifi
-#echo "Finding a book by author"
-#findBookByAuthor Verne
-#echo "Add number of books to inventory by book id"
-#addNumberOfBooksToInventoryByBookId 1 5
-##echo "Deleting a book by id"
-##deleteBookById 1
-#
-### Interacting with the order resource
-#echo "Creating an order"
-#createOrder order.json
-#echo "Getting an order by id"
-#getOrderById 1
-#echo "Getting orders for a user by user id"
-#getOrdersByUserId 1
-#echo "Getting orders for a certain book by book id"
-#getOrdersByBookId 1
-#echo "Getting orders for books with a certain book tag"
-#getOrderByBookTag fiction
+echo "Getting a store user by id"
+getUserById 1
+echo "Finding a store user by email address"
+getUserByEmailAddress chris@masteringakka.com
+echo "Editing a store user by id"
+editUserById 1 user-edit.json
+#echo "Deleting a store user by id"
+#deleteUserById 1
+
+## Interacting with the book resource
+echo "Creating a book"
+createBook book.json
+echo "Getting a book by id"
+getBookById 1
+echo "Add tag to book by id"
+addTagToBookById 1 ocean
+echo "Remove tag from book by id"
+removeTagFromBookById 1 ocean
+echo "Finding a book by tag"
+findBookByTag fiction
+echo "Finding a book by two tags"
+findBookByTwoTags fiction scifi
+echo "Finding a book by author"
+findBookByAuthor Verne
+echo "Add number of books to inventory by book id"
+addNumberOfBooksToInventoryByBookId 1 5
+#echo "Deleting a book by id"
+#deleteBookById 1
+
+## Interacting with the order resource
+echo "Creating an order"
+createOrder order.json
+echo "Getting an order by id"
+getOrderById 1
+echo "Getting orders for a user by user id"
+getOrdersByUserId 1
+echo "Getting orders for a certain book by book id"
+getOrdersByBookId 1
+echo "Getting orders for books with a certain book tag"
+getOrderByBookTag fiction
