@@ -191,7 +191,7 @@ class SalesOrder(idInput:Int) extends EntityActor[SalesOrderFO](idInput){
   }
   
   def initializedHandling:StateFunction = {
-    case Event(UpdateOrderStatus(status), data:InitializedData) =>
+    case Event(UpdateOrderStatus(status), data:InitializedData[SalesOrderFO]) =>
       log.info("Setting status on order {} to {}", data.fo.id, status)
       persist(data.fo, repo.updateOrderStatus(data.fo.id, status), _ => data.fo.copy(status = status))
   }
