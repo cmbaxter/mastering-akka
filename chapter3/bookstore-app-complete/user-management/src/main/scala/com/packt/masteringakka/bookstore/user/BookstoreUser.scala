@@ -40,13 +40,13 @@ class BookstoreUser(idInput:Int) extends EntityActor[BookstoreUserFO](idInput){
     case Event(vo:BookstoreUserFO, _) =>
       val checkFut = emailUnique(vo.email)
       checkFut.
-        map(b => FinishCreate(vo)).
-        to(self, sender())     
+        map(b => FinishCreate(vo))
+        .to(self, sender())
       stay
   }
   
   def initializedHandling:StateFunction = {
-    case Event(UpdatePersonalInfo(input), data:InitializedData) =>
+    case Event(UpdatePersonalInfo(input), data:InitializedData[BookstoreUserFO]) =>
       val newFo = data.fo.copy(firstName = input.firstName, lastName = input.lastName, email = input.email)
       val persistFut = 
         for{
@@ -59,7 +59,8 @@ class BookstoreUser(idInput:Int) extends EntityActor[BookstoreUserFO](idInput){
   
   /**
    * Checks to make sure the email is unique
-   * @param email The email to check
+    *
+    * @param email The email to check
    * @param existingId Supplied when the user already exists to avoid matching on the same user
    * when checking for uniqueness
    * @return A Future for an Option[Boolean] which will be failed if the email is not unique

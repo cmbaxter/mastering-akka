@@ -3,6 +3,8 @@ package com.packt.masteringakka.bookstore.credit
 import akka.actor.Props
 import com.packt.masteringakka.bookstore.common.EntityActor
 import java.util.Date
+
+import com.packt.masteringakka.bookstore.common.EntityActor.FinishCreate
 import dispatch._
 import org.json4s._
 import org.json4s.native.Serialization
