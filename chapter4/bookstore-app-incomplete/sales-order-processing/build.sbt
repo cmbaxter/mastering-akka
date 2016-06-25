@@ -1,4 +1,4 @@
-name := "chapter4-sales-order-processing-incomplete"
+name := "chapter4-sales-order-processing-complete"
 
 libraryDependencies ++= Seq(
   "org.specs2"  %% "specs2"  % "3.7" % "test",
