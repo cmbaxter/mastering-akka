@@ -59,10 +59,10 @@ trait ElasticsearchSupport{ me:BookstoreActor =>
   
   def baseUrl = s"${esSettings.rootUrl}/${indexRoot}/$entityType"
   
-  def queryElasticsearch(query:String)(implicit ec:ExecutionContext, mater:Materializer):Future[List[JsObject]] = {
+  def queryElasticsearch[RT](query:String)(implicit ec:ExecutionContext, mater:Materializer, jf:RootJsonFormat[RT]):Future[List[RT]] = {
     val req = HttpRequest(HttpMethods.GET, Uri(s"$baseUrl/_search").withQuery(Uri.Query(("q",  query))))
     callElasticsearch[QueryResponse](req).
-      map(_.hits.hits.map(_._source))
+      map(_.hits.hits.map(_._source.fromJson[RT]))
   }
   
   def updateIndex[RT](id:String, request:RT, version:Option[Long])(implicit ec:ExecutionContext, jf:JsonFormat[RT], mater:Materializer):Future[IndexingResult] = {    

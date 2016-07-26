@@ -13,5 +13,5 @@ trait Bootstrap{
    * @param system The actor system to boot actors into
    * @return a List of BookstorePlans to add as plans into the server
    */
-  def bootup(system:ActorSystem):List[BookstorePlan]
+  def bootup(system:ActorSystem):List[BookstoreRoutesDefinition]
 }

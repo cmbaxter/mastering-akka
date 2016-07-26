@@ -71,7 +71,7 @@ class CreditAssociate extends Aggregate[CreditCardTransactionFO, CreditCardTrans
   def chargeCard(info:CreditCardInfo, amount:Double):Future[ChargeResponse] = { 
     val chargeReq = ChargeRequest(info.cardHolder, info.cardType, info.cardNumber, info.expiration, amount)
     val entity = HttpEntity(ContentTypes.`application/json`, chargeReq.toJson.prettyPrint )
-    val request = HttpRequest(HttpMethods.POST, settings.creditChargeUrl)
+    val request = HttpRequest(HttpMethods.POST, settings.creditChargeUrl, entity = entity)
     Http(context.system).
       singleRequest(request).
       flatMap{

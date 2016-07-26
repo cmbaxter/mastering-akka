@@ -7,6 +7,7 @@ import akka.actor.Props
 import com.packt.masteringakka.bookstore.common.BookstoreActor
 import com.packt.masteringakka.bookstore.common.ElasticsearchSupport
 import akka.persistence.query.EventEnvelope
+import akka.stream.ActorMaterializer
 
 
 trait BookstoreUserReadModel{
@@ -23,11 +24,12 @@ object BookstoreUserViewBuilder{
   def props = Props[BookstoreUserViewBuilder]
 }
 
-class BookstoreUserViewBuilder extends ViewBuilder[BookstoreUserViewBuilder.BookstoreUserRM] with BookstoreUserReadModel{
+class BookstoreUserViewBuilder extends ViewBuilder[BookstoreUserViewBuilder.BookstoreUserRM] with BookstoreUserReadModel with UserJsonProtocol{
   import BookstoreUser.Event._
   import ViewBuilder._
   import BookstoreUserViewBuilder._
   
+  implicit val rmFormats = bookstoreUserRmFormat 
   def projectionId = Name
   def actionFor(id:String, env:EventEnvelope) = env.event match {
     case UserCreated(user) =>
@@ -49,13 +51,15 @@ object BookstoreUserView{
   def props = Props[BookstoreUserView]
 }
 
-class BookstoreUserView extends BookstoreActor with ElasticsearchSupport with BookstoreUserReadModel{
+class BookstoreUserView extends BookstoreActor with ElasticsearchSupport with BookstoreUserReadModel with UserJsonProtocol{
   import BookstoreUserView._
+  import BookstoreUserViewBuilder._
   import context.dispatcher
+  implicit val mater = ActorMaterializer()
   
   def receive = {
     case FindUsersByName(name) =>
-      val results = queryElasticsearch(s"firstName:$name OR lastName:$name")
+      val results = queryElasticsearch[BookstoreUserRM](s"firstName:$name OR lastName:$name")
       pipeResponse(results)      
   }
 }

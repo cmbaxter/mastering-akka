@@ -9,6 +9,8 @@ import akka.stream.scaladsl.Source
 import akka.util.Timeout
 import akka.persistence.query.EventEnvelope
 import akka.stream.scaladsl.Flow
+import akka.stream.ActorMaterializer
+import com.packt.masteringakka.bookstore.order.OrderJsonProtocol
 
 trait SalesOrderReadModel{
   def indexRoot = "order"
@@ -24,13 +26,14 @@ object SalesOrderViewBuilder{
   def props = Props[SalesOrderViewBuilder]  
 }
 
-class SalesOrderViewBuilder extends SalesOrderReadModel with ViewBuilder[SalesOrderViewBuilder.SalesOrderRM]{
+class SalesOrderViewBuilder extends ViewBuilder[SalesOrderViewBuilder.SalesOrderRM] with SalesOrderReadModel with OrderJsonProtocol{
   import SalesOrder.Event._
   import ViewBuilder._
   import SalesOrderViewBuilder._
   import akka.pattern.ask
   import concurrent.duration._
   implicit val timeout = Timeout(5 seconds)  
+  implicit val rmFormats = orderRmFormat 
     
   val invClerk = context.actorSelection(s"/user/${InventoryClerk.Name}")
   val bookLookup = 
@@ -80,22 +83,25 @@ object SalesOrderView{
   def props = Props[SalesOrderView]
 }
 
-class SalesOrderView extends SalesOrderReadModel with BookstoreActor with ElasticsearchSupport{
+class SalesOrderView extends SalesOrderReadModel with BookstoreActor with ElasticsearchSupport with OrderJsonProtocol{
   import SalesOrderView._
+  import SalesOrderViewBuilder._
   import ElasticsearchApi._
   import context.dispatcher
+  implicit val mater = ActorMaterializer()
   
   def receive = {
     case FindOrdersForBook(bookId) =>
-      val results = queryElasticsearch(s"lineItems.book.id:$bookId")
+      val results = queryElasticsearch[SalesOrderRM](s"lineItems.\\*.book.id:$bookId")
       pipeResponse(results)
       
     case FindOrdersForUser(email) =>
-      val results = queryElasticsearch(s"userEmail:$email")
+      val results = queryElasticsearch[SalesOrderRM](s"userEmail:$email")
       pipeResponse(results)
       
     case FindOrdersForBookTag(tag) =>
-      val results = queryElasticsearch(s"lineItems.book.tags:$tag")
+      println(tag)
+      val results = queryElasticsearch[SalesOrderRM](s"lineItems.\\*.book.tags:$tag")
       pipeResponse(results)      
     
   }

@@ -69,20 +69,21 @@ object BookView{
   def props = Props[BookView]
 }
 
-class BookView extends BookReadModel with BookstoreActor with ElasticsearchSupport{
+class BookView extends BookReadModel with BookstoreActor with ElasticsearchSupport with InventoryJsonProtocol{
   import BookView._
+  import BookViewBuilder._
   import ElasticsearchApi._
   import context.dispatcher
   implicit val mater = ActorMaterializer()
   
   def receive = {
     case FindBooksByAuthor(author) =>
-      val results = queryElasticsearch(s"author:$author")
+      val results = queryElasticsearch[BookRM](s"author:$author")
       pipeResponse(results)
       
     case FindBooksByTags(tags) =>
       val query = tags.map(t => s"tags:$t").mkString(" AND ")
-      val results = queryElasticsearch(query)
+      val results = queryElasticsearch[BookRM](query)
       pipeResponse(results)      
   }
 }

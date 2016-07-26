@@ -12,16 +12,6 @@ import BookstoreUser._
 import CustomerRelationsManager._
 
 /**
- * Json protocol class for the user system
- */
-trait UserJsonProtocol extends BookstoreJsonProtocol{
-  implicit val bookstoreUserFoFormat = jsonFormat5(BookstoreUserFO.apply)
-  implicit val bookstoreUserRmFormat = jsonFormat5(BookstoreUserRM.apply)
-  implicit val userInputFormat = jsonFormat2(UserInput)
-  implicit val createUserInputFormat = jsonFormat3(CreateUserInput)
-}
-
-/**
  * Http routes class for performing user related actions
  */
 class UserRoutes(crm:ActorRef, view:ActorRef)(implicit val ec:ExecutionContext) extends BookstoreRoutesDefinition with UserJsonProtocol{

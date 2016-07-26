@@ -13,6 +13,8 @@ import akka.persistence.query.EventEnvelope
 import akka.stream.Supervision
 import scala.util.control.NonFatal
 import akka.stream.ActorMaterializerSettings
+import spray.json.JsonFormat
+import scala.reflect.ClassTag
 
 trait ReadModelObject extends AnyRef{
   def id:String
@@ -35,7 +37,7 @@ object ViewBuilder{
   case class LatestOffsetResult(offset:Option[Long])
 }
 
-trait ViewBuilder[RM <: ReadModelObject] extends BookstoreActor with ElasticsearchSupport{
+abstract class ViewBuilder[RM <: ReadModelObject : ClassTag] extends BookstoreActor with ElasticsearchSupport{
   import context.dispatcher
   import ViewBuilder._
   import ElasticsearchApi._
@@ -57,6 +59,7 @@ trait ViewBuilder[RM <: ReadModelObject] extends BookstoreActor with Elasticsear
     ActorMaterializerSettings(context.system).
       withSupervisionStrategy(decider)
   )
+  implicit val rmFormats:JsonFormat[RM]
   
   val resumableProjection = ResumableProjection(projectionId, context.system)
   resumableProjection.
@@ -78,8 +81,8 @@ trait ViewBuilder[RM <: ReadModelObject] extends BookstoreActor with Elasticsear
           Source.single(ea).via(Flow[EnvelopeAndAction])
       }.
       collect{
-        case EnvelopeAndAction(env, i:InsertAction) =>
-          EnvelopeAndFunction(env, () => updateIndex(i.id, i.rm, None))            
+        case EnvelopeAndAction(env, InsertAction(id, rm:RM)) =>
+          EnvelopeAndFunction(env, () => updateIndex(id, rm, None))            
           
         case EnvelopeAndAction(env, u:UpdateAction) =>
           EnvelopeAndFunction(env, () => updateDocumentField(u.id, env.sequenceNr - 1, u.expression, u.params))

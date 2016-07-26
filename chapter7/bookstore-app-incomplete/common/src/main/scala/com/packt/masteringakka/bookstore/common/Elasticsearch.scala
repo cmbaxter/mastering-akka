@@ -2,10 +2,6 @@ package com.packt.masteringakka.bookstore.common
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
-import dispatch._
-import org.json4s._
-import org.json4s.native.Serialization
-import org.json4s.native.Serialization.{read, write}
 import akka.pattern.pipe
 import akka.actor.Stash
 import scala.concurrent.ExecutionContext
@@ -14,8 +10,21 @@ import akka.actor.Extension
 import akka.actor.ExtensionIdProvider
 import akka.actor.ExtensionId
 import akka.actor.ExtendedActorSystem
+import spray.json.JsObject
+import akka.http.scaladsl.model.HttpRequest
+import akka.http.scaladsl.model.HttpMethods
+import akka.http.scaladsl.model.Uri
+import scala.reflect.ClassTag
+import akka.http.scaladsl.Http
+import akka.stream.Materializer
+import akka.http.scaladsl.unmarshalling._
+import akka.http.scaladsl.model.ResponseEntity
+import akka.http.scaladsl.model.HttpEntity
+import akka.http.scaladsl.model.ContentTypes
+import spray.json.JsonFormat
+import spray.json._
 
-object ElasticsearchApi {
+object ElasticsearchApi extends BookstoreJsonProtocol{
   trait EsResponse
   case class ShardData(total:Int, failed:Int, successful:Int)
   case class IndexingResult(_shards:ShardData, _index:String, _type:String, _id:String, _version:Int, created:Option[Boolean]) extends EsResponse
@@ -23,13 +32,20 @@ object ElasticsearchApi {
   case class UpdateScript(inline:String, params:Map[String,Any])
   case class UpdateRequest(script:UpdateScript)
   
-  case class SearchHit(_source:JObject)
+  case class SearchHit(_source:JsObject)
   case class QueryHits(hits:List[SearchHit])
   case class QueryResponse(hits:QueryHits) extends EsResponse 
   
   case class DeleteResult(acknowledged:Boolean) extends EsResponse
   
-  implicit val formats = Serialization.formats(NoTypeHints)
+  implicit val shardDataFormat = jsonFormat3(ShardData)
+  implicit val indexResultFormat = jsonFormat6(IndexingResult)
+  implicit val updateScriptFormat = jsonFormat2(UpdateScript)
+  implicit val updateRequestFormat = jsonFormat1(UpdateRequest)
+  implicit val searchHitFormat = jsonFormat1(SearchHit)
+  implicit val queryHitsFormat = jsonFormat1(QueryHits)
+  implicit val queryResponseFormat = jsonFormat1(QueryResponse)
+  implicit val deleteResultFormat = jsonFormat1(DeleteResult)
 }
 
 trait ElasticsearchSupport{ me:BookstoreActor =>
@@ -43,52 +59,38 @@ trait ElasticsearchSupport{ me:BookstoreActor =>
   
   def baseUrl = s"${esSettings.rootUrl}/${indexRoot}/$entityType"
   
-  def queryElasticsearch(query:String)(implicit ec:ExecutionContext):Future[List[JObject]] = {
-    val req = url(s"$baseUrl/_search") <<? Map("q" -> query)
+  def queryElasticsearch[RT](query:String)(implicit ec:ExecutionContext, mater:Materializer, jf:RootJsonFormat[RT]):Future[List[RT]] = {
+    val req = HttpRequest(HttpMethods.GET, Uri(s"$baseUrl/_search").withQuery(Uri.Query(("q",  query))))
     callElasticsearch[QueryResponse](req).
-      map(_.hits.hits.map(_._source))
+      map(_.hits.hits.map(_._source.fromJson[RT]))
   }
   
-  def updateIndex(id:String, request:AnyRef, version:Option[Long])(implicit ec:ExecutionContext):Future[IndexingResult] = {    
+  def updateIndex[RT](id:String, request:RT, version:Option[Long])(implicit ec:ExecutionContext, jf:JsonFormat[RT], mater:Materializer):Future[IndexingResult] = {    
     val urlBase = s"$baseUrl/$id"
     val requestUrl = version match{
       case None => urlBase
       case Some(v) => s"$urlBase/_update?version=$v"
-    }     
-    val req = url(requestUrl) << write(request)
+    } 
+    val entity = HttpEntity(ContentTypes.`application/json`, request.toJson.prettyPrint )
+    val req = HttpRequest(HttpMethods.POST, requestUrl, entity = entity)
     callElasticsearch[IndexingResult](req)
   }
   
-  def clearIndex(implicit ec:ExecutionContext) = {    
-    val req = url(s"${esSettings.rootUrl}/${indexRoot}/").DELETE
+  def clearIndex(implicit ec:ExecutionContext, mater:Materializer) = {    
+    val req = HttpRequest(HttpMethods.DELETE, s"${esSettings.rootUrl}/${indexRoot}/")
     callElasticsearch[DeleteResult](req)
-  }  
- 
-  /*def waitingForEsResult(req:Req):Receive = {
-    case es:EsResponse =>
-      log.info("Successfully processed a request against the index for url: {}", req.toRequest.getUrl())
-      context.become(handlingEvents)
-      unstashAll      
-      
-    case akka.actor.Status.Failure(ex) =>
-      val wrappedEx = Option(ex.getCause())
-      wrappedEx match{
-        case Some(StatusCode(sc)) =>
-          log.warning("Got a non-OK status code talking to elasticsearch: {}", sc)
-          
-        case other =>
-          log.error(ex, "Error calling elasticsearch when building the read model")    
-      }
-      
-      context.become(handlingEvents)
-      unstashAll
-      
-    case other =>
-      stash     
-  }  */
+  } 
    
-  def callElasticsearch[RT : Manifest](req:Req)(implicit ec:ExecutionContext):Future[RT] = {    
-    Http(req OK as.String).map(resp => read[RT](resp))
+  def callElasticsearch[RT : ClassTag](req:HttpRequest)(implicit ec:ExecutionContext, mater:Materializer, unmarshaller:Unmarshaller[ResponseEntity, RT]):Future[RT] = {    
+    Http(context.system).
+      singleRequest(req).
+      flatMap{
+        case resp if resp.status.isSuccess =>
+          Unmarshal(resp.entity).to[RT]
+        case resp =>
+          resp.discardEntityBytes()
+          Future.failed(new RuntimeException(s"Unexpected status code of: ${resp.status}"))
+      }
   }   
 }
 

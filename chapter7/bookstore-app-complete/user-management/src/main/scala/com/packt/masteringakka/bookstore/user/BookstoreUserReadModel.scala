@@ -51,14 +51,15 @@ object BookstoreUserView{
   def props = Props[BookstoreUserView]
 }
 
-class BookstoreUserView extends BookstoreActor with ElasticsearchSupport with BookstoreUserReadModel{
+class BookstoreUserView extends BookstoreActor with ElasticsearchSupport with BookstoreUserReadModel with UserJsonProtocol{
   import BookstoreUserView._
+  import BookstoreUserViewBuilder._
   import context.dispatcher
   implicit val mater = ActorMaterializer()
   
   def receive = {
     case FindUsersByName(name) =>
-      val results = queryElasticsearch(s"firstName:$name OR lastName:$name")
+      val results = queryElasticsearch[BookstoreUserRM](s"firstName:$name OR lastName:$name")
       pipeResponse(results)      
   }
 }

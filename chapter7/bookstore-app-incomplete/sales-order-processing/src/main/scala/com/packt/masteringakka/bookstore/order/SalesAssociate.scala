@@ -1,7 +1,6 @@
 package com.packt.masteringakka.bookstore.order
 
 import akka.actor._
-import slick.jdbc.GetResult
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import concurrent.duration._

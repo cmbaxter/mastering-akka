@@ -87,7 +87,7 @@ class SalesOrderView extends SalesOrderReadModel with BookstoreActor with Elasti
   
   def receive = {
     case FindOrdersForBook(bookId) =>
-      val results = queryElasticsearch(s"lineItems.book.id:$bookId")
+      val results = queryElasticsearch(s"lineItems.\\*.book.id:$bookId")
       pipeResponse(results)
       
     case FindOrdersForUser(email) =>
@@ -95,7 +95,7 @@ class SalesOrderView extends SalesOrderReadModel with BookstoreActor with Elasti
       pipeResponse(results)
       
     case FindOrdersForBookTag(tag) =>
-      val results = queryElasticsearch(s"lineItems.book.tags:$tag")
+      val results = queryElasticsearch(s"lineItems.\\*.book.tags:$tag")
       pipeResponse(results)      
     
   }
