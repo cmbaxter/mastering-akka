@@ -43,6 +43,11 @@ trait EntityEvent extends Serializable with DatamodelWriter{
  */
 object PersistentEntity{
   
+  /**
+   * Send back to the entity by the parent Shard to finish the passivation process
+   */
+  case object StopEntity
+  
   /** Request to get the current state from an entity actor */
   case class GetState(id:String) extends EntityCommand{
     def entityId = id
@@ -92,6 +97,7 @@ object PersistentEntity{
 abstract class PersistentEntity[FO <: EntityFieldsObject[String, FO]: ClassTag]
   extends PersistentActor with ActorLogging{
   import PersistentEntity._
+  import ShardRegion.Passivate
   import concurrent.duration._
     
   val id = self.path.name
@@ -141,10 +147,15 @@ abstract class PersistentEntity[FO <: EntityFieldsObject[String, FO]: ClassTag]
    */
   def standardCommandHandling:Receive = {
     
-    //Have been idle too long, time to start passivation process
+    //Have been idle too long, time to start the passivation process
     case ReceiveTimeout =>
       log.info("{} entity with id {} is being passivated due to inactivity", entityType, id)
-      context stop self    
+      context.parent ! Passivate(stopMessage = StopEntity)
+      
+    //Finishes the two part passivation process by stopping the entity
+    case StopEntity =>
+      log.info("{} entity with id {} is now being stopped due to inactivity", entityType, id)
+      context stop self        
     
     //Don't allow actions on deleted entities or a non-create request
     //when in the initial state
@@ -278,8 +289,14 @@ abstract class PersistentEntity[FO <: EntityFieldsObject[String, FO]: ClassTag]
 abstract class Aggregate[FO <: EntityFieldsObject[String, FO], E <: PersistentEntity[FO] : ClassTag] extends BookstoreActor{
   
   val idExtractor = PersistentEntity.PersistentEntityIdExtractor(context.system)
-  val entityShardRegion = ClusterSharding(context.system).start(entityName, entityProps, 
-    ClusterShardingSettings(context.system), idExtractor.extractEntityId, idExtractor.extractShardId )
+  val entityShardRegion = 
+    ClusterSharding(context.system).start(
+      typeName = entityName,
+      entityProps = entityProps, 
+      settings = ClusterShardingSettings(context.system), 
+      extractEntityId = idExtractor.extractEntityId, 
+      extractShardId = idExtractor.extractShardId 
+    )
     
   /**
    * Gets the Props needed to create the child entity for this factory
@@ -296,7 +313,8 @@ abstract class Aggregate[FO <: EntityFieldsObject[String, FO], E <: PersistentEn
     entityTag.runtimeClass.getSimpleName()
   }
   
-  def forwardCommand(id:String, command:Any) = entityShardRegion.forward(command)
+  def forwardCommand(id:String, command:Any) = 
+    entityShardRegion.forward(command)
 }
 
 /**

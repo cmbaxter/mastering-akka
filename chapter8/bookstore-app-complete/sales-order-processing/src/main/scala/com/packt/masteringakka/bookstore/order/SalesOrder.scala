@@ -17,6 +17,7 @@ import com.packt.masteringakka.bookstore.credit.CreditCardInfo
 import com.packt.masteringakka.bookstore.common.EntityFieldsObject
 import com.packt.masteringakka.bookstore.credit.CreditCardTransactionFO
 import com.packt.masteringakka.bookstore.credit.CreditAssociate
+import com.packt.masteringakka.bookstore.common.EntityCommand
 
 object LineItemStatus extends Enumeration{
   val Unknown, Approved, BackOrdered = Value
@@ -36,7 +37,7 @@ case class SalesOrderFO(id:String, userId:String, creditTxnId:String,
 /**
  * Aggregate root for the SalesOrder and SalesOrderLineItem entities
  */
-class SalesOrder(id:String) extends PersistentEntity[SalesOrderFO](id){
+class SalesOrder extends PersistentEntity[SalesOrderFO]{
   import SalesOrder._
   import Command._
   import Event._
@@ -54,7 +55,7 @@ class SalesOrder(id:String) extends PersistentEntity[SalesOrderFO](id){
       //Now we can persist the complete order
       persist(OrderCreated(order))(handleEventAndRespond())
       
-    case UpdateLineItemStatus(bookId, status) =>
+    case UpdateLineItemStatus(bookId, status, id) =>
       val itemNumber = state.lineItems.
         find(_.bookId == bookId).
         map(_.lineItemNumber).
@@ -88,14 +89,20 @@ object SalesOrder{
   import collection.JavaConversions._
   
   val EntityType = "salesorder"
-  def props(id:String) = Props(classOf[SalesOrder], id)
+  def props = Props[SalesOrder]
   
   case class LineItemRequest(bookId:String, quantity:Int)
   
   object Command{
-    case class CreateOrder(newOrderId:String, userEmail:String, lineItems:List[LineItemRequest], cardInfo:CreditCardInfo) 
-    case class CreateValidatedOrder(order:SalesOrderFO)
-    case class UpdateLineItemStatus(bookId:String, status:LineItemStatus.Value)    
+    case class CreateOrder(newOrderId:String, userEmail:String, lineItems:List[LineItemRequest], cardInfo:CreditCardInfo) extends EntityCommand{
+      def entityId = newOrderId 
+    }
+    case class CreateValidatedOrder(order:SalesOrderFO) extends EntityCommand{
+      def entityId = order.id 
+    }
+    case class UpdateLineItemStatus(bookId:String, status:LineItemStatus.Value, orderId:String) extends EntityCommand{
+      def entityId = orderId
+    }    
   }
 
   object Event{

@@ -33,14 +33,12 @@ class CustomerRelationsManager extends Aggregate[BookstoreUserFO, BookstoreUser]
   def receive = {
       
     case FindUserByEmail(email) => 
-      val user = lookupOrCreateChild(email)
-      forwardCommand(email, GetState)
+      forwardCommand(email, GetState(email))
         
     case SignupNewUser(input) =>
       //Check uniqueness of email here
-      val user = lookupOrCreateChild(input.email)
       implicit val timeout = Timeout(5 seconds)
-      val stateFut = (user ? GetState).mapTo[ServiceResult[BookstoreUserFO]]
+      val stateFut = (entityShardRegion ? GetState(input.email)).mapTo[ServiceResult[BookstoreUserFO]]
       val caller = sender()
       stateFut onComplete{
         case util.Success(FullResult(user)) =>
@@ -48,7 +46,7 @@ class CustomerRelationsManager extends Aggregate[BookstoreUserFO, BookstoreUser]
           
         case util.Success(EmptyResult) =>
           val fo = BookstoreUserFO(input.email, input.firstName, input.lastName, new Date)
-          user.tell(CreateUser(fo), caller)
+          entityShardRegion.tell(CreateUser(fo), caller)
           
         case _ =>
           caller ! Failure(FailureType.Service, ServiceResult.UnexpectedFailure)
@@ -56,11 +54,11 @@ class CustomerRelationsManager extends Aggregate[BookstoreUserFO, BookstoreUser]
 
       
     case UpdateUserInfo(email, info) =>
-      forwardCommand(email, UpdatePersonalInfo(info))
+      forwardCommand(email, UpdatePersonalInfo(info, email))
       
     case RemoveUser(email) =>
       forwardCommand(email, MarkAsDeleted)            
   }
   
-  def entityProps(id:String) = BookstoreUser.props(id)
+  def entityProps = BookstoreUser.props
 }

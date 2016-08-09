@@ -18,6 +18,8 @@ import akka.stream.ActorMaterializer
 import akka.persistence.query.EventEnvelope
 import akka.cluster.sharding.ClusterSharding
 import com.packt.masteringakka.bookstore.common.PersistentEntity
+import com.packt.masteringakka.bookstore.common.BookstoreActor
+import akka.actor.ActorRef
 
 /**
  * Companion to the InventoryClerk actor where the vocab is defined 
@@ -48,19 +50,8 @@ object InventoryClerk{
 class InventoryClerk extends Aggregate[BookFO, Book]{
   import InventoryClerk._
   import com.packt.masteringakka.bookstore.common.PersistentEntity._
-  import context.dispatcher
   import Book.Command._
  
-  
-  val projection = ResumableProjection("inventory-allocation", context.system)
-  implicit val mater = ActorMaterializer()
-  val journal = PersistenceQuery(context.system).
-    readJournalFor[CassandraReadJournal](CassandraReadJournal.Identifier)
-  projection.fetchLatestOffset.foreach{ o =>
-    journal.
-      eventsByTag("ordercreated", o.getOrElse(0L)).
-      runForeach(e => self ! e)
-  }
   
   def receive = {
     case FindBook(id) =>
@@ -86,17 +77,44 @@ class InventoryClerk extends Aggregate[BookFO, Book]{
     case RemoveBookFromCatalog(id) =>
       forwardCommand(id, MarkAsDeleted)
       
-    case EventEnvelope(offset, pid, seq, order:SalesOrderCreateInfo) =>
-      
-      //Allocate inventory from each book
-      log.info("Received OrderCreated event for order id {}", order.id)
+    case order:SalesOrderCreateInfo =>
       order.lineItemInfo.
         foreach{
           case (bookId, quant) =>
             forwardCommand(bookId, AllocateInventory(order.id, quant, bookId))
-        }
-      projection.storeLatestOffset(offset)
+        }      
   }
     
   def entityProps = Book.props
+}
+
+object InventoryAllocationEventListener{
+  val Name = "inventory-allocation-listener"
+  def props = Props[InventoryAllocationEventListener]
+}
+
+class InventoryAllocationEventListener extends BookstoreActor{
+  import InventoryClerk._
+  import context.dispatcher
+  
+  val clerk = context.system.actorSelection(s"/user/${InventoryClerk.Name}")
+  
+  val projection = ResumableProjection("inventory-allocation", context.system)
+  implicit val mater = ActorMaterializer()
+  val journal = PersistenceQuery(context.system).
+    readJournalFor[CassandraReadJournal](CassandraReadJournal.Identifier)
+  projection.fetchLatestOffset.foreach{ o =>
+    journal.
+      eventsByTag("ordercreated", o.getOrElse(0L)).
+      runForeach(e => self ! e)
+  }  
+  
+  def receive = {
+    case EventEnvelope(offset, pid, seq, order:SalesOrderCreateInfo) =>
+      
+      //Allocate inventory from each book
+      log.info("Received OrderCreated event for order id {}", order.id)
+      clerk ! order
+      projection.storeLatestOffset(offset)    
+  }
 }

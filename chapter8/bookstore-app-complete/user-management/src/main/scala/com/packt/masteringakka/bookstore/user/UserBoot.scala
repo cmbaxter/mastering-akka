@@ -11,7 +11,7 @@ class UserBoot extends Bootstrap{
     import system.dispatcher    
     val crm = system.actorOf(CustomerRelationsManager.props, CustomerRelationsManager.Name)
     val view = system.actorOf(BookstoreUserView.props, BookstoreUserView.Name)
-    system.actorOf(BookstoreUserViewBuilder.props, BookstoreUserViewBuilder.Name)
+    startSingleton(system, BookstoreUserViewBuilder.props, BookstoreUserViewBuilder.Name)
     List(new UserRoutes(crm, view))
   }
 }

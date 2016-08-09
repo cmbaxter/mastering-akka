@@ -15,6 +15,7 @@ import scala.util.control.NonFatal
 import akka.stream.ActorMaterializerSettings
 import spray.json.JsonFormat
 import scala.reflect.ClassTag
+import akka.actor.Props
 
 trait ReadModelObject extends AnyRef{
   def id:String

@@ -21,8 +21,12 @@ object BookstoreUser{
   case class UserInput(firstName:String, lastName:String)
   
   object Command{
-    case class CreateUser(user:BookstoreUserFO)
-    case class UpdatePersonalInfo(input:UserInput)
+    case class CreateUser(user:BookstoreUserFO) extends EntityCommand{
+      def entityId = user.email 
+    }
+    case class UpdatePersonalInfo(input:UserInput, id:String) extends EntityCommand{
+      def entityId = id
+    }
   }
   
   object Event{
@@ -77,11 +81,11 @@ object BookstoreUser{
     
   }
   
-  def props(id:String) = Props(classOf[BookstoreUser], id)
+  def props = Props[BookstoreUser]
    
 }
 
-class BookstoreUser(email:String) extends PersistentEntity[BookstoreUserFO](email){
+class BookstoreUser extends PersistentEntity[BookstoreUserFO]{
   import BookstoreUser._
   import Command._
   import Event._
@@ -94,7 +98,7 @@ class BookstoreUser(email:String) extends PersistentEntity[BookstoreUserFO](emai
     case CreateUser(user) =>
       persist(UserCreated(user)){handleEventAndRespond()}
       
-    case UpdatePersonalInfo(input) =>
+    case UpdatePersonalInfo(input, id) =>
       persist(PersonalInfoUpdated(input.firstName, input.lastName)){handleEventAndRespond()}
   }
   
@@ -112,5 +116,5 @@ class BookstoreUser(email:String) extends PersistentEntity[BookstoreUserFO](emai
     case _ => false
   }  
   
-  override def newDeleteEvent = Some(UserDeleted(email))
+  override def newDeleteEvent = Some(UserDeleted(id))
 }

@@ -12,7 +12,8 @@ class InventoryBoot extends Bootstrap{
     import system.dispatcher    
     val inventoryClerk = system.actorOf(InventoryClerk.props, InventoryClerk.Name)
     val bookView = system.actorOf(BookView.props, BookView.Name)
-    system.actorOf(BookViewBuilder.props, BookViewBuilder.Name)
+    startSingleton(system, BookViewBuilder.props, BookViewBuilder.Name)
+    startSingleton(system, InventoryAllocationEventListener.props, InventoryAllocationEventListener.Name)
     List(new InventoryRoutes(inventoryClerk, bookView))
   }
 }

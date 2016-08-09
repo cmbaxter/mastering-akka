@@ -24,10 +24,12 @@ object CreditCardTransactionFO{
  * Companion to the CreditCardTransaction entity
  */
 object CreditCardTransaction{
-  def props(id:String) = Props(classOf[CreditCardTransaction], id) 
+  def props = Props[CreditCardTransaction] 
   
   object Command{
-    case class CreateCreditTransaction(txn:CreditCardTransactionFO)
+    case class CreateCreditTransaction(txn:CreditCardTransactionFO) extends EntityCommand{
+      def entityId = txn.id 
+    }
   }
   
   object Event{
@@ -74,7 +76,7 @@ object CreditCardTransaction{
 /**
  * Entity class representing a credit transaction in the bookstore app
  */
-class CreditCardTransaction(id:String) extends PersistentEntity[CreditCardTransactionFO](id){
+class CreditCardTransaction extends PersistentEntity[CreditCardTransactionFO]{
   import CreditCardTransaction._
   import Command._
   import Event._
