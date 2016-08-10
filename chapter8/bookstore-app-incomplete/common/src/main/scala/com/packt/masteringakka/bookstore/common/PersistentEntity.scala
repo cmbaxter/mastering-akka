@@ -9,6 +9,24 @@ import akka.persistence.SaveSnapshotSuccess
 import akka.persistence.SaveSnapshotFailure
 import akka.persistence.SnapshotOffer
 import akka.persistence.RecoveryCompleted
+import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
+import akka.actor.ActorSystem
+import akka.cluster.sharding.ClusterSharding
+import akka.cluster.sharding.ClusterShardingSettings
+import akka.cluster.sharding.ShardRegion
+
+/**
+ * Base trait for all entity based commands to extend from
+ */
+trait EntityCommand{
+  
+  /**
+   * Gets the id of the entity that this command is for, to
+   * use for shard routing
+   * @return a String representing the entity id of this command
+   */
+  def entityId:String
+}
 
 /**
  * Marker trait for something that is an event generated as the result of a command
@@ -25,21 +43,64 @@ trait EntityEvent extends Serializable with DatamodelWriter{
  */
 object PersistentEntity{
   
+  /**
+   * Send back to the entity by the parent Shard to finish the passivation process
+   */
+  case object StopEntity
+  
   /** Request to get the current state from an entity actor */
-  case object GetState
+  case class GetState(id:String) extends EntityCommand{
+    def entityId = id
+  }
   
   /** Request to mark an entity instance as deleted*/
-  case object MarkAsDeleted
+  case class MarkAsDeleted(id:String)  extends EntityCommand{
+    def entityId = id
+  }
+  
+  /**
+   * Class that will be instantntiated on a per entity bases to represent
+   * the different shard related extraction functions.  This is based on the Java APIs
+   * HashCodeMessageExtractor but uses a more scala friendly approach
+   */
+  class PersistentEntityIdExtractor(maxShards:Int) {
+    val extractEntityId:ShardRegion.ExtractEntityId = {
+      case ec:EntityCommand => (ec.entityId, ec)      
+    }
+    
+    val extractShardId:ShardRegion.ExtractShardId = {
+      case ec:EntityCommand => 
+        (math.abs(ec.entityId.hashCode) % maxShards).toString
+    }
+  }
+  
+  /**
+   * Companion to the PersistentEntityIdExtractor
+   */
+  object PersistentEntityIdExtractor{
+    
+    /**
+     * Creates a new instance of PersistentEntityIdExtractor given
+     * an actor system where the max shards config can be pulled from
+     * @param system The system where the config will be read from for max shards
+     */
+    def apply(system:ActorSystem):PersistentEntityIdExtractor =  {
+      val maxShards = system.settings.config.getInt("maxShards")
+      new PersistentEntityIdExtractor(maxShards)
+    }
+  }
 }
 
 /**
  * Base class for the Event Sourced entities to extend from
  */
-abstract class PersistentEntity[FO <: EntityFieldsObject[String, FO]: ClassTag](id:String) 
+abstract class PersistentEntity[FO <: EntityFieldsObject[String, FO]: ClassTag]
   extends PersistentActor with ActorLogging{
   import PersistentEntity._
+  import ShardRegion.Passivate
   import concurrent.duration._
     
+  val id = self.path.name
   val entityType = getClass.getSimpleName
   var state:FO = initialState
   var eventsSinceLastSnapshot = 0
@@ -86,10 +147,15 @@ abstract class PersistentEntity[FO <: EntityFieldsObject[String, FO]: ClassTag](
    */
   def standardCommandHandling:Receive = {
     
-    //Have been idle too long, time to start passivation process
+    //Have been idle too long, time to start the passivation process
     case ReceiveTimeout =>
       log.info("{} entity with id {} is being passivated due to inactivity", entityType, id)
-      context stop self    
+      context.parent ! Passivate(stopMessage = StopEntity)
+      
+    //Finishes the two part passivation process by stopping the entity
+    case StopEntity =>
+      log.info("{} entity with id {} is now being stopped due to inactivity", entityType, id)
+      context stop self        
     
     //Don't allow actions on deleted entities or a non-create request
     //when in the initial state
@@ -98,7 +164,7 @@ abstract class PersistentEntity[FO <: EntityFieldsObject[String, FO]: ClassTag](
       sender() ! stateResponse()      
           
     //Standard request to get the current state of the entity instance
-    case GetState =>
+    case GetState(id) =>
       sender ! stateResponse()
       
     //Standard handling logic for a request to mark the entity instance  as deleted
@@ -222,35 +288,21 @@ abstract class PersistentEntity[FO <: EntityFieldsObject[String, FO]: ClassTag](
  */
 abstract class Aggregate[FO <: EntityFieldsObject[String, FO], E <: PersistentEntity[FO] : ClassTag] extends BookstoreActor{
   
-  /**
-   * Looks up or creates a new child entity for the id supplied
-   * @param id The id of the entity to get
-   * @return an ActorRef
-   */
-  def lookupOrCreateChild(id:String) = {
-    val name = entityActorName(id)
-    context.child(name).getOrElse{
-      log.info("Creating new {} actor to handle a request for id {}", entityName, id)
-      context.actorOf(entityProps(id), name)
-    }
-  }
-  
-  /**
-   * Looks up the entity child for the supplied id and then
-   * forwards the supplied message to it
-   * @param id The id to get the child for
-   * @param msg The message to forward
-   */
-  def forwardCommand(id:String, msg:Any):Unit = {
-    val entity = lookupOrCreateChild(id)
-    entity.forward(msg)    
-  }
+  val idExtractor = PersistentEntity.PersistentEntityIdExtractor(context.system)
+  val entityShardRegion = 
+    ClusterSharding(context.system).start(
+      typeName = entityName,
+      entityProps = entityProps, 
+      settings = ClusterShardingSettings(context.system), 
+      extractEntityId = idExtractor.extractEntityId, 
+      extractShardId = idExtractor.extractShardId 
+    )
     
   /**
    * Gets the Props needed to create the child entity for this factory
    * @return a Props instance
    */
-  def entityProps(id:String):Props
+  def entityProps:Props
   
   /**
    * Gets the name of the entity that this factory manages
@@ -261,15 +313,8 @@ abstract class Aggregate[FO <: EntityFieldsObject[String, FO], E <: PersistentEn
     entityTag.runtimeClass.getSimpleName()
   }
   
-  /**
-   * Gets the instance specific name to give child entity actors
-   * @param id The id of the child
-   * @return a String
-   */
-  private def entityActorName(id:String) = {    
-    s"${entityName.toLowerCase}-$id"  
-  }
- 
+  def forwardCommand(id:String, command:Any) = 
+    entityShardRegion.forward(command)
 }
 
 /**

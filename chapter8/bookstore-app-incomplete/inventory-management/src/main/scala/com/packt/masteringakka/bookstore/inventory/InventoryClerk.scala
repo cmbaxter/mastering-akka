@@ -16,6 +16,10 @@ import akka.persistence.query.PersistenceQuery
 import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
 import akka.stream.ActorMaterializer
 import akka.persistence.query.EventEnvelope
+import akka.cluster.sharding.ClusterSharding
+import com.packt.masteringakka.bookstore.common.PersistentEntity
+import com.packt.masteringakka.bookstore.common.BookstoreActor
+import akka.actor.ActorRef
 
 /**
  * Companion to the InventoryClerk actor where the vocab is defined 
@@ -46,24 +50,13 @@ object InventoryClerk{
 class InventoryClerk extends Aggregate[BookFO, Book]{
   import InventoryClerk._
   import com.packt.masteringakka.bookstore.common.PersistentEntity._
-  import context.dispatcher
   import Book.Command._
-  
-  val projection = ResumableProjection("inventory-allocation", context.system)
-  implicit val mater = ActorMaterializer()
-  val journal = PersistenceQuery(context.system).
-    readJournalFor[CassandraReadJournal](CassandraReadJournal.Identifier)
-  projection.fetchLatestOffset.foreach{ o =>
-    journal.
-      eventsByTag("ordercreated", o.getOrElse(0L)).
-      runForeach(e => self ! e)
-  }
+ 
   
   def receive = {
     case FindBook(id) =>
       log.info("Finding book {}", id)
-      val book = lookupOrCreateChild(id)
-      forwardCommand(id, GetState)
+      forwardCommand(id, GetState(id))
           
     case CatalogNewBook(title, author, tags, cost) =>
       log.info("Cataloging new book with title {}", title)
@@ -73,28 +66,51 @@ class InventoryClerk extends Aggregate[BookFO, Book]{
       forwardCommand(id, command)
       
     case IncreaseBookInventory(id, amount) =>
-      forwardCommand(id, AddInventory(amount))
+      forwardCommand(id, AddInventory(amount, id))
       
     case CategorizeBook(id, tag) =>
-      forwardCommand(id, AddTag(tag))
+      forwardCommand(id, AddTag(tag, id))
       
     case UncategorizeBook(id, tag) =>
-      forwardCommand(id, RemoveTag(tag))
+      forwardCommand(id, RemoveTag(tag, id))
       
     case RemoveBookFromCatalog(id) =>
       forwardCommand(id, MarkAsDeleted)
       
-    case EventEnvelope(offset, pid, seq, order:SalesOrderCreateInfo) =>
-      
-      //Allocate inventory from each book
-      log.info("Received OrderCreated event for order id {}", order.id)
+    case order:SalesOrderCreateInfo =>
       order.lineItemInfo.
         foreach{
           case (bookId, quant) =>
-            forwardCommand(bookId, AllocateInventory(order.id, quant))
-        }
-      projection.storeLatestOffset(offset)
+            forwardCommand(bookId, AllocateInventory(order.id, quant, bookId))
+        }      
   }
     
-  def entityProps(id:String) = Book.props(id)
+  def entityProps = Book.props
+}
+
+object InventoryAllocationEventListener{
+  val Name = "inventory-allocation-listener"
+  def props(clerk:ActorRef) = Props(classOf[InventoryAllocationEventListener], clerk)
+}
+
+class InventoryAllocationEventListener(clerk:ActorRef) extends BookstoreActor{
+  import InventoryClerk._
+  import context.dispatcher  
+  
+  val projection = ResumableProjection("inventory-allocation", context.system)
+  implicit val mater = ActorMaterializer()
+  val journal = PersistenceQuery(context.system).
+    readJournalFor[CassandraReadJournal](CassandraReadJournal.Identifier)
+  projection.fetchLatestOffset.foreach{ o =>
+    journal.
+      eventsByTag("ordercreated", o.getOrElse(0L)).
+      runForeach(e => self ! e)
+  }  
+  
+  def receive = {
+    case EventEnvelope(offset, pid, seq, order:SalesOrderCreateInfo) =>
+      log.info("Received OrderCreated event for order id {}", order.id)
+      clerk ! order
+      projection.storeLatestOffset(offset)    
+  }
 }

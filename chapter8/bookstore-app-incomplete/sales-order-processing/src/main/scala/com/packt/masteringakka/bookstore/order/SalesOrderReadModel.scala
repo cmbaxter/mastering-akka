@@ -10,7 +10,6 @@ import akka.util.Timeout
 import akka.persistence.query.EventEnvelope
 import akka.stream.scaladsl.Flow
 import akka.stream.ActorMaterializer
-import com.packt.masteringakka.bookstore.order.OrderJsonProtocol
 
 trait SalesOrderReadModel{
   def indexRoot = "order"

@@ -57,15 +57,13 @@ class SalesAssociate extends Aggregate[SalesOrderFO, SalesOrder]{
 
 object OrderStatusEventListener{
   val Name = "order-status-event-listener"
-  def props = Props[OrderStatusEventListener]
+  def props(associate:ActorRef) = Props(classOf[OrderStatusEventListener], associate)
 }
 
-class OrderStatusEventListener extends BookstoreActor{
+class OrderStatusEventListener(associate:ActorRef) extends BookstoreActor{
   import SalesAssociate._
   import Book.Event._
   import context.dispatcher
-  
-  val associate = context.system.actorSelection(s"/user/${SalesAssociate.Name}")
   
   val projection = ResumableProjection("order-status", context.system)
   implicit val mater = ActorMaterializer()

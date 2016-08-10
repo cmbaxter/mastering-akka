@@ -24,7 +24,7 @@ case class BookFO(id:String, title:String, author:String, tags:List[String], cos
 /**
  * Entity class representing a Book within the bookstore app
  */
-private[inventory] class Book(id:String) extends PersistentEntity[BookFO](id){
+private[inventory] class Book extends PersistentEntity[BookFO]{
   import Book._
   import Command._
   import Event._
@@ -43,7 +43,7 @@ private[inventory] class Book(id:String) extends PersistentEntity[BookFO](id){
         persist(BookCreated(book))(handleEventAndRespond())
       }
       
-    case AddTag(tag) =>      
+    case AddTag(tag, id) =>      
       if (state.tags.contains(tag)){
         log.warning("Not adding tag {} to book {}, tag already exists", tag, state.id)
         sender() ! stateResponse()
@@ -52,7 +52,7 @@ private[inventory] class Book(id:String) extends PersistentEntity[BookFO](id){
         persist(TagAdded(tag))(handleEventAndRespond())
       }
       
-    case RemoveTag(tag) =>
+    case RemoveTag(tag, id) =>
       if (!state.tags.contains(tag)){
         log.warning("Cannot remove tag {} to book {}, tag not present", tag, state.id)
         sender() ! stateResponse()
@@ -61,10 +61,10 @@ private[inventory] class Book(id:String) extends PersistentEntity[BookFO](id){
         persist(TagRemoved(tag))(handleEventAndRespond())
       }
       
-    case AddInventory(amount) =>
+    case AddInventory(amount, id) =>
       persist(InventoryAdded(amount))(handleEventAndRespond())
                 
-    case AllocateInventory(orderId, amount) =>
+    case AllocateInventory(orderId, amount, id) =>
       val event = 
         if (amount > state.inventoryAmount ){
           InventoryBackordered(orderId, id)
@@ -109,11 +109,14 @@ object Book{
   val EntityType = "book"
   
   object Command{
-    case class CreateBook(book:BookFO)
-    case class AddTag(tag:String)
-    case class RemoveTag(tag:String)
-    case class AddInventory(amount:Int)
-    case class AllocateInventory(orderId:String, amount:Int)
+    case class CreateBook(book:BookFO) extends EntityCommand{
+      def entityId = book.id 
+    }
+    trait BookIdEntityCommand extends EntityCommand{val bookId:String; def entityId = bookId}
+    case class AddTag(tag:String, bookId:String) extends BookIdEntityCommand
+    case class RemoveTag(tag:String, bookId:String) extends BookIdEntityCommand
+    case class AddInventory(amount:Int, bookId:String) extends BookIdEntityCommand
+    case class AllocateInventory(orderId:String, amount:Int, bookId:String) extends BookIdEntityCommand
   }
   
   object Event{
@@ -238,7 +241,7 @@ object Book{
     }
   }
 
-  def props(id:String) = Props(classOf[Book], id)
+  def props = Props[Book]
   
   val BookAlreadyCreated = ErrorMessage("book.alreadyexists", Some("This book has already been created and can not handle another CreateBook request"))
   val InventoryNotAvailError = ErrorMessage("inventory.notavailable", Some("Inventory for an item on an order can not be allocated"))

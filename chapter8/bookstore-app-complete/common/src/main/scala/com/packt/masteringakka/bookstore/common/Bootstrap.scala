@@ -25,7 +25,9 @@ trait Bootstrap{
    * @param terminationMessage The termination message to use for that singleton, defaulting to PoisonPill
    * @return an ActorRef to the manager actor for that singleton
    */
-  def startSingleton(system:ActorSystem, props:Props, managerName:String, terminationMessage:Any = PoisonPill):ActorRef = {
+  def startSingleton(system:ActorSystem, props:Props, 
+    managerName:String, terminationMessage:Any = PoisonPill):ActorRef = {
+    
     system.actorOf(
       ClusterSingletonManager.props(
         singletonProps = props, 

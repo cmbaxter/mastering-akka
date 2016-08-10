@@ -90,14 +90,12 @@ class InventoryClerk extends Aggregate[BookFO, Book]{
 
 object InventoryAllocationEventListener{
   val Name = "inventory-allocation-listener"
-  def props = Props[InventoryAllocationEventListener]
+  def props(clerk:ActorRef) = Props(classOf[InventoryAllocationEventListener], clerk)
 }
 
-class InventoryAllocationEventListener extends BookstoreActor{
+class InventoryAllocationEventListener(clerk:ActorRef) extends BookstoreActor{
   import InventoryClerk._
-  import context.dispatcher
-  
-  val clerk = context.system.actorSelection(s"/user/${InventoryClerk.Name}")
+  import context.dispatcher  
   
   val projection = ResumableProjection("inventory-allocation", context.system)
   implicit val mater = ActorMaterializer()
@@ -111,8 +109,6 @@ class InventoryAllocationEventListener extends BookstoreActor{
   
   def receive = {
     case EventEnvelope(offset, pid, seq, order:SalesOrderCreateInfo) =>
-      
-      //Allocate inventory from each book
       log.info("Received OrderCreated event for order id {}", order.id)
       clerk ! order
       projection.storeLatestOffset(offset)    

@@ -38,6 +38,33 @@ class SalesAssociate extends Aggregate[SalesOrderFO, SalesOrder]{
   import PersistentEntity._
   import context.dispatcher
   
+  def entityProps = SalesOrder.props
+ 
+  def receive = {
+    case FindOrderById(id) =>
+      forwardCommand(id, GetState(id))         
+    
+    case req:CreateNewOrder =>
+      val newId = UUID.randomUUID().toString
+      val orderReq = SalesOrder.Command.CreateOrder(newId, req.userEmail, req.lineItems, req.cardInfo )
+      forwardCommand(newId, orderReq)
+      
+    case StatusChange(orderId, status, bookId, offset) =>          
+      forwardCommand(orderId, UpdateLineItemStatus(bookId, status, orderId))
+  }
+  
+}
+
+object OrderStatusEventListener{
+  val Name = "order-status-event-listener"
+  def props(associate:ActorRef) = Props(classOf[OrderStatusEventListener], associate)
+}
+
+class OrderStatusEventListener(associate:ActorRef) extends BookstoreActor{
+  import SalesAssociate._
+  import Book.Event._
+  import context.dispatcher
+  
   val projection = ResumableProjection("order-status", context.system)
   implicit val mater = ActorMaterializer()
   val journal = PersistenceQuery(context.system).
@@ -57,25 +84,11 @@ class SalesAssociate extends Aggregate[SalesOrderFO, SalesOrder]{
           StatusChange(event.orderId,  LineItemStatus.BackOrdered, event.bookId, offset)
       }.
       runForeach(self ! _)
-  }  
+  }   
   
-  
-  def entityProps(id:String) = SalesOrder.props(id)
- 
   def receive = {
-    case FindOrderById(id) =>
-      val order = lookupOrCreateChild(id)
-      order.forward(GetState)           
-    
-    case req:CreateNewOrder =>
-      val newId = UUID.randomUUID().toString
-      val entity = lookupOrCreateChild(newId)
-      val orderReq = SalesOrder.Command.CreateOrder(newId, req.userEmail, req.lineItems, req.cardInfo )
-      entity.forward(orderReq)
-      
-    case StatusChange(orderId, status, bookId, offset) =>          
-      forwardCommand(orderId, UpdateLineItemStatus(bookId, status))
+    case change @ StatusChange(orderId, status, bookId, offset) =>          
+      associate ! change
       projection.storeLatestOffset(offset)
   }
-  
 }

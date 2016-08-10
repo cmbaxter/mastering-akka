@@ -13,9 +13,9 @@ import akka.http.scaladsl.Http
  */
 object Server extends App{
   import akka.http.scaladsl.server.Directives._
-  val conf = ConfigFactory.load.getConfig("bookstore")
+  val conf = ConfigFactory.load.getConfig("bookstore").resolve()
   
-  implicit val system = ActorSystem("Bookstore", conf)
+  implicit val system = ActorSystem("BookstoreSystem", conf)
   implicit val mater = ActorMaterializer()
   val log = Logging(system.eventStream, "Server")
   import system.dispatcher
@@ -33,7 +33,7 @@ object Server extends App{
     PretendCreditCardService.routes //manually add in the pretend credit card service to the routing tree
   
   val serverSource =
-    Http().bind(interface = "localhost", port = 8080)    
+    Http().bind(interface = "localhost", port = conf.getInt("httpPort"))    
   val sink = Sink.foreach[Http.IncomingConnection](_.handleWith(finalRoutes))
   serverSource.to(sink).run  
   
