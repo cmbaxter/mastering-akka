@@ -15,7 +15,6 @@ import spray.json.RootJsonFormat
 import spray.json.JsValue
 import spray.json.DeserializationException
 import SalesOrderViewBuilder._
-import com.packt.masteringakka.bookstore.credit.CreditCardInfo
 import SalesAssociate._
 import SalesOrder._
 

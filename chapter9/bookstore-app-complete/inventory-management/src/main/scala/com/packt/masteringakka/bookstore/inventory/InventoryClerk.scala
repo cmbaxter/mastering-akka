@@ -20,6 +20,7 @@ import akka.cluster.sharding.ClusterSharding
 import com.packt.masteringakka.bookstore.common.PersistentEntity
 import com.packt.masteringakka.bookstore.common.BookstoreActor
 import akka.actor.ActorRef
+import com.packt.masteringakka.bookstore.order.SalesOrder
 
 /**
  * Companion to the InventoryClerk actor where the vocab is defined 
@@ -33,11 +34,6 @@ object InventoryClerk{
   case class UncategorizeBook(bookId:String, tag:String)
   case class IncreaseBookInventory(bookId:String, amount:Int)
   case class RemoveBookFromCatalog(id:String)
-  
-  trait SalesOrderCreateInfo{
-    def id:String
-    def lineItemInfo:List[(String, Int)]
-  }
   
   def props = Props[InventoryClerk]
   
@@ -56,6 +52,7 @@ class InventoryClerk extends Aggregate[BookFO, Book]{
   def receive = {
     case FindBook(id) =>
       log.info("Finding book {}", id)
+      log.info("Service locator = {}", System.getenv("SERVICE_LOCATOR"))
       forwardCommand(id, GetState(id))
           
     case CatalogNewBook(title, author, tags, cost) =>
@@ -77,12 +74,10 @@ class InventoryClerk extends Aggregate[BookFO, Book]{
     case RemoveBookFromCatalog(id) =>
       forwardCommand(id, MarkAsDeleted)
       
-    case order:SalesOrderCreateInfo =>
-      order.lineItemInfo.
-        foreach{
-          case (bookId, quant) =>
-            forwardCommand(bookId, AllocateInventory(order.id, quant, bookId))
-        }      
+    case SalesOrder.Event.OrderCreated(order) =>
+      order.lineItems.foreach{ item =>
+        forwardCommand(item.bookId, AllocateInventory(order.id, item.quantity , item.bookId))
+      }      
   }
     
   def entityProps = Book.props
@@ -108,9 +103,9 @@ class InventoryAllocationEventListener(clerk:ActorRef) extends BookstoreActor{
   }  
   
   def receive = {
-    case EventEnvelope(offset, pid, seq, order:SalesOrderCreateInfo) =>
-      log.info("Received OrderCreated event for order id {}", order.id)
-      clerk ! order
+    case EventEnvelope(offset, pid, seq, orderCreated:SalesOrder.Event.OrderCreated) =>
+      log.info("Received OrderCreated event for order id {}", orderCreated.order.id)
+      clerk ! orderCreated
       projection.storeLatestOffset(offset)    
   }
 }

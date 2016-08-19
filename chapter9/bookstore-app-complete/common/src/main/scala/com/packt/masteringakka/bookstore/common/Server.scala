@@ -31,12 +31,12 @@ class Server(boot:Bootstrap, service:String){
   val serverSource =
     Http().bind(interface = serviceConf.getString("ip"), port = serviceConf.getInt("port")) 
   val log = Logging(system.eventStream, "Server")
-  log.info("Starting up on port {} and ip {}", serviceConf.getString("port"), serviceConf.getString("ip"))
+  log.info("Starting up on port {} and ip {}", serviceConf.getString("port"), serviceConf.getString("ip"))  
+  
   val sink = Sink.foreach[Http.IncomingConnection](_.handleWith(finalRoutes))
   serverSource.to(sink).run  
   
   implicit val cc = ConnectionContext()
   StatusService.signalStartedOrExit() 
-  log.info(config.toString())
 }
 

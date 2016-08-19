@@ -14,22 +14,22 @@ libraryDependencies ++= {
 
 normalizedName in Bundle := "inventory"
 
-BundleKeys.system := "BookstoreSystem"
-
-BundleKeys.endpoints := Map(
-  "akka-remote" -> Endpoint("tcp"),
-  "inventory-management" -> Endpoint("http", 0, Set(URI("http://:9000/inventory")))
-)
-
-BundleKeys.startCommand += "-main com.packt.masteringakka.bookstore.inventory.Main"
+BundleKeys.system := "InventorySystem"
 
 javaOptions in Universal := Seq(
-  "-J-Xmx256m",
-  "-J-Xms256m"
+  "-J-Xmx128m",
+  "-J-Xms128m"
 )
 
 BundleKeys.nrOfCpus := 0.1
-BundleKeys.memory := 512.MiB
+BundleKeys.memory := 256.MiB
 BundleKeys.diskSpace := 50.MB
+
+BundleKeys.endpoints := Map(
+  "akka-remote" -> Endpoint("tcp"),
+  "inventory-management" -> Endpoint("http", 0, Set(URI("http://:9000/inventory-management")))
+)
+
+BundleKeys.startCommand += "-main com.packt.masteringakka.bookstore.inventory.Main"
 
 lazy val root = (project in file(".")).enablePlugins(JavaAppPackaging)

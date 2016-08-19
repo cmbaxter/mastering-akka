@@ -8,7 +8,8 @@ import akka.actor.ActorSystem
  */
 class CreditBoot extends Bootstrap{
   def bootup(system:ActorSystem) = {
-    system.actorOf(CreditAssociate.props, CreditAssociate.Name)
-    Nil
+    import system.dispatcher
+    val assoc = system.actorOf(CreditAssociate.props, CreditAssociate.Name)
+    List(new CreditRoutes(assoc))
   }
 }

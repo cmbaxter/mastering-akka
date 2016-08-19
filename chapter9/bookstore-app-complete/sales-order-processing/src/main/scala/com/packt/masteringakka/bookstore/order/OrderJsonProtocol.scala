@@ -5,7 +5,6 @@ import spray.json._
 import SalesAssociate._
 import SalesOrder._
 import SalesOrderViewBuilder._
-import com.packt.masteringakka.bookstore.credit.CreditCardInfo
 
 /**
  * Json protocol class for the order system

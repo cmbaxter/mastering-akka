@@ -2,14 +2,15 @@ package com.packt.masteringakka.bookstore.order
 
 import com.packt.masteringakka.bookstore.common._
 import java.util.Date
-import com.packt.masteringakka.bookstore.inventory.BookFO
-import com.packt.masteringakka.bookstore.inventory.InventoryClerk
 import akka.actor.Props
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
 import akka.persistence.query.EventEnvelope
 import akka.stream.scaladsl.Flow
 import akka.stream.ActorMaterializer
+import com.packt.masteringakka.bookstore.common.ServiceLookup
+import com.typesafe.conductr.lib.akka.ImplicitConnectionContext
+import scala.concurrent.Future
 
 trait SalesOrderReadModel{
   def indexRoot = "order"
@@ -25,21 +26,23 @@ object SalesOrderViewBuilder{
   def props = Props[SalesOrderViewBuilder]  
 }
 
-class SalesOrderViewBuilder extends ViewBuilder[SalesOrderViewBuilder.SalesOrderRM] with SalesOrderReadModel with OrderJsonProtocol{
+class SalesOrderViewBuilder extends ViewBuilder[SalesOrderViewBuilder.SalesOrderRM] 
+  with SalesOrderReadModel with OrderJsonProtocol with ServiceLookup with ImplicitConnectionContext{
+  
+  import SalesOrder._
   import SalesOrder.Event._
   import ViewBuilder._
   import SalesOrderViewBuilder._
   import akka.pattern.ask
   import concurrent.duration._
   implicit val timeout = Timeout(5 seconds)  
-  implicit val rmFormats = orderRmFormat 
-    
-  val invClerk = context.actorSelection(s"/user/${InventoryClerk.Name}")
+  implicit val rmFormats = orderRmFormat     
+  
   val bookLookup = 
     Flow[SalesOrderLineItemFO].
-      mapAsyncUnordered(4)(item => (invClerk ? InventoryClerk.FindBook(item.bookId)).mapTo[ServiceResult[BookFO]]).
-      fold(Map.empty[String, BookFO]){
-        case (books, FullResult(b)) => books ++ Map(b.id -> b) 
+      mapAsyncUnordered(4)(item => findBook(item.bookId )).
+      fold(Map.empty[String, Book]){
+        case (books, Some(b)) => books ++ Map(b.id -> b) 
         case (books, other) => 
           log.error("Encountered a non successful result looking up a book: {}", other)
           books
@@ -71,7 +74,19 @@ class SalesOrderViewBuilder extends ViewBuilder[SalesOrderViewBuilder.SalesOrder
       
     case LineItemStatusUpdated(bookId, itemNumber, status) =>
       UpdateAction(id, s"lineItems['${itemNumber}'].status = newStatus", Map("newStatus" -> status.toString()))
-  } 
+  }
+  
+  def findBook(id:String):Future[Option[Book]] = {
+    import context.dispatcher
+    
+    def lookupBook:Future[Option[Book]] = null
+    
+    for{
+      result <- lookupService("inventory-management", OrderBoot.SharedLocationCache)
+      if (result.uriOpt.isDefined)
+      book <- lookupBook
+    } yield book
+  }
 }
 
 object SalesOrderView{

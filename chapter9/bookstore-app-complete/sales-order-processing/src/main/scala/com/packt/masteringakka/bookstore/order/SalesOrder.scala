@@ -2,26 +2,19 @@ package com.packt.masteringakka.bookstore.order
 
 import java.util.Date
 import akka.actor.ActorRef
-import com.packt.masteringakka.bookstore.user.BookstoreUserFO
-import com.packt.masteringakka.bookstore.inventory.BookFO
 import akka.actor.Identify
 import concurrent.duration._
 import akka.actor.ActorIdentity
 import akka.actor.FSM
-import com.packt.masteringakka.bookstore.user.CustomerRelationsManager
-import com.packt.masteringakka.bookstore.inventory.InventoryClerk
 import com.packt.masteringakka.bookstore.common._
-import com.packt.masteringakka.bookstore.credit.CreditTransactionStatus
 import akka.actor.Props
-import com.packt.masteringakka.bookstore.credit.CreditCardInfo
 import com.packt.masteringakka.bookstore.common.EntityFieldsObject
-import com.packt.masteringakka.bookstore.credit.CreditCardTransactionFO
-import com.packt.masteringakka.bookstore.credit.CreditAssociate
 import com.packt.masteringakka.bookstore.common.EntityCommand
 import com.typesafe.conductr.bundlelib.akka.LocationService
 import com.typesafe.conductr.lib.akka.ImplicitConnectionContext
-import com.typesafe.conductr.bundlelib.scala.URI
-import com.typesafe.conductr.bundlelib.scala.LocationCache
+import com.typesafe.conductr.bundlelib.scala._
+import java.net.{URI => JavaURI}
+import scala.concurrent.Future
 
 object LineItemStatus extends Enumeration{
   val Unknown, Approved, BackOrdered = Value
@@ -95,7 +88,14 @@ object SalesOrder{
   val EntityType = "salesorder"
   def props = Props[SalesOrder]
   
+  case class CreditCardInfo(cardHolder:String, cardType:String, cardNumber:String, expiration:Date)
   case class LineItemRequest(bookId:String, quantity:Int)
+  //Minimally mapped info from the other modules
+  case class BookstoreUser(email:String)
+  case class Book(id:String, title:String, author:String, tags:List[String], inventoryAmount:Int, cost:Double)
+  case class ChargeCreditCard(info:CreditCardInfo, amount:Double)
+  case class CreditTxn(id:String, status:String)  
+  
   
   object Command{
     case class CreateOrder(newOrderId:String, userEmail:String, lineItems:List[LineItemRequest], cardInfo:CreditCardInfo) extends EntityCommand{
@@ -111,11 +111,7 @@ object SalesOrder{
 
   object Event{
     trait SalesOrderEvent extends EntityEvent{def entityType = EntityType }
-    case class OrderCreated(order:SalesOrderFO) extends SalesOrderEvent with InventoryClerk.SalesOrderCreateInfo{
-      def id = order.id
-      def lineItemInfo = order.lineItems.map{ item =>
-        (item.bookId, item.quantity )
-      }
+    case class OrderCreated(order:SalesOrderFO) extends SalesOrderEvent {
       
       def toDatamodel = {
         val lineItemsDm = order.lineItems.map{ item =>
@@ -172,7 +168,9 @@ object SalesOrder{
 }
 
 private[order] object SalesOrderCreateValidator{
-  def props = Props[SalesOrderCreateValidator]
+  import SalesOrder._
+  
+  def props = Props(classOf[SalesOrderCreateValidator], OrderBoot.SharedLocationCache)
   
   sealed trait State
   case object WaitingForRequest extends State
@@ -191,21 +189,21 @@ private[order] object SalesOrderCreateValidator{
     def inputs:Inputs
     def originator = inputs.originator 
   }  
-  case class UnresolvedDependencies(inputs:Inputs, userAssociate:Option[ActorRef] = None, 
-    invClerk:Option[ActorRef] = None, creditAssociate:Option[ActorRef] = None) extends InputsData
+  case class UnresolvedDependencies(inputs:Inputs, userUri:Option[JavaURI] = None, 
+    inventoryUri:Option[JavaURI] = None, creditUri:Option[JavaURI] = None) extends InputsData
 
   case class ResolvedDependencies(inputs:Inputs, expectedBooks:Set[String], 
-    user:Option[BookstoreUserFO], books:Map[String, BookFO], userAssociate:ActorRef, 
-    invClerk:ActorRef, creditAssociate:ActorRef) extends InputsData
+    user:Option[BookstoreUser], books:Map[String, Book], userUri:JavaURI, 
+    inventoryUri:JavaURI, creditUri:JavaURI) extends InputsData
 
-  case class LookedUpData(inputs:Inputs, user:BookstoreUserFO, 
-    items:List[SalesOrderLineItemFO], total:Double) extends InputsData
-  
-  object ResolutionIdent extends Enumeration{
-    val Book, User, Credit = Value
-  }  
+  case class LookedUpData(inputs:Inputs, user:BookstoreUser, 
+    items:List[SalesOrderLineItemFO], total:Double) extends InputsData 
     
   val ResolveTimeout = 5 seconds
+  
+  val InvMgmtName = "inventory-management"
+  val UserMgmtName = "user-management"
+  val CredProcName = "credit-processing"
   
   val InvalidBookIdError = ErrorMessage("order.invalid.bookId", Some("You have supplied an invalid book id"))
   val InvalidUserIdError = ErrorMessage("order.invalid.userId", Some("You have supplied an invalid user id"))
@@ -213,47 +211,50 @@ private[order] object SalesOrderCreateValidator{
   val InventoryNotAvailError = ErrorMessage("order.inventory.notavailable", Some("Inventory for an item on this order is no longer available"))  
 }
 
-private[order] class SalesOrderCreateValidator 
-  extends FSM[SalesOrderCreateValidator.State, SalesOrderCreateValidator.Data] with ImplicitConnectionContext{
+private[order] class SalesOrderCreateValidator(cache:CacheLike) 
+  extends FSM[SalesOrderCreateValidator.State, SalesOrderCreateValidator.Data] with ImplicitConnectionContext with ServiceLookup{
   import SalesOrderCreateValidator._
+  import SalesOrder._
   import SalesOrder.Command._
+  import akka.pattern.pipe
   
+  import context.dispatcher
   
   startWith(WaitingForRequest, NoData)
   
   when(WaitingForRequest){
     case Event(request:CreateOrder, _) =>      
-      val fut = LocationService.lookup("inventory-management/api/book", URI("http://localhost:8080/api/book"), LocationCache())
-      lookup(InventoryClerk.Name) ! Identify(ResolutionIdent.Book)
-      lookup(CustomerRelationsManager.Name) ! Identify(ResolutionIdent.User )
-      lookup(CreditAssociate.Name) ! Identify(ResolutionIdent.Credit)
+      lookupService(InvMgmtName, cache).pipeTo(self)
+      lookupService(UserMgmtName, cache).pipeTo(self)
+      lookupService(CredProcName, cache).pipeTo(self)
       goto(ResolvingDependencies) using UnresolvedDependencies(Inputs(sender(), request))
   }
   
   when(ResolvingDependencies, ResolveTimeout )(transform {
-    case Event(ActorIdentity(identifier:ResolutionIdent.Value, actor @ Some(ref)), 
-      data:UnresolvedDependencies) =>
+    case Event(ServiceLookupResult(name, uriOpt), data:UnresolvedDependencies) =>
         
-      log.info("Resolved dependency {}, {}", identifier, ref)
-      val newData = identifier match{
-        case ResolutionIdent.Book => data.copy(invClerk = actor)
-        case ResolutionIdent.User => data.copy(userAssociate = actor)
-        case ResolutionIdent.Credit => data.copy(creditAssociate = actor)
+      log.info("Resolved dependency {} to: {}", name, uriOpt)
+      val newData = name match{
+        case InvMgmtName => data.copy(inventoryUri = uriOpt)
+        case UserMgmtName => data.copy(userUri = uriOpt)
+        case CredProcName => data.copy(creditUri = uriOpt)
       }
       stay using newData
   } using{
-    case FSM.State(state, UnresolvedDependencies(inputs, Some(userAssociate), 
-      Some(invClerk), Some(creditAssociate)), _, _, _) =>
+    case FSM.State(state, UnresolvedDependencies(inputs, Some(userUri), 
+      Some(inventoryUri), Some(creditUri)), _, _, _) =>
         
       log.info("Resolved all dependencies, looking up entities")
-      userAssociate ! CustomerRelationsManager.FindUserByEmail(inputs.request.userEmail)
+      findUserByEmail(userUri, inputs.request.userEmail)
+            
       val expectedBooks = inputs.request.lineItems.map(_.bookId).toSet
-      expectedBooks.foreach(id => invClerk ! InventoryClerk.FindBook(id))
-      goto(LookingUpEntities) using ResolvedDependencies(inputs, expectedBooks, None, Map.empty, invClerk, userAssociate, creditAssociate)
+      val bookFutures = expectedBooks.map(id => findBook(inventoryUri, id))
+      bookFutures.foreach(_.pipeTo(self))
+      goto(LookingUpEntities) using ResolvedDependencies(inputs, expectedBooks, None, Map.empty, inventoryUri, userUri, creditUri)
   })
   
   when(LookingUpEntities, 10 seconds)(transform {
-    case Event(FullResult(b:BookFO), data:ResolvedDependencies) =>      
+    case Event(FullResult(b:Book), data:ResolvedDependencies) =>      
       log.info("Looked up book: {}", b) 
       
       //Make sure inventory is available
@@ -273,7 +274,7 @@ private[order] class SalesOrderCreateValidator
           stay using data.copy(books = data.books ++ Map(b.id -> b))    
       }      
       
-    case Event(FullResult(u:BookstoreUserFO), data:ResolvedDependencies) =>      
+    case Event(FullResult(u:BookstoreUser), data:ResolvedDependencies) =>      
       log.info("Found user: {}", u)      
       stay using data.copy(user = Some(u)) 
       
@@ -287,7 +288,7 @@ private[order] class SalesOrderCreateValidator
       
   } using{
     case FSM.State(state, ResolvedDependencies(inputs, expectedBooks, Some(u), 
-      bookMap, userAssociate, invClerk, creditAssociate), _, _, _) 
+      bookMap, userUri, invUri, creditUri), _, _, _) 
       if bookMap.keySet == expectedBooks =>            
       
       log.info("Successfully looked up all entities and inventory is available, charging credit card")
@@ -301,18 +302,18 @@ private[order] class SalesOrderCreateValidator
         }
          
       val total = lineItems.map(_.cost).sum
-      creditAssociate ! CreditAssociate.ChargeCreditCard(inputs.request.cardInfo, total)      
+      chargeCreditCard(creditUri, ChargeCreditCard(inputs.request.cardInfo, total)).pipeTo(self)
       goto(ChargingCard) using LookedUpData(inputs, u, lineItems, total)
   }) 
   
   when(ChargingCard, 10 seconds){
-    case Event(FullResult(txn:CreditCardTransactionFO), data:LookedUpData) if txn.status == CreditTransactionStatus.Approved  =>     
+    case Event(FullResult(txn:CreditTxn), data:LookedUpData) if txn.status == "approved"  =>     
       val order = SalesOrderFO(data.inputs.request.newOrderId, 
-        data.user.id, txn.id, data.total, data.items, newDate)
+        data.user.email, txn.id, data.total, data.items, newDate)
       context.parent.tell(CreateValidatedOrder(order), data.inputs.originator )
       stop            
       
-    case Event(FullResult(txn:CreditCardTransactionFO), data:LookedUpData) =>
+    case Event(FullResult(txn:CreditTxn), data:LookedUpData) =>
       log.info("Credit was rejected for request: {}", data.inputs.request)
       data.originator ! Failure(FailureType.Validation, CreditRejectedError )
       stop      
@@ -329,6 +330,19 @@ private[order] class SalesOrderCreateValidator
       data.inputs.originator ! unexpectedFail
       stop
   }
+  
+  def findUserByEmail(uri:JavaURI, email:String):Future[BookstoreUser] = {
+    null
+  }
+  
+  def findBook(uri:JavaURI, id:String):Future[Book] = {
+    null
+  }
+  
+  def chargeCreditCard(uri:JavaURI, charge:ChargeCreditCard):Future[CreditTxn] = {
+    null
+  }
+ 
   
   def unexpectedFail = Failure(FailureType.Service, ServiceResult.UnexpectedFailure )
   def newDate = new Date

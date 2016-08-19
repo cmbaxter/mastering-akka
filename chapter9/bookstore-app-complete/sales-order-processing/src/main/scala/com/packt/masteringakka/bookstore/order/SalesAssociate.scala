@@ -4,24 +4,26 @@ import akka.actor._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import concurrent.duration._
-import com.packt.masteringakka.bookstore.inventory.Book
 import com.packt.masteringakka.bookstore.common._
 import java.util.UUID
-import com.packt.masteringakka.bookstore.credit.CreditCardInfo
 import akka.stream.ActorMaterializer
 import akka.stream.ActorMaterializer
 import akka.persistence.query.PersistenceQuery
 import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
 import akka.persistence.query.EventEnvelope
 import akka.stream.scaladsl.Sink
+import java.util.Date
 
 /**
  * Companion to the SalesOrderManager service
  */
 object SalesAssociate{
+  import SalesOrder._
+  
   val Name = "sales-associate"
   def props = Props[SalesAssociate]
-   
+     
+  
   case class CreateNewOrder(userEmail:String, lineItems:List[SalesOrder.LineItemRequest], cardInfo:CreditCardInfo)
   case class FindOrderById(id:String)
   case class StatusChange(orderId:String, status:LineItemStatus.Value, bookId:String, offset:Long)
@@ -32,7 +34,6 @@ object SalesAssociate{
  */
 class SalesAssociate extends Aggregate[SalesOrderFO, SalesOrder]{
   import SalesAssociate._
-  import Book.Event._
   import SalesOrder._
   import Command._
   import PersistentEntity._
@@ -61,7 +62,7 @@ object OrderStatusEventListener{
 }
 
 class OrderStatusEventListener(associate:ActorRef) extends BookstoreActor{
-  import SalesAssociate._
+  /*import SalesAssociate._
   import Book.Event._
   import context.dispatcher
   
@@ -84,11 +85,12 @@ class OrderStatusEventListener(associate:ActorRef) extends BookstoreActor{
           StatusChange(event.orderId,  LineItemStatus.BackOrdered, event.bookId, offset)
       }.
       runForeach(self ! _)
-  }   
+  }*/   
   
   def receive = {
-    case change @ StatusChange(orderId, status, bookId, offset) =>          
+    /*case change @ StatusChange(orderId, status, bookId, offset) =>          
       associate ! change
-      projection.storeLatestOffset(offset)
+      projection.storeLatestOffset(offset)*/
+    case _ =>
   }
 }

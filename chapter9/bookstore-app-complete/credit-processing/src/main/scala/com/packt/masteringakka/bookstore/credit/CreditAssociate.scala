@@ -14,11 +14,6 @@ import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import akka.http.scaladsl.unmarshalling.Unmarshal
 
-trait CreditJsonProtocol extends BookstoreJsonProtocol{
-  import CreditAssociate._
-  implicit val chargeReqFormat = jsonFormat5(ChargeRequest)
-  implicit val chargeRespFormat = jsonFormat1(ChargeResponse)   
-}
 
 /**
  * Companion to the CreditAssociate actor
@@ -27,6 +22,7 @@ object CreditAssociate{
   val Name = "credit-associate"
   def props = Props[CreditAssociate]
   case class ChargeCreditCard(cardInfo:CreditCardInfo, amount:Double)
+  case class FindTransactionById(id:String)
       
   case class ChargeRequest(cardHolder:String, cardType:String, cardNumber:String, expiration:Date, amount:Double)
   case class ChargeResponse(confirmationCode:String)    
@@ -39,12 +35,14 @@ class CreditAssociate extends Aggregate[CreditCardTransactionFO, CreditCardTrans
   import akka.pattern.pipe
   import context.dispatcher  
   import CreditAssociate._
+  import PersistentEntity._
   import spray.json._
   implicit val mater = ActorMaterializer()
   
-  val settings = CreditSettings(context.system)
-  
   def receive = {
+    case FindTransactionById(id) => 
+      forwardCommand(id, GetState(id))    
+    
     case ChargeCreditCard(info, amount) =>
       val caller = sender()
       chargeCard(info, amount ).onComplete{
@@ -69,16 +67,8 @@ class CreditAssociate extends Aggregate[CreditCardTransactionFO, CreditCardTrans
    * @return a Future wrapping the response from the charge request
    */
   def chargeCard(info:CreditCardInfo, amount:Double):Future[ChargeResponse] = { 
-    val chargeReq = ChargeRequest(info.cardHolder, info.cardType, info.cardNumber, info.expiration, amount)
-    val entity = HttpEntity(ContentTypes.`application/json`, chargeReq.toJson.prettyPrint )
-    val request = HttpRequest(HttpMethods.POST, settings.creditChargeUrl, entity = entity)
-    Http(context.system).
-      singleRequest(request).
-      flatMap{
-        case resp if resp.status.isSuccess =>
-          Unmarshal(resp.entity).to[ChargeResponse]
-        case resp =>
-          Future.failed(new RuntimeException(s"Invalid status code received on request: ${resp.status}"))
-      }
+    //No more need to fake this out with an actual call, just stub back as a successful Future
+    val id = UUID.randomUUID().toString
+    Future.successful(ChargeResponse(id))
   }   
 }

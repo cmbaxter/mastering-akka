@@ -83,8 +83,6 @@ class CreditCardTransaction extends PersistentEntity[CreditCardTransactionFO]{
   import context.dispatcher
   import akka.pattern.pipe
   
-  val settings = CreditSettings(context.system)
-  
   def initialState = CreditCardTransactionFO.empty
   
   def additionalCommandHandling = {
