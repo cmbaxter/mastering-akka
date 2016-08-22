@@ -62,8 +62,8 @@ object OrderStatusEventListener{
 }
 
 class OrderStatusEventListener(associate:ActorRef) extends BookstoreActor{
-  /*import SalesAssociate._
-  import Book.Event._
+  import SalesAssociate._
+  import com.packt.masteringakka.bookstore.inventory.Book.Event._
   import context.dispatcher
   
   val projection = ResumableProjection("order-status", context.system)
@@ -85,12 +85,11 @@ class OrderStatusEventListener(associate:ActorRef) extends BookstoreActor{
           StatusChange(event.orderId,  LineItemStatus.BackOrdered, event.bookId, offset)
       }.
       runForeach(self ! _)
-  }*/   
+  }  
   
   def receive = {
-    /*case change @ StatusChange(orderId, status, bookId, offset) =>          
+    case change @ StatusChange(orderId, status, bookId, offset) =>          
       associate ! change
-      projection.storeLatestOffset(offset)*/
-    case _ =>
+      projection.storeLatestOffset(offset)
   }
 }

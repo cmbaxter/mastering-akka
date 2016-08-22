@@ -4,10 +4,6 @@ import com.packt.masteringakka.bookstore.common.Bootstrap
 import akka.actor.ActorSystem
 import com.typesafe.conductr.bundlelib.scala.LocationCache
 
-object OrderBoot{
-  val SharedLocationCache = new LocationCache
-}
-
 class OrderBoot extends Bootstrap {
 
   def bootup(system:ActorSystem) = {

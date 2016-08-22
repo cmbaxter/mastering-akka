@@ -19,7 +19,7 @@ case class ApiResponseMeta(statusCode:Int, error:Option[ErrorMessage] = None)
 /**
  * Json protocol class for the api response set of types
  */
-trait ApiResponseJsonProtocol extends SprayJsonSupport with DefaultJsonProtocol{
+trait ApiResponseJsonProtocol extends BookstoreJsonProtocol{
   implicit val errorMessageFormat = jsonFormat3(ErrorMessage.apply)
   implicit val metaFormat = jsonFormat2(ApiResponseMeta)
   implicit def apiRespFormat[T : JsonFormat] = jsonFormat2(ApiResponse.apply[T])

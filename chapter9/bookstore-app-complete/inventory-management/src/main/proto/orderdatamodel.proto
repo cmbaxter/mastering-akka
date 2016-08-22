@@ -1,5 +1,5 @@
-package com.packt.masteringakka.bookstore.inventory;
-option java_outer_classname = "OrderDatamodel";
+package com.packt.masteringakka.bookstore.order;
+option java_outer_classname = "Datamodel";
 option optimize_for = SPEED;
 
 message SalesOrderLineItem{

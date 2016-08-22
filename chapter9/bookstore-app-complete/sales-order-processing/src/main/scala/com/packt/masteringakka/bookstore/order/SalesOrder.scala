@@ -15,6 +15,15 @@ import com.typesafe.conductr.lib.akka.ImplicitConnectionContext
 import com.typesafe.conductr.bundlelib.scala._
 import java.net.{URI => JavaURI}
 import scala.concurrent.Future
+import akka.stream.scaladsl.Source
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.Http
+import akka.stream.ActorMaterializer
+import spray.json.JsonFormat
+import akka.http.scaladsl.unmarshalling.Unmarshal
+import scala.reflect.ClassTag
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import spray.json.RootJsonFormat
 
 object LineItemStatus extends Enumeration{
   val Unknown, Approved, BackOrdered = Value
@@ -93,8 +102,8 @@ object SalesOrder{
   //Minimally mapped info from the other modules
   case class BookstoreUser(email:String)
   case class Book(id:String, title:String, author:String, tags:List[String], inventoryAmount:Int, cost:Double)
-  case class ChargeCreditCard(info:CreditCardInfo, amount:Double)
-  case class CreditTxn(id:String, status:String)  
+  case class ChargeCreditCard(cardInfo:CreditCardInfo, amount:Double)
+  case class CreditTxn(id:String, status:String)    
   
   
   object Command{
@@ -170,7 +179,7 @@ object SalesOrder{
 private[order] object SalesOrderCreateValidator{
   import SalesOrder._
   
-  def props = Props(classOf[SalesOrderCreateValidator], OrderBoot.SharedLocationCache)
+  def props = Props[SalesOrderCreateValidator]
   
   sealed trait State
   case object WaitingForRequest extends State
@@ -211,8 +220,8 @@ private[order] object SalesOrderCreateValidator{
   val InventoryNotAvailError = ErrorMessage("order.inventory.notavailable", Some("Inventory for an item on this order is no longer available"))  
 }
 
-private[order] class SalesOrderCreateValidator(cache:CacheLike) 
-  extends FSM[SalesOrderCreateValidator.State, SalesOrderCreateValidator.Data] with ImplicitConnectionContext with ServiceLookup{
+private[order] class SalesOrderCreateValidator 
+  extends BookstoreActor with FSM[SalesOrderCreateValidator.State, SalesOrderCreateValidator.Data] with ImplicitConnectionContext with ServiceConsumer with OrderJsonProtocol{
   import SalesOrderCreateValidator._
   import SalesOrder._
   import SalesOrder.Command._
@@ -224,9 +233,9 @@ private[order] class SalesOrderCreateValidator(cache:CacheLike)
   
   when(WaitingForRequest){
     case Event(request:CreateOrder, _) =>      
-      lookupService(InvMgmtName, cache).pipeTo(self)
-      lookupService(UserMgmtName, cache).pipeTo(self)
-      lookupService(CredProcName, cache).pipeTo(self)
+      lookupService(InvMgmtName).pipeTo(self)
+      lookupService(UserMgmtName).pipeTo(self)
+      lookupService(CredProcName).pipeTo(self)
       goto(ResolvingDependencies) using UnresolvedDependencies(Inputs(sender(), request))
   }
   
@@ -245,7 +254,7 @@ private[order] class SalesOrderCreateValidator(cache:CacheLike)
       Some(inventoryUri), Some(creditUri)), _, _, _) =>
         
       log.info("Resolved all dependencies, looking up entities")
-      findUserByEmail(userUri, inputs.request.userEmail)
+      findUserByEmail(userUri, inputs.request.userEmail).pipeTo(self)
             
       val expectedBooks = inputs.request.lineItems.map(_.bookId).toSet
       val bookFutures = expectedBooks.map(id => findBook(inventoryUri, id))
@@ -254,7 +263,7 @@ private[order] class SalesOrderCreateValidator(cache:CacheLike)
   })
   
   when(LookingUpEntities, 10 seconds)(transform {
-    case Event(FullResult(b:Book), data:ResolvedDependencies) =>      
+    case Event(b:Book, data:ResolvedDependencies) =>      
       log.info("Looked up book: {}", b) 
       
       //Make sure inventory is available
@@ -274,17 +283,9 @@ private[order] class SalesOrderCreateValidator(cache:CacheLike)
           stay using data.copy(books = data.books ++ Map(b.id -> b))    
       }      
       
-    case Event(FullResult(u:BookstoreUser), data:ResolvedDependencies) =>      
+    case Event(u:BookstoreUser, data:ResolvedDependencies) =>      
       log.info("Found user: {}", u)      
       stay using data.copy(user = Some(u)) 
-      
-    case Event(EmptyResult, data:ResolvedDependencies) => 
-      val (etype, error) = 
-        if (sender().path.name.contains("book")) ("book", InvalidBookIdError) 
-        else ("user", InvalidUserIdError )
-      log.info("Unexpected result type of EmptyResult received looking up a {} entity", etype)
-      data.originator ! Failure(FailureType.Validation, error)
-      stop
       
   } using{
     case FSM.State(state, ResolvedDependencies(inputs, expectedBooks, Some(u), 
@@ -307,13 +308,13 @@ private[order] class SalesOrderCreateValidator(cache:CacheLike)
   }) 
   
   when(ChargingCard, 10 seconds){
-    case Event(FullResult(txn:CreditTxn), data:LookedUpData) if txn.status == "approved"  =>     
+    case Event(txn:CreditTxn, data:LookedUpData) if txn.status == "Approved"  =>     
       val order = SalesOrderFO(data.inputs.request.newOrderId, 
         data.user.email, txn.id, data.total, data.items, newDate)
       context.parent.tell(CreateValidatedOrder(order), data.inputs.originator )
       stop            
       
-    case Event(FullResult(txn:CreditTxn), data:LookedUpData) =>
+    case Event(txn:CreditTxn, data:LookedUpData) =>
       log.info("Credit was rejected for request: {}", data.inputs.request)
       data.originator ! Failure(FailureType.Validation, CreditRejectedError )
       stop      
@@ -332,19 +333,22 @@ private[order] class SalesOrderCreateValidator(cache:CacheLike)
   }
   
   def findUserByEmail(uri:JavaURI, email:String):Future[BookstoreUser] = {
-    null
+    val requestUri = Uri(uri.toString).withPath(Uri.Path("/api") / "user" / email)
+    executeHttpRequest[BookstoreUser](HttpRequest(HttpMethods.GET, requestUri))
   }
   
   def findBook(uri:JavaURI, id:String):Future[Book] = {
-    null
+    val requestUri = Uri(uri.toString).withPath(Uri.Path("/api") / "book" / id)
+    executeHttpRequest[Book](HttpRequest(HttpMethods.GET, requestUri))
   }
   
   def chargeCreditCard(uri:JavaURI, charge:ChargeCreditCard):Future[CreditTxn] = {
-    null
+    import spray.json._    
+    val requestUri = Uri(uri.toString).withPath(Uri.Path("/api") / "credit")
+    val entity = HttpEntity(ContentTypes.`application/json`, charge.toJson.prettyPrint)
+    executeHttpRequest[CreditTxn](HttpRequest(HttpMethods.POST, requestUri, entity = entity))
   }
  
-  
   def unexpectedFail = Failure(FailureType.Service, ServiceResult.UnexpectedFailure )
-  def newDate = new Date
-  def lookup(name:String) = context.actorSelection(s"/user/$name")  
+  def newDate = new Date 
 }

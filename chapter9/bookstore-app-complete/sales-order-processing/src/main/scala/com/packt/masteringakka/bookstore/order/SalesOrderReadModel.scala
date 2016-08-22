@@ -8,9 +8,12 @@ import akka.util.Timeout
 import akka.persistence.query.EventEnvelope
 import akka.stream.scaladsl.Flow
 import akka.stream.ActorMaterializer
-import com.packt.masteringakka.bookstore.common.ServiceLookup
 import com.typesafe.conductr.lib.akka.ImplicitConnectionContext
 import scala.concurrent.Future
+import com.packt.masteringakka.bookstore.common.ServiceConsumer
+import akka.http.scaladsl.model.Uri
+import akka.http.scaladsl.model.HttpRequest
+import akka.http.scaladsl.model.HttpMethods
 
 trait SalesOrderReadModel{
   def indexRoot = "order"
@@ -27,7 +30,7 @@ object SalesOrderViewBuilder{
 }
 
 class SalesOrderViewBuilder extends ViewBuilder[SalesOrderViewBuilder.SalesOrderRM] 
-  with SalesOrderReadModel with OrderJsonProtocol with ServiceLookup with ImplicitConnectionContext{
+  with SalesOrderReadModel with OrderJsonProtocol with ServiceConsumer with ImplicitConnectionContext{
   
   import SalesOrder._
   import SalesOrder.Event._
@@ -78,14 +81,18 @@ class SalesOrderViewBuilder extends ViewBuilder[SalesOrderViewBuilder.SalesOrder
   
   def findBook(id:String):Future[Option[Book]] = {
     import context.dispatcher
-    
-    def lookupBook:Future[Option[Book]] = null
-    
-    for{
-      result <- lookupService("inventory-management", OrderBoot.SharedLocationCache)
-      if (result.uriOpt.isDefined)
-      book <- lookupBook
-    } yield book
+    val fut = 
+      for{
+        result <- lookupService("inventory-management")
+        if result.uriOpt.isDefined      
+        requestUri = Uri(result.uriOpt.get.toString).withPath(Uri.Path("/api") / "book" / id)
+        book <- executeHttpRequest[Book](HttpRequest(HttpMethods.GET, requestUri))
+      } yield Some(book)
+    fut.recover{
+      case ex:Throwable => 
+        log.error(ex, "Error loading book {}", id)
+        None
+    }
   }
 }
 

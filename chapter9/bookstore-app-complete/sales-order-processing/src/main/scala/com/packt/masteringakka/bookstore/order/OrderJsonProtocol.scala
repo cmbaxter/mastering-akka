@@ -28,4 +28,10 @@ trait OrderJsonProtocol extends BookstoreJsonProtocol{
   implicit val ccInfoFormat = jsonFormat4(CreditCardInfo)
   implicit val lineItemReqFormat = jsonFormat2(LineItemRequest)
   implicit val createNewOrderFormat = jsonFormat3(CreateNewOrder)
+  
+  //Formats for stuff from inventory
+  implicit val bookFormat = jsonFormat6(Book)
+  implicit val bookstoreUserFormat = jsonFormat1(BookstoreUser)
+  implicit val chargeCcFormat = jsonFormat2(ChargeCreditCard)
+  implicit val creditTxnFormat = jsonFormat2(CreditTxn)    
 }
