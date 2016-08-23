@@ -1,7 +1,7 @@
 {
   "userEmail": "chris@masteringakka.com",
   "lineItems": [
-    {"bookId": "12b5f84d-928e-4d9c-86b9-817e57e26ef6", "quantity": 1}
+    {"bookId": "PUT_YOUR_BOOK_ID_HERE", "quantity": 1}
   ],
   "cardInfo": {
     "cardHolder": "Chris Baxter",
