@@ -6,3 +6,5 @@ target/
 .classpath
 .DS_Store
 **/*.DS_Store
+chapter10/samples/access.log
+chapter10/samples/externalcall.log
