@@ -1,14 +1,20 @@
 package com.packt.masteringakka.bookstore.common
 
+import java.util.concurrent.TimeUnit
+
 import akka.persistence.PersistentActor
 import akka.actor.ReceiveTimeout
 import akka.actor.ActorLogging
+
 import scala.reflect.ClassTag
 import akka.actor.Props
 import akka.persistence.SaveSnapshotSuccess
 import akka.persistence.SaveSnapshotFailure
 import akka.persistence.SnapshotOffer
 import akka.persistence.RecoveryCompleted
+import com.typesafe.config.Config
+
+import scala.concurrent.duration.Duration
 
 /**
  * Marker trait for something that is an event generated as the result of a command
@@ -23,13 +29,16 @@ trait EntityEvent extends Serializable with DatamodelWriter{
 /**
  * Companion to the PersistentEntity abstract class
  */
-object PersistentEntity{
+object PersistentEntity {
   
   /** Request to get the current state from an entity actor */
   case object GetState
   
   /** Request to mark an entity instance as deleted*/
   case object MarkAsDeleted
+
+  def getPersistentEntityTimeout(config: Config, timeUnit: TimeUnit): Duration =
+    Duration.create(config.getDuration("persistent-entity-timeout", TimeUnit.SECONDS), timeUnit)
 }
 
 /**
@@ -45,7 +54,7 @@ abstract class PersistentEntity[FO <: EntityFieldsObject[String, FO]: ClassTag](
   var eventsSinceLastSnapshot = 0
   
   //Using this scheduled task as the passivation mechanism
-  context.setReceiveTimeout(1 minute)  
+  context.setReceiveTimeout(PersistentEntity.getPersistentEntityTimeout(context.system.settings.config, TimeUnit.SECONDS))
   
   //Dynamically setting the persistence id as a combo of 
   //entity type and the id of the entity instance

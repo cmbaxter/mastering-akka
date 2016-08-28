@@ -1,7 +1,6 @@
 package com.packt.masteringakka.bookstore.order
 
 import akka.actor._
-import slick.jdbc.GetResult
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import concurrent.duration._
@@ -22,7 +21,7 @@ object SalesAssociate{
   val Name = "sales-associate"
   def props = Props[SalesAssociate]
    
-  case class CreateNewOrder(userEmail:String, lineItems:List[SalesOrder.LineItemRequest], cardInfo:CreditCardInfo)
+  case class CreateNewOrder(userEmail:String, lineItems:List[SalesOrder.LineItemRequest], cardInfo:CreditCardInfo, id: Option[String])
   case class FindOrderById(id:String)
 }
 
@@ -57,7 +56,7 @@ class SalesAssociate extends Aggregate[SalesOrderFO, SalesOrder]{
       order.forward(GetState)           
     
     case req:CreateNewOrder =>
-      val newId = UUID.randomUUID().toString
+      val newId = req.id.getOrElse(UUID.randomUUID().toString) // optionally an ID can be posted for testing purposes only
       val entity = lookupOrCreateChild(newId)
       val orderReq = SalesOrder.Command.CreateOrder(newId, req.userEmail, req.lineItems, req.cardInfo )
       entity.forward(orderReq)
