@@ -21,7 +21,7 @@ object InventoryClerk{
   case class FindBooksByAuthor(author:String)
   
   //Command operations
-  case class CatalogNewBook(title:String, author:String, tags:List[String], cost:Double)
+  case class CatalogNewBook(title:String, author:String, tags:List[String], cost:Double, id: Option[String])
   case class CategorizeBook(bookId:String, tag:String)
   case class UncategorizeBook(bookId:String, tag:String)
   case class IncreaseBookInventory(bookId:String, amount:Int)
@@ -66,9 +66,9 @@ class InventoryClerk extends Aggregate[BookFO, Book]{
       val result = multiEntityLookup(repo.findBookIdsByAuthor(author))
       pipeResponse(result) */
       
-    case CatalogNewBook(title, author, tags, cost) =>
+    case CatalogNewBook(title, author, tags, cost, optionalId) =>
       log.info("Cataloging new book with title {}", title)
-      val id = UUID.randomUUID().toString()
+      val id = optionalId.getOrElse(UUID.randomUUID().toString()) // optionally an ID can be posted for testing purposes only
       val fo = BookFO(id, title, author, tags, cost, 0, new Date)
       val command = CreateBook(fo)
       forwardCommand(id, command)
