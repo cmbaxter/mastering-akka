@@ -1,17 +1,12 @@
 package code
 
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.Source
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Flow
-import akka.stream.Fusing
 import akka.stream.Attributes
+import akka.stream.scaladsl.Flow
 
-object SplitBuffers extends App{
-  implicit val system = ActorSystem()
-  implicit val mater = ActorMaterializer()  
-  
+import scala.concurrent.Future
+
+object SplitBuffers extends AkkaStreamsApp {
+
   val separateMapStage = 
     Flow[Int].
       map(_*2).
@@ -23,5 +18,10 @@ object SplitBuffers extends App{
       map(_/2).
       async
       
-  val totalFlow = separateMapStage.via(otherMapStage )
+  val totalFlow = separateMapStage.via(otherMapStage)
+
+  override def akkaStreamsExample: Future[_] =
+    Future.successful(())
+
+  runExample
 }
