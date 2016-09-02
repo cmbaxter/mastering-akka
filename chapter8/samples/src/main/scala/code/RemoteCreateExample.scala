@@ -76,7 +76,8 @@ class WordCountMaster extends Actor with ActorLogging{
 object WorkerNode extends App with RemotingConfig{
   val port = args(0).toInt
   val cfg = remotingConfig(port)
-  val system = ActorSystem("WorkerSystem", ConfigFactory.parseString(cfg))
+  val system = ActorSystem("WorkerSystem", ConfigFactory.parseString(cfg)
+    .withFallback(ConfigFactory.defaultApplication()))
 }
 
 object WordCountApp extends App with RemotingConfig{
@@ -84,6 +85,7 @@ object WordCountApp extends App with RemotingConfig{
   import WordCountMaster._
   
   val config = ConfigFactory.parseString(remotingConfig(2552))
+    .withFallback(ConfigFactory.defaultApplication())
   val deployConfig = ConfigFactory.parseString("""
     akka {
       actor {
@@ -97,7 +99,7 @@ object WordCountApp extends App with RemotingConfig{
         }
       }
     }      
-  """)
+  """).withFallback(ConfigFactory.defaultApplication())
   val system = ActorSystem("MasterSystem", config.withFallback(deployConfig))
   val master = system.actorOf(WordCountMaster.props, "wordCountMaster")
   
