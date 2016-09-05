@@ -6,12 +6,13 @@ import akka.http.scaladsl._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server.{ Directives, Route }
 import akka.stream.{ ActorMaterializer, Materializer }
-import com.typesafe.conductr.bundlelib.akka.{ Env, StatusService }
+import com.typesafe.conductr.bundlelib.akka.{ Env, LocationService, StatusService }
+import com.typesafe.conductr.bundlelib.scala.{ LocationCache, URI }
 import com.typesafe.conductr.lib.akka.ConnectionContext
 import com.typesafe.config.ConfigFactory
 import spray.json.DefaultJsonProtocol
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ ExecutionContext, Future }
 
 object Main extends App with SprayJsonSupport with DefaultJsonProtocol with Directives {
   // getting bundle configuration from Conductr
@@ -27,8 +28,13 @@ object Main extends App with SprayJsonSupport with DefaultJsonProtocol with Dire
   implicit val ec: ExecutionContext = system.dispatcher
   implicit val log: LoggingAdapter = Logging(system, this.getClass)
   implicit val cc = ConnectionContext()
+  implicit val locationCache = LocationCache()
 
   val httpServerCfg = system.settings.config.getConfig("helloworld")
+  val configuredIpAddress = httpServerCfg.getString("ip")
+  val configuredPort = httpServerCfg.getInt("port")
+
+  log.debug(" ==> Launching HelloWorld sample application on ip: '{}', port: '{}'", configuredIpAddress, configuredPort)
 
   final case class HelloWorldResponse(msg: String)
 
@@ -38,6 +44,9 @@ object Main extends App with SprayJsonSupport with DefaultJsonProtocol with Dire
   implicit val personJsonFormat = jsonFormat2(Person)
 
   def completeWithHello = extractMethod(method => complete(HelloWorldResponse(s"${method.value} Hello World!")))
+
+  def queryServiceLocator(serviceName: String = "web") =
+    LocationService.lookup(serviceName, URI("http://localhost:8080/"), locationCache)
 
   def route: Route =
     logRequestResult("chapter9-sample-helloworld") {
@@ -55,11 +64,17 @@ object Main extends App with SprayJsonSupport with DefaultJsonProtocol with Dire
             (get & pathEnd) {
               complete(Person("John Doe", 40))
             }
+        } ~
+        (get & path("service" / Segment)) { serviceName =>
+          complete(queryServiceLocator(serviceName).map {
+            case Some(uri) => s"Service '$serviceName' found, its available at: $uri"
+            case _         => s"No service found for service name: '$serviceName'"
+          })
         }
     }
 
   (for {
-    _ <- Http().bindAndHandle(route, interface = httpServerCfg.getString("ip"), port = httpServerCfg.getInt("port"))
+    _ <- Http().bindAndHandle(route, interface = configuredIpAddress, port = configuredPort)
     _ <- StatusService.signalStartedOrExit()
   } yield ()).recover {
     case cause: Throwable =>

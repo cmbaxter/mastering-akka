@@ -50,9 +50,19 @@ BundleKeys.diskSpace := 50.MB // how much disk space is needed on the server nod
 
 BundleKeys.startCommand += "-main code.Main" // configure what main to run at startup
 
+//
 // service registry
+//
+// the endpoint key is used to form a set of environment variables for your components.
+// e.g. for the endpoint key "helloworld" ConductR creates the environment variable HELLOWORLD_BIND_PORT
+// with the configuration below the endpoint will be proxied on the offset /web in Conductr,
+// this means that the 'helloworld' service will be available at: http://192.168.99.100/web/helloworld
+// instead at http://localhost:8080/helloworld when running eg. in SBT
+//
+// Note: the service name is: 'web'
+//
 BundleKeys.endpoints := Map( 
- "helloworld" -> Endpoint("http", 0, Set(URI("http://:9000/helloworld"))),
+ "helloworld" -> Endpoint("http", 0, Set(URI("http://:9000/web"))),
  "akka-remote" -> Endpoint("tcp")
 )
 
