@@ -123,7 +123,7 @@ abstract class PersistentEntity[FO <: EntityFieldsObject[String, FO]: ClassTag](
    * @param cmd The command to check
    * @return a Boolean indicating if we can handle the command
    */
-  def isAcceptingCommand(cmd:Any) = 
+  def isAcceptingCommand(cmd:Any):Boolean = 
     !state.deleted && 
       !(state == initialState && !isCreateMessage(cmd))
   
