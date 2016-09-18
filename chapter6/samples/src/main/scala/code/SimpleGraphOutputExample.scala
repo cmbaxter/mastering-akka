@@ -1,25 +1,22 @@
 package code
 
-import akka.stream.scaladsl._
-import akka.NotUsed
 import akka.stream.ClosedShape
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
+import akka.stream.scaladsl._
 
-object SimpleGraphOutputExample extends App{
-  implicit val system = ActorSystem()
-  implicit val mater = ActorMaterializer()
+import scala.concurrent.Future
+
+object SimpleGraphOutputExample extends AkkaStreamsApp {
 
   val foldSink = Sink.fold[Int,Int](0)(_+_)
   val g = RunnableGraph.fromGraph(GraphDSL.create(foldSink) { 
-    implicit builder => (sink) =>
+    implicit builder => sink =>
     
     import GraphDSL.Implicits._
     val in = Source(1 to 5)
-    val f1 = Flow[Int].map(_*2)
-    val f2 = Flow[Int].map(_ * 1)
-    val f3 = Flow[Int].map(_*2)
-    val f4 = Flow[Int].map(_+1)
+    val f1 = Flow[Int].map(_*2).log("f1")
+    val f2 = Flow[Int].map(_ * 1).log("f2")
+    val f3 = Flow[Int].map(_*2).log("f3")
+    val f4 = Flow[Int].map(_+1).log("f4")
   
     val bcast = builder.add(Broadcast[Int](2))
     val merge = builder.add(Merge[Int](2))  
@@ -28,6 +25,9 @@ object SimpleGraphOutputExample extends App{
     bcast ~> f3 ~> merge
     ClosedShape
   })
-  val fut = g.run
-  fut.onComplete(println)(system.dispatcher)
+
+  override def akkaStreamsExample: Future[_] =
+    g.run
+
+  runExample
 }
