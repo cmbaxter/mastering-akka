@@ -258,8 +258,10 @@ abstract class PersistentEntity[FO <: EntityFieldsObject[String, FO]: ClassTag]
    */
   def handleEventAndRespond(respectDeleted:Boolean = true)(event:EntityEvent):Unit = {
     handleEvent(event)
-    eventsSinceLastSnapshot += 1
-    maybeSnapshot
+    if (snapshotAfterCount.isDefined){
+      eventsSinceLastSnapshot += 1
+      maybeSnapshot
+    }
     sender() ! stateResponse(respectDeleted)
   }
   
