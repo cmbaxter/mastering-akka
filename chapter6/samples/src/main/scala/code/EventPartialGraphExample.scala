@@ -9,7 +9,7 @@ import scala.concurrent.Future
 
 object EventPartialGraphExample extends AkkaStreamsApp with EdgeServices {
 
-  val eventsFlow = GraphDSL.create() { 
+  val eventsFlow = Flow.fromGraph(GraphDSL.create() { 
     implicit builder: GraphDSL.Builder[NotUsed] =>
     
     import GraphDSL.Implicits._
@@ -27,7 +27,7 @@ object EventPartialGraphExample extends AkkaStreamsApp with EdgeServices {
     bcast ~> weather ~> zip.in1 
     bcast ~> imageInfo ~> zip.in2 
     FlowShape(bcast.in, zip.out)
-  }
+  })
 
   override def akkaStreamsExample: Future[_] =
     otherEventsSource
