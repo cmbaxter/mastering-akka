@@ -18,7 +18,7 @@ import akka.http.scaladsl.server.Route
 import akka.actor.ActorRef
 
 
-trait HighLevelHttpRoutes extends MyJsonProtocol{
+trait HighLevelHttpRoutes extends MyJsonProtocol with SprayJsonSupport{
   import akka.pattern.ask
   implicit val timeout = Timeout(5 seconds)
 	 

@@ -16,7 +16,7 @@ import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import spray.json._
 
-trait MyJsonProtocol extends SprayJsonSupport with DefaultJsonProtocol{
+trait MyJsonProtocol extends DefaultJsonProtocol{
   implicit val personFormat = jsonFormat2(Person)
 }
 
