@@ -58,6 +58,7 @@ object RoutedWordCountApp extends App with RemotingConfig{
   import WordCountMaster._
   
   val config = ConfigFactory.parseString(remotingConfig(2552))
+    .withFallback(ConfigFactory.defaultApplication())
   val deployConfig = ConfigFactory.parseString("""
     akka {
       actor {
@@ -73,7 +74,7 @@ object RoutedWordCountApp extends App with RemotingConfig{
         }
       }
     }      
-  """)
+  """).withFallback(ConfigFactory.defaultApplication())
   val system = ActorSystem("MasterSystem", config.withFallback(deployConfig))
   val master = system.actorOf(RoutedWordCountMaster.props, "wordCountMaster")
   

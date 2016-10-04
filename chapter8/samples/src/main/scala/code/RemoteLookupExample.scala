@@ -23,7 +23,6 @@ trait RemotingConfig{
         }
       }
     }
-    
   """
 }
 
@@ -45,6 +44,7 @@ class DateActor extends Actor with ActorLogging{
 
 object ReceiverSystem extends App with RemotingConfig{
   val config = ConfigFactory.parseString(remotingConfig(2552))
+    .withFallback(ConfigFactory.defaultApplication())
   val system = ActorSystem("ReceiverSystem", config)
   system.actorOf(DateActor.props, "dateActor")
 }
@@ -52,6 +52,7 @@ object ReceiverSystem extends App with RemotingConfig{
 object SenderSystem extends App with RemotingConfig{
   import DateActor._
   val config = ConfigFactory.parseString(remotingConfig(2553))
+    .withFallback(ConfigFactory.defaultApplication())
   val system = ActorSystem("SenderSystem", config)
   val path = "akka.tcp://ReceiverSystem@127.0.0.1:2552/user/dateActor"
   val selection = system.actorSelection(path)

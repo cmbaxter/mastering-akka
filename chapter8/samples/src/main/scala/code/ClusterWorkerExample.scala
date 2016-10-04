@@ -29,14 +29,14 @@ trait ClusterConfig{
         ]
       }          
     }
-    
   """
 }
 
 object ClusterWorkerNode extends App with ClusterConfig{
   val port = args(0).toInt
   val cfg = clusterConfig(port, "worker")
-  val system = ActorSystem("WordCountSystem", ConfigFactory.parseString(cfg))
+  val system = ActorSystem("WordCountSystem", ConfigFactory.parseString(cfg)
+    .withFallback(ConfigFactory.defaultApplication()))
 }
 
 object ClusterStateListener{
@@ -142,7 +142,8 @@ object ClusterWordCountApp extends App with ClusterConfig{
       }
     }      
   """)
-  val system = ActorSystem("WordCountSystem", config.withFallback(deployConfig))
+  val system = ActorSystem("WordCountSystem", config.withFallback(deployConfig)
+    .withFallback(ConfigFactory.defaultApplication()))
   val listener = system.actorOf(ClusterStateListener.props)
   
   val master = system.actorOf(ClusterWordCountMaster.props, "wordCountMaster")
