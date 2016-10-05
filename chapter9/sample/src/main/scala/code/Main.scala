@@ -59,7 +59,7 @@ object Main extends App with SprayJsonSupport with DefaultJsonProtocol with Dire
       } ~
         path("person") {
           (post & pathEnd & entity(as[Person])) { person =>
-            complete(s"Received: $person")
+            complete(person)
           } ~
             (get & pathEnd) {
               complete(Person("John Doe", 40))
