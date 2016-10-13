@@ -68,7 +68,7 @@ object ConsumerActor {
   def props(queue: ActorRef) = Props(classOf[ConsumerActor], queue)
 }
 
-class ConsumerActor(queue: ActorRef) extends Actor {
+class ConsumerActor(queue: ActorRef) extends Actor with ActorLogging {
 
   def receive = consumerReceive(1000)
 
@@ -79,7 +79,7 @@ class ConsumerActor(queue: ActorRef) extends Actor {
     case i: Int ⇒
       val newRemaining = remaining - 1
       if (newRemaining == 0) {
-        println(s"Consumer ${self.path} is done consuming")
+        log.info("Consumer {} is done consuming", self.path)
         context.stop(self)
       } else {
         queue ! ActorQueue.Dequeue

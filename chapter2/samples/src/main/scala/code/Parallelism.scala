@@ -96,14 +96,17 @@ object ParallelismExample extends App {
 
   val master = system.actorOf(WorkMaster.props(workerCount), "master")
   val start = System.currentTimeMillis()
-  (master ? WorkMaster.StartProcessing).mapTo[WorkMaster.IterationCount].flatMap { iterations ⇒
-    val time = System.currentTimeMillis() - start
-    println(s"total time was: $time ms")
-    println(s"total iterations was: ${iterations.count}")
-    system.terminate()
-  }.recover {
-    case t: Throwable ⇒
-      t.printStackTrace()
+  (master ? WorkMaster.StartProcessing).
+    mapTo[WorkMaster.IterationCount].
+    flatMap { iterations ⇒
+      val time = System.currentTimeMillis() - start
+      println(s"total time was: $time ms")
+      println(s"total iterations was: ${iterations.count}")
       system.terminate()
-  }
+    }.
+    recover {
+      case t: Throwable ⇒
+        t.printStackTrace()
+        system.terminate()
+    }
 }

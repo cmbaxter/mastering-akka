@@ -2,8 +2,6 @@ package com.packt.masteringakka.bookstore.order
 
 import akka.testkit._
 import akka.actor._
-import org.specs2.specification.Scope
-import org.specs2.mutable.Specification
 import com.packt.masteringakka.bookstore.domain.credit.CreditCardInfo
 import java.util.Date
 import com.packt.masteringakka.bookstore.domain.user.FindUserById
@@ -16,16 +14,18 @@ import com.packt.masteringakka.bookstore.domain.credit.ChargeCreditCard
 import com.packt.masteringakka.bookstore.common.FullResult
 import com.packt.masteringakka.bookstore.domain.credit.CreditCardTransaction
 import com.packt.masteringakka.bookstore.domain.credit.CreditTransactionStatus
-import org.specs2.mock.Mockito
 import scala.concurrent.Future
 import com.packt.masteringakka.bookstore.order.SalesOrderProcessor.CreditHandlerName
 import com.packt.masteringakka.bookstore.order.SalesOrderProcessor.UserManagerName
+import org.scalatest.{ BeforeAndAfterAll, FlatSpec, Matchers}
+import org.scalatest.mock.MockitoSugar
+import org.mockito.Mockito._
 
-class SalesOrderProcessorUnitSpec extends Specification with Mockito{
-  import SalesOrderProcessor._
-  val system = ActorSystem()
+class SalesOrderProcessorUnitSpec extends FlatSpec with Matchers with BeforeAndAfterAll with MockitoSugar{  
+  import SalesOrderProcessor._  
+  implicit val system = ActorSystem()
   
-  class scope extends TestKit(system) with Scope with ImplicitSender{      
+  class scoping extends TestKit(system) with ImplicitSender{
     val userMgr = TestProbe(UserManagerName)
     val bookMgr = TestProbe(SalesOrderManager.BookMgrName)
     val creditHandler = TestProbe(CreditHandlerName )
@@ -45,10 +45,11 @@ class SalesOrderProcessorUnitSpec extends Specification with Mockito{
         context.actorSelection(s"akka://default/system/${namesMap.getOrElse(name, "")}")
     })
   } 
-  
-  "A request to create a new sales order" should{
-    """write a new order to the db and respond 
-      with that new order when everything succeeds""" in new scope{
+   
+  "A request to create a new sales order" should 
+    """write a new order to the db and respond with 
+      that new order when everything succeeds""" in new scoping {
+
       val lineItem = LineItemRequest(2, 1)
       val cardInfo = CreditCardInfo("Chris Baxter", "Visa",
         "1234567890", new Date)
@@ -61,8 +62,8 @@ class SalesOrderProcessorUnitSpec extends Specification with Mockito{
         nowDate, nowDate)
       val finalOrder = expectedOrder.copy(id = 987)
       
-      mockDao.createSalesOrder(expectedOrder) returns 
-        Future.successful(finalOrder)      
+      when(mockDao.createSalesOrder(expectedOrder)).
+        thenReturn(Future.successful(finalOrder))
       
       orderProcessor ! request
       
@@ -81,9 +82,11 @@ class SalesOrderProcessorUnitSpec extends Specification with Mockito{
         19.99, CreditTransactionStatus.Approved, Some("abc123"),
         new Date, new Date)))   
         
-      expectMsg(FullResult(finalOrder))
-    }   
+      expectMsg(FullResult(finalOrder))  
+     
   }
   
-  step(system.terminate)
+  override def afterAll {
+    TestKit.shutdownActorSystem(system)
+  } 
 }
