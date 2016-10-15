@@ -22,7 +22,7 @@ services:
       - "./elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml"
 
   bookstore:
-    image: chapter5-server-complete:latest
+    image: chapter6-server-complete:latest
     container_name: bookstore
     environment:
       - "TZ=Europe/Amsterdam"

@@ -63,31 +63,8 @@ trait ElasticsearchSupport{ me:BookstoreActor =>
     val req = url(s"${esSettings.rootUrl}/${indexRoot}/").DELETE
     callElasticsearch[DeleteResult](req)
   }  
- 
-  /*def waitingForEsResult(req:Req):Receive = {
-    case es:EsResponse =>
-      log.info("Successfully processed a request against the index for url: {}", req.toRequest.getUrl())
-      context.become(handlingEvents)
-      unstashAll      
-      
-    case akka.actor.Status.Failure(ex) =>
-      val wrappedEx = Option(ex.getCause())
-      wrappedEx match{
-        case Some(StatusCode(sc)) =>
-          log.warning("Got a non-OK status code talking to elasticsearch: {}", sc)
-          
-        case other =>
-          log.error(ex, "Error calling elasticsearch when building the read model")    
-      }
-      
-      context.become(handlingEvents)
-      unstashAll
-      
-    case other =>
-      stash     
-  }  */
    
-  def callElasticsearch[RT : Manifest](req:Req)(implicit ec:ExecutionContext):Future[RT] = {    
+  def callElasticsearch[RT : Manifest](req:Req)(implicit ec:ExecutionContext):Future[RT] = {       
     Http(req OK as.String).map(resp => read[RT](resp))
   }   
 }
