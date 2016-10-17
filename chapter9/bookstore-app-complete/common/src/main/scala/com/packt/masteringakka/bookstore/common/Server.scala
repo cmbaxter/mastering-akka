@@ -22,6 +22,13 @@ class Server(boot:Bootstrap, service:String){
   implicit val mater = ActorMaterializer()
   import system.dispatcher
 
+  //Make sure projection storage system is initialized
+  val projExt = CassandraProjectionStorage(system)
+  while(!projExt.isInitialized){
+    println("Waiting for resumable projection system to be initialized")
+    Thread.sleep(1000)
+  }
+
   //Boot up each service module from the config and get the routes
   val routes = boot.bootup(system).map(_.routes)   
   val definedRoutes = routes.reduce(_~_)

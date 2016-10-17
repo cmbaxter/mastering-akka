@@ -91,6 +91,8 @@ class CassandraProjectionStorageExt(system:ActorSystem) extends Extension{
       rs.all().headOption.map(_.getLong(0))
     }
   }
+
+  def isInitialized = initialized.get();
   
   def toDone(a:Any):Done = Done
 
