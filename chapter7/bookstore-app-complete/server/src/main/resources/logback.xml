@@ -1,22 +1,19 @@
 <configuration debug="true">
-  
 
-    <!-- The catch all logger that will receive everything (except the access log data) -->
-  <appender name="serverLog" class="ch.qos.logback.core.rolling.RollingFileAppender" level="ERROR">
-    <file>server.log</file>
-    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-	    <fileNamePattern>server.%d{yyyy-MM-dd}.log</fileNamePattern>
-	    <maxHistory>30</maxHistory>
-    </rollingPolicy>        
-    <append>true</append>
+  <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>info</level>
+    </filter>
     <encoder>
-      <pattern>%d [%thread] %-5level %logger{35} - %msg%n</pattern>
-      <immediateFlush>true</immediateFlush>
+      <pattern>%date{ISO8601} - %logger -> %-5level[%thread] %logger{0} - %msg%n</pattern>
     </encoder>
-  </appender> 
-  
-  <root>
-    <appender-ref ref="serverLog" />
+  </appender>
+
+  <logger name="akka" level="info"/>
+  <logger name="com.packt" level="debug"/>
+
+  <root level="error">
+    <appender-ref ref="console"/>
   </root>
   
 </configuration>

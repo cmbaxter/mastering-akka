@@ -32,8 +32,9 @@ object Server extends App{
     pathPrefix("api")(definedRoutes ) ~
     PretendCreditCardService.routes //manually add in the pretend credit card service to the routing tree
   
+  
   val serverSource =
-    Http().bind(interface = "localhost", port = 8080)    
+    Http().bind(interface = "0.0.0.0", port = 8080)    
   val sink = Sink.foreach[Http.IncomingConnection](_.handleWith(finalRoutes))
   serverSource.to(sink).run  
   
