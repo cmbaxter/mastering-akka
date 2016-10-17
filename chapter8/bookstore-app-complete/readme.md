@@ -1,5 +1,10 @@
-# chapter 5 - bookstore-app-complete
+# chapter 8 - bookstore-app-complete
 Example code from the Mastering Akka book
+
+# Difference From chapter 8 content instructions
+If you have the print version of the book, the instructions at the end of chapter 8 refer to starting up the 2 cluster nodes without using docker.  Please note that this is a mistake and was not updated properly when the switch to fully using Docker in all chapters was made.  It's much simpler now in that all you need to do as usual is run `docker.build.sh` and then `launch.sh` and you will have both cluster nodes running.
+
+Also note that the instructions from the chapter 8 content in the print version of the book discuss clearing out cassandra and elasticsearch and this is actually not necessary as starting up the containers within docker will start with a clean system.
 
 # How to build
 To build and package the bookstore example as a docker application, run the script `docker-build.sh`. This script

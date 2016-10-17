@@ -1,4 +1,4 @@
-# chapter 5 - bookstore-app-complete
+# chapter 6 - bookstore-app-complete
 Example code from the Mastering Akka book
 
 # How to build

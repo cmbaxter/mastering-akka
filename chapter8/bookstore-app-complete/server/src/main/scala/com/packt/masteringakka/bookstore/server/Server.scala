@@ -15,6 +15,11 @@ object Server extends App{
   import akka.http.scaladsl.server.Directives._
   val conf = ConfigFactory.load.getConfig("bookstore").resolve()
   
+  //Need cassandra to be running before the singleton manager tries to use it so
+  //simplest thing is to just add a pause in here
+  println("Waiting 10 seconds to make sure that docker networking is up first...")
+  Thread.sleep(10000)
+
   implicit val system = ActorSystem("BookstoreSystem", conf)
   implicit val mater = ActorMaterializer()
   val log = Logging(system.eventStream, "Server")
@@ -33,7 +38,7 @@ object Server extends App{
     PretendCreditCardService.routes //manually add in the pretend credit card service to the routing tree
   
   val serverSource =
-    Http().bind(interface = "localhost", port = conf.getInt("httpPort"))    
+    Http().bind(interface = "0.0.0.0", port = conf.getInt("httpPort"))    
   val sink = Sink.foreach[Http.IncomingConnection](_.handleWith(finalRoutes))
   serverSource.to(sink).run  
   

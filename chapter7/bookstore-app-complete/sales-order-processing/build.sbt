@@ -1,4 +1,4 @@
-name := "chapter6-sales-order-processing-complete"
+name := "chapter7-sales-order-processing-complete"
 
 libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.2.6" % "test",
